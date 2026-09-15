@@ -2,7 +2,7 @@
     --crdb-green: #007934;
     --crdb-dark-green: #004d21;
     --crdb-orange: #f37021;
-    --bg-color: #eef3ef;
+    --bg-color: #f0f4f1;
     --card-bg: #ffffff;
     --text-dark: #1b2e21;
 }
@@ -21,94 +21,86 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    padding: 20px;
 }
 
-/* Medium Application Page Box */
 .container {
     width: 100%;
-    max-width: 440px; /* Medium tailored width */
+    max-width: 480px;
     background: var(--card-bg);
-    min-height: 820px;
-    max-height: 90vh;
-    box-shadow: 0 8px 30px rgba(0, 121, 52, 0.12);
-    border-radius: 16px;
+    min-height: 100vh;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     display: flex;
     flex-direction: column;
     position: relative;
-    overflow-y: auto;
-    border: 1px solid #d4e2d8;
 }
 
 .bank-header {
     background: #ffffff;
-    padding: 14px 18px;
+    padding: 15px 20px;
     display: flex;
     align-items: center;
     border-bottom: 2px solid #e0e8e2;
-    border-top-left-radius: 16px;
-    border-top-right-radius: 16px;
 }
 
 .menu-icon {
-    font-size: 22px;
+    font-size: 24px;
     color: var(--crdb-green);
-    margin-right: 12px;
+    margin-right: 15px;
     cursor: pointer;
 }
 
 .brand-logo {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .crdb-text {
     font-weight: 900;
     color: var(--crdb-green);
-    font-size: 18px;
+    font-size: 20px;
     letter-spacing: 0.5px;
 }
 
 .bank-text {
     font-weight: 900;
     color: var(--crdb-green);
-    font-size: 18px;
+    font-size: 20px;
 }
 
 .divider {
     color: #ccc;
-    font-size: 18px;
+    font-size: 20px;
     margin: 0 4px;
 }
 
 .simbanking-logo {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
 }
 
 .phone-icon {
-    font-size: 16px;
+    font-size: 18px;
 }
 
 .sim-title {
     display: block;
     font-weight: 700;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--crdb-green);
     line-height: 1;
 }
 
 .sim-sub {
     display: block;
-    font-size: 9px;
+    font-size: 10px;
     color: #555;
 }
 
 .form-step {
     display: none;
-    padding: 18px;
+    padding: 20px;
     flex: 1;
     animation: fadeIn 0.3s ease-in-out;
 }
@@ -119,12 +111,12 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(4px); }
+    from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
 .step-indicator {
-    font-size: 18px;
+    font-size: 20px;
     color: var(--text-dark);
     font-weight: 800;
     text-align: center;
@@ -135,21 +127,21 @@ body {
     font-size: 12px;
     color: #556;
     text-align: center;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
 }
 
 .calculator-card {
     background: #f7faf8;
     border: 1px solid #d4e2d8;
-    border-radius: 10px;
-    padding: 14px;
-    margin-bottom: 12px;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 15px;
 }
 
 .calculator-card h3 {
-    font-size: 14px;
+    font-size: 15px;
     color: var(--text-dark);
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     font-weight: 700;
 }
 
@@ -157,19 +149,19 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
 }
 
 .highlight-val {
     color: var(--crdb-orange);
     font-weight: 800;
-    font-size: 14px;
+    font-size: 15px;
 }
 
 .slider-limits {
     display: flex;
     justify-content: space-between;
-    font-size: 10px;
+    font-size: 11px;
     color: #778;
     margin-top: 2px;
 }
@@ -177,7 +169,7 @@ body {
 input[type="range"] {
     width: 100%;
     accent-color: var(--crdb-orange);
-    height: 5px;
+    height: 6px;
     background: #d8e5dc;
     border-radius: 3px;
     outline: none;
@@ -187,43 +179,43 @@ input[type="range"] {
 .monthly-payment-box {
     background: #ffffff;
     border: 1px solid #e0eae2;
-    padding: 10px 12px;
+    padding: 12px;
     border-radius: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 10px;
+    margin-top: 12px;
 }
 
 .monthly-payment-box span {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     color: #445;
 }
 
 .monthly-payment-box strong {
-    font-size: 16px;
+    font-size: 18px;
     color: var(--crdb-orange);
 }
 
 .form-group {
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 
 .form-group label {
     display: block;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: #334;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
 }
 
 input[type="text"], input[type="tel"], input[type="password"], select {
     width: 100%;
-    padding: 9px 11px;
+    padding: 10px 12px;
     border: 1px solid #d0dcd3;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 14px;
     background: #f8faf9;
     color: var(--text-dark);
     outline: none;
@@ -250,11 +242,10 @@ input:focus, select:focus {
 
 .prefix {
     background: #eef4f0;
-    padding: 9px 10px;
+    padding: 10px;
     font-weight: 600;
     color: #445;
     border-right: 1px solid #d0dcd3;
-    font-size: 13px;
 }
 
 .phone-input-wrapper input {
@@ -264,16 +255,16 @@ input:focus, select:focus {
 
 .btn-primary {
     width: 100%;
-    padding: 12px;
+    padding: 13px;
     background: var(--crdb-orange);
     color: #fff;
     border: none;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     cursor: pointer;
-    margin-top: 8px;
-    box-shadow: 0 4px 10px rgba(243, 112, 33, 0.25);
+    margin-top: 10px;
+    box-shadow: 0 4px 12px rgba(243, 112, 33, 0.25);
     transition: background 0.2s;
 }
 
@@ -282,16 +273,16 @@ input:focus, select:focus {
 }
 
 .section-title {
-    font-size: 18px;
+    font-size: 20px;
     color: var(--text-dark);
-    margin-bottom: 5px;
+    margin-bottom: 6px;
     font-weight: 700;
 }
 
 .section-desc {
-    font-size: 12px;
+    font-size: 13px;
     color: #556;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
     line-height: 1.4;
 }
 
@@ -300,7 +291,7 @@ input:focus, select:focus {
     height: 4px;
     background: #e0e8e2;
     border-radius: 2px;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
     overflow: hidden;
 }
 
@@ -310,30 +301,30 @@ input:focus, select:focus {
 }
 
 .shield-badge, .lock-badge {
-    font-size: 32px;
+    font-size: 36px;
     text-align: center;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .otp-phone-display {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--crdb-green);
     font-weight: 600;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
 }
 
 .otp-inputs, .pin-inputs {
     display: flex;
     gap: 8px;
     justify-content: center;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
 
 .otp-box, .pin-box {
-    width: 40px;
-    height: 46px;
+    width: 44px;
+    height: 50px;
     text-align: center;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
     border: 2px solid #d0dcd3;
     border-radius: 8px;
@@ -341,8 +332,8 @@ input:focus, select:focus {
 
 .timer-section {
     text-align: center;
-    margin-top: 10px;
-    font-size: 11px;
+    margin-top: 12px;
+    font-size: 12px;
     color: #667;
 }
 
@@ -353,7 +344,6 @@ input:focus, select:focus {
     font-weight: 700;
     cursor: pointer;
     margin-left: 4px;
-    font-size: 11px;
 }
 
 .resend-link:disabled {
@@ -364,55 +354,54 @@ input:focus, select:focus {
 .success-banner {
     background: linear-gradient(135deg, var(--crdb-green), var(--crdb-dark-green));
     color: white;
-    padding: 16px;
-    border-radius: 10px;
+    padding: 20px;
+    border-radius: 12px;
     text-align: center;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
 }
 
 .check-circle {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     background: white;
     color: var(--crdb-green);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: bold;
-    margin: 0 auto 8px auto;
+    margin: 0 auto 10px auto;
 }
 
 .approved-card {
     background: #f4f8f5;
     border: 1px solid #cce0d2;
-    padding: 14px;
+    padding: 16px;
     border-radius: 10px;
     text-align: center;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
 }
 
 .card-amount {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 900;
     color: var(--crdb-green);
-    margin: 4px 0;
+    margin: 6px 0;
 }
 
 .reminder-box {
     background: #fff8f0;
     border: 1px solid #fce0c6;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 11px;
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 12px;
     line-height: 1.4;
 }
 
 .reminder-box h3 {
     color: var(--crdb-orange);
-    margin-bottom: 3px;
-    font-size: 12px;
+    margin-bottom: 4px;
 }
 
 .loading-overlay {
@@ -426,21 +415,19 @@ input:focus, select:focus {
     z-index: 100;
     font-weight: 600;
     color: var(--crdb-green);
-    border-radius: 16px;
 }
 
 .spinner {
-    width: 32px;
-    height: 32px;
-    border: 3px solid #e0e8e2;
-    border-top: 3px solid var(--crdb-green);
+    width: 36px;
+    height: 36px;
+    border: 4px solid #e0e8e2;
+    border-top: 4px solid var(--crdb-green);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-        }
-               
+}
