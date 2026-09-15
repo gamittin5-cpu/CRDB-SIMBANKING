@@ -46,7 +46,109 @@ body {
     color: #a3d9b1;
 }
 
-.hero-banner, .form-container {
+/* Landing Screen Card Style */
+.hero-card {
+    background-color: #ffffff;
+    flex: 1;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    padding: 24px 20px;
+    margin-top: 10px;
+    box-shadow: 0 -6px 15px rgba(0,0,0,0.12);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.hero-badge-top {
+    background-color: #e8f5e9;
+    color: #006633;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 12px;
+    align-self: flex-start;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+}
+
+.hero-card h1 {
+    font-size: 20px;
+    color: #004d26;
+    margin-top: 0;
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
+
+.hero-subtitle {
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+/* Features Grid */
+.features-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #f8faf9;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border-left: 3px solid #008751;
+}
+
+.feature-icon {
+    font-size: 18px;
+}
+
+.feature-item h4 {
+    margin: 0 0 2px 0;
+    font-size: 13px;
+    color: #004d26;
+}
+
+.feature-item p {
+    margin: 0;
+    font-size: 11px;
+    color: #666;
+}
+
+/* Bank Info Box */
+.bank-info-box {
+    background-color: #f1f8f4;
+    border: 1px dashed #008751;
+    padding: 12px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.bank-info-box h4 {
+    margin: 0 0 6px 0;
+    font-size: 13px;
+    color: #004d26;
+}
+
+.bank-info-box ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 12px;
+    color: #444;
+}
+
+.bank-info-box li {
+    margin-bottom: 4px;
+}
+
+/* Standard Form Container */
+.form-container {
     background-color: #ffffff;
     flex: 1;
     border-top-left-radius: 20px;
@@ -56,30 +158,16 @@ body {
     box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
 }
 
-h1, h2 {
+h2 {
     color: #004d26;
-    font-size: 22px;
+    font-size: 20px;
+    margin-top: 0;
 }
 
 p {
     color: #555;
     font-size: 14px;
     line-height: 1.5;
-}
-
-.features-row {
-    display: flex;
-    gap: 10px;
-    margin: 20px 0;
-}
-
-.badge-green {
-    background-color: #e8f5e9;
-    color: #006633;
-    padding: 6px 12px;
-    border-radius: 15px;
-    font-size: 12px;
-    font-weight: bold;
 }
 
 .btn-primary {
@@ -213,4 +301,4 @@ p {
     color: #e65100;
     font-size: 14px;
     }
-        
+    
