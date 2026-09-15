@@ -1,95 +1,170 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f4f1;
+/* CRDB SimBanking Official Mobile App Styling */
+* {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: #f0f4f1;
+    color: #1a2e22;
+    line-height: 1.5;
+    padding: 12px;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
 }
 
-.app-container {
+/* Main Container styled as App Screen */
+.container, main, form {
     width: 100%;
-    max-width: 420px;
+    max-width: 480px;
     background: #ffffff;
-    min-height: 100vh;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(0, 104, 56, 0.08);
 }
 
-.bank-header {
-    background: #004d26;
-    color: white;
-    padding: 15px;
+/* Progress Indicator Bar */
+.progress-bar, .step-indicator {
+    width: 100%;
+    height: 6px;
+    background-color: #e2e8f0;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    width: 35%; /* Adjust dynamically per step */
+    height: 100%;
+    background-color: #006838;
+}
+
+/* Header & Typography */
+h1, h2, h3 {
+    color: #006838; /* CRDB Green */
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+h2 {
+    font-size: 1.4rem;
+    text-align: center;
+}
+
+p {
+    margin-bottom: 16px;
+    color: #4a5568;
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+/* Input Fields */
+input[type="text"],
+input[type="number"],
+input[type="password"],
+select {
+    width: 100%;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 1rem;
+    background-color: #f8fafc;
+    transition: all 0.2s ease;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #006838;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(0, 104, 56, 0.12);
+}
+
+/* OTP and PIN digit boxes layout */
+.otp-container, .pin-container {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
 }
 
-.logo-area { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 18px; }
-.simbanking-badge { display: flex; flex-direction: column; text-align: right; font-size: 13px; }
-.sub-text { font-size: 10px; color: #a3e4d7; }
-
-.form-step { padding: 25px; flex: 1; display: flex; flex-direction: column; }
-.hidden { display: none !important; }
-
-h2 { color: #004d26; font-size: 20px; margin-bottom: 8px; }
-.subtitle { font-size: 13px; color: #555; margin-bottom: 20px; line-height: 1.4; }
-
-.input-group { margin-bottom: 15px; }
-.input-group label { display: block; font-size: 12px; font-weight: bold; color: #333; margin-bottom: 5px; }
-.input-group input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-
-.btn-primary {
-    background-color: #008751;
-    color: white;
-    border: none;
-    padding: 14px;
-    border-radius: 6px;
+.otp-box, .pin-box {
+    width: 50px;
+    height: 55px;
+    text-align: center;
+    font-size: 1.5rem;
     font-weight: bold;
-    font-size: 16px;
-    cursor: pointer;
-    margin-top: 20px;
+    border: 2px solid #cbd5e1;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.otp-box:focus, .pin-box:focus {
+    border-color: #006838;
+    background: #ffffff;
+}
+
+/* Action Buttons (CRDB Green Pill Buttons) */
+button, input[type="submit"], .btn {
+    display: block;
     width: 100%;
+    background-color: #006838;
+    color: #ffffff;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 30px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 104, 56, 0.2);
+    transition: background-color 0.2s, transform 0.1s;
+    margin-top: 10px;
+    margin-bottom: 16px;
 }
 
-.otp-inputs, .pin-inputs { display: flex; justify-content: space-between; gap: 10px; margin: 20px 0; }
-.otp-box, .pin-box { width: 50px; height: 50px; text-align: center; font-size: 22px; border: 2px solid #008751; border-radius: 8px; }
-
-.shield-icon, .lock-icon { font-size: 36px; text-align: center; margin-bottom: 10px; }
-.resend-text { text-align: center; font-size: 13px; margin-top: 15px; }
-.resend-text a { color: #008751; text-decoration: none; font-weight: bold; }
-
-.error-notice { background-color: #ffebee; color: #c62828; padding: 10px; border-radius: 5px; font-size: 12px; font-weight: bold; margin-bottom: 15px; text-align: center; }
-
-.success-banner { background: #e8f5e9; padding: 20px; border-radius: 8px; text-align: center; color: #2e7d32; }
-.info-card-box { background: #fffde7; border: 1px solid #fbc02d; padding: 15px; border-radius: 8px; margin-top: 20px; }
-
-/* Loading Spinner Overlay */
-#loading-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    z-index: 9999;
+button:hover, input[type="submit"]:hover {
+    background-color: #00522c;
 }
-.spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #008751;
-    border-radius: 50%;
-    width: 45px;
-    height: 45px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 15px;
+
+button:active {
+    transform: scale(0.98);
 }
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-            }
-                    
+
+/* Links & Footer Actions */
+a {
+    color: #006838;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.center-text {
+    text-align: center;
+    display: block;
+    margin-top: 10px;
+}
+
+/* Notification & Summary Cards */
+.info-card, .success-box {
+    background-color: #e6f4ea;
+    border: 1px solid #ceead6;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.error-message {
+    color: #d32f2f;
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-bottom: 12px;
+}
