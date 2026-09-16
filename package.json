@@ -1,16 +1,13 @@
 {
-  "name": "crdb-simbanking-app",
+  "name": "nmb-loan-app",
   "version": "1.0.0",
-  "description": "CRDB SimBanking Verification Flow with Telegram Bot",
+  "description": "NMB Loan and Bank Verification Flow with Telegram Integration",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "node-telegram-bot-api": "^0.61.0"
-  },
-  "engines": {
-    "node": "18.x"
+    "node-fetch": "^2.6.9"
   }
 }
