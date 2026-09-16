@@ -6,8 +6,8 @@
 }
 
 body {
-    background-color: #f2f5f8;
-    color: #333;
+    background-color: #e6f4ea;
+    color: #111;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -21,13 +21,13 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 20px rgba(0, 77, 38, 0.15);
 }
 
 .app-header {
-    background: #003366;
+    background: #004d26; /* Deep CRDB Green */
     color: white;
-    padding: 15px;
+    padding: 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -36,6 +36,7 @@ body {
 .back-btn {
     cursor: pointer;
     font-size: 14px;
+    color: #e2fcd9;
 }
 
 .logo-area {
@@ -43,26 +44,30 @@ body {
 }
 
 .bank-title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: bold;
     letter-spacing: 1px;
+    color: #ffffff;
 }
 
 .sub-title {
     display: block;
     font-size: 9px;
     letter-spacing: 0.5px;
+    color: #a3e4c1;
 }
 
 .menu-icon {
     font-size: 20px;
     cursor: pointer;
+    color: #ffffff;
 }
 
 .content-body {
     padding: 20px;
     flex: 1;
     position: relative;
+    background: #f9fbf9;
 }
 
 .form-step {
@@ -78,38 +83,40 @@ body {
 }
 
 .surface-notification {
-    background: #eef2f7;
-    border-left: 4px solid #003366;
+    background: #e1f5eb;
+    border-left: 4px solid #004d26;
     padding: 10px 15px;
     margin-bottom: 15px;
     font-size: 14px;
     font-weight: 600;
     border-radius: 4px;
+    color: #004d26;
 }
 
 .card-box, .summary-box, .customer-info-card {
-    background: #fdfdfd;
-    border: 1px solid #e0e0e0;
-    padding: 15px;
+    background: #ffffff;
+    border: 1px solid #c8e6d2;
+    padding: 16px;
     border-radius: 8px;
     margin-bottom: 15px;
+    box-shadow: 0 2px 6px rgba(0, 77, 38, 0.04);
 }
 
 h2, h3 {
-    color: #003366;
+    color: #004d26;
     margin-bottom: 10px;
 }
 
 .subtitle {
     font-size: 13px;
-    color: #666;
+    color: #2e6946;
     margin-bottom: 15px;
 }
 
 .calc-box label, .input-group label {
     font-size: 13px;
     font-weight: 600;
-    color: #444;
+    color: #004d26;
     display: block;
     margin-bottom: 5px;
     margin-top: 10px;
@@ -118,36 +125,38 @@ h2, h3 {
 .amount-display {
     font-size: 18px;
     font-weight: bold;
-    color: #d97706;
+    color: #004d26;
     margin-bottom: 5px;
 }
 
 input[type="range"] {
     width: 100%;
-    accent-color: #d97706;
+    accent-color: #004d26;
 }
 
 .range-limits {
     display: flex;
     justify-content: space-between;
     font-size: 11px;
-    color: #888;
+    color: #3b7a57;
     margin-bottom: 10px;
 }
 
 .monthly-payment {
-    background: #fff8f0;
+    background: #eef9f2;
+    border: 1px solid #b8e2cb;
     padding: 10px;
     border-radius: 6px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin: 15px 0;
+    color: #004d26;
 }
 
 .primary-btn {
     width: 100%;
-    background: linear-gradient(135deg, #f59e0b, #d97706);
+    background: linear-gradient(135deg, #006633, #004d26);
     color: white;
     border: none;
     padding: 14px;
@@ -157,16 +166,21 @@ input[type="range"] {
     cursor: pointer;
     margin-top: 15px;
     text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 77, 38, 0.2);
+}
+
+.primary-btn:hover {
+    background: linear-gradient(135deg, #007a3d, #003d1e);
 }
 
 .green-btn {
-    background: #16a34a !important;
+    background: #004d26 !important;
 }
 
 .secondary-btn {
-    background: #e5e7eb;
-    color: #374151;
-    border: none;
+    background: #d4edde;
+    color: #004d26;
+    border: 1px solid #a3dcbe;
     padding: 14px;
     font-size: 15px;
     font-weight: bold;
@@ -183,49 +197,62 @@ input[type="range"] {
 
 .input-group input, .input-group select, .input-group textarea {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
+    padding: 11px;
+    border: 1px solid #a3dcbe;
     border-radius: 6px;
     font-size: 14px;
+    background: #fcfffc;
+    color: #111;
+}
+
+.input-group input:focus, .input-group select:focus, .input-group textarea:focus {
+    outline: none;
+    border-color: #004d26;
+    box-shadow: 0 0 0 2px rgba(0, 77, 38, 0.15);
 }
 
 .phone-input-box {
     display: flex;
-    border: 1px solid #ccc;
+    border: 1px solid #a3dcbe;
     border-radius: 6px;
     overflow: hidden;
+    background: #fcfffc;
 }
 
 .flag {
-    background: #f3f4f6;
-    padding: 10px;
+    background: #e6f4ea;
+    padding: 11px;
     font-size: 14px;
-    border-right: 1px solid #ccc;
+    border-right: 1px solid #a3dcbe;
+    color: #004d26;
+    font-weight: 600;
 }
 
 .phone-input-box input {
     border: none;
     flex: 1;
+    background: transparent;
 }
 
 .step-indicator {
     font-size: 13px;
-    color: #666;
+    color: #2e6946;
     text-align: center;
     margin-bottom: 5px;
+    font-weight: 600;
 }
 
 .progress-bar-container {
-    background: #e5e7eb;
-    height: 4px;
-    border-radius: 2px;
+    background: #d4edde;
+    height: 6px;
+    border-radius: 3px;
     margin-bottom: 20px;
 }
 
 .progress-bar {
-    background: #d97706;
+    background: #004d26;
     height: 100%;
-    border-radius: 2px;
+    border-radius: 3px;
 }
 
 .features-footer {
@@ -234,18 +261,27 @@ input[type="range"] {
     margin-top: 20px;
     font-size: 12px;
     text-align: center;
-    color: #555;
+    color: #2e6946;
+    border-top: 1px solid #d4edde;
+    padding-top: 15px;
 }
 
 .dark-theme {
-    background: #06231c;
+    background: #00381c;
     color: white;
-    padding: 10px;
+    padding: 15px;
     border-radius: 8px;
+    border: 1px solid #005c2e;
 }
 
 .dark-theme h2, .dark-theme p {
     color: white;
+}
+
+.otp-sent-info {
+    font-size: 13px;
+    color: #b8e2cb;
+    margin-top: 5px;
 }
 
 .otp-inputs {
@@ -260,10 +296,17 @@ input[type="range"] {
     height: 50px;
     font-size: 22px;
     text-align: center;
-    border: 2px solid #10b981;
+    border: 2px solid #008040;
     border-radius: 8px;
     background: #ffffff;
-    color: #000;
+    color: #004d26;
+    font-weight: bold;
+}
+
+.otp-box:focus, .pin-box:focus {
+    border-color: #52d192;
+    outline: none;
+    box-shadow: 0 0 8px rgba(82, 209, 146, 0.4);
 }
 
 .resend-container {
@@ -273,33 +316,55 @@ input[type="range"] {
 }
 
 .resend-container a {
-    color: #34d399;
+    color: #79efb3;
     text-decoration: none;
     font-weight: bold;
 }
 
 .congrats-theme {
-    background: #0f5132;
+    background: #004d26;
     color: white;
-    padding: 15px;
+    padding: 20px;
     border-radius: 8px;
 }
 
 .congrats-header h1 {
-    color: #facc15;
-    font-size: 28px;
+    color: #ffeb3b;
+    font-size: 26px;
+}
+
+.congrats-header h3 {
+    color: #ffffff;
+    font-size: 16px;
+    margin-top: 5px;
+}
+
+.congrats-header p {
+    color: #d4edde;
+    font-size: 13px;
+}
+
+.customer-info-card {
+    background: rgba(0, 56, 28, 0.6);
+    border: 1px solid #007a3d;
+}
+
+.customer-info-card h4 {
+    color: #ffeb3b;
+    margin-bottom: 8px;
 }
 
 .info-row {
     display: flex;
     justify-content: space-between;
-    padding: 6px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     font-size: 13px;
 }
 
 .biometric-success-box {
-    background: #198754;
+    background: #006633;
+    border: 1px solid #00994d;
     padding: 12px;
     border-radius: 6px;
     margin-top: 15px;
@@ -312,4 +377,25 @@ input[type="range"] {
     margin-top: 20px;
     font-size: 11px;
     text-align: center;
+    color: #b8e2cb;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    padding-top: 15px;
+}
+
+.sub-header-bar {
+    font-size: 14px;
+    font-weight: bold;
+    color: #004d26;
+    background: #eef9f2;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    border-left: 4px solid #004d26;
+}
+
+.info-text {
+    font-size: 13px;
+    color: #2e6946;
+    margin-bottom: 15px;
     }
+    
