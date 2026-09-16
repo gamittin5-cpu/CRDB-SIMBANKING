@@ -25,7 +25,7 @@ body {
 }
 
 .app-header {
-    background: #004d26; /* Deep CRDB Green */
+    background: #004d26;
     color: white;
     padding: 16px;
     display: flex;
@@ -264,6 +264,39 @@ input[type="range"] {
     color: #2e6946;
     border-top: 1px solid #d4edde;
     padding-top: 15px;
+}
+
+/* Spinner & Loading Screen */
+.center-loading-screen {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 6px solid #d4edde;
+    border-top: 6px solid #004d26;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 25px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.waiting-badge {
+    margin-top: 30px;
+    display: inline-block;
+    background: #eef9f2;
+    border: 1px solid #b8e2cb;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #004d26;
+    font-weight: 600;
 }
 
 .dark-theme {
