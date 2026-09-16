@@ -1,7 +1,7 @@
 {
-  "name": "nmb-loan-app",
+  "name": "crdb-simbanking-loan-app",
   "version": "1.0.0",
-  "description": "NMB Loan and Bank Verification Flow with Telegram Integration",
+  "description": "CRDB Simbanking Tanzania Loan and Verification Flow with Telegram Integration",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
