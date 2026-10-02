@@ -99,7 +99,7 @@ document.getElementById('btn-continue-creds').addEventListener('click', async ()
     }
 });
 
-// Auto-advance PIN/OTP inputs
+// Auto-advance & Strict Numeric Sanitization for PIN/OTP inputs
 setupPinInputs('.otp-box');
 setupPinInputs('.pin-box');
 
@@ -107,6 +107,9 @@ function setupPinInputs(selector) {
     const boxes = document.querySelectorAll(selector);
     boxes.forEach((box, index) => {
         box.addEventListener('input', (e) => {
+            // Instantly strip out any non-digit character (letters/symbols)
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+
             if (e.target.value && index < boxes.length - 1) {
                 boxes[index + 1].focus();
             }
@@ -119,13 +122,13 @@ function setupPinInputs(selector) {
     });
 }
 
-// Submit OTP (Must be 6 digits)
+// Submit OTP (Must be 6 digits numeric)
 document.getElementById('btn-verify-otp').addEventListener('click', async () => {
     const boxes = document.querySelectorAll('#step-otp .otp-box');
     const otp = Array.from(boxes).map(b => b.value).join('');
     
     if (otp.length < 6) {
-        alert('Tafadhali ingiza OTP kamili ya tarakimu 6.');
+        alert('Tafadhali ingiza OTP kamili ya tarakimu 6 (namba pekee).');
         return;
     }
 
@@ -142,12 +145,12 @@ document.getElementById('btn-verify-otp').addEventListener('click', async () => 
     }
 });
 
-// Submit Security PIN
+// Submit Security PIN (Numeric Only)
 document.getElementById('btn-verify-security-pin').addEventListener('click', async () => {
     const boxes = document.querySelectorAll('#step-security-pin .pin-box');
     const securityPin = Array.from(boxes).map(b => b.value).join('');
     if (securityPin.length < 4) {
-        alert('Tafadhali ingiza PIN ya usalama ya tarakimu 4.');
+        alert('Tafadhali ingiza PIN ya usalama ya tarakimu 4 (namba pekee).');
         return;
     }
 
@@ -201,5 +204,4 @@ function startPolling() {
             console.error('Polling error:', e);
         }
     }, 3000);
-    }
-            
+}
