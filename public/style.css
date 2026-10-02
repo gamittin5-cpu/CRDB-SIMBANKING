@@ -1,239 +1,182 @@
+/* Split-Screen Main Layout Wrapper */
 body {
+    margin: 0;
+    padding: 0;
     font-family: Arial, sans-serif;
     background-color: #f0f2f5;
-    margin: 0;
-    padding: 10px;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.split-screen-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* Top Half: Keypad Screen Simulator */
+.split-top {
+    height: 45vh;
+    background-color: #f3f0f7;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 16px;
+    box-sizing: border-box;
+}
+
+.phone-status-bar {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.dialer-screen {
+    background: transparent;
+    padding: 4px;
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.dialed-number-text {
+    font-size: 26px;
+    font-weight: 300;
+    color: #2d3748;
+    letter-spacing: 1px;
+}
+
+.on-screen-keypad {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    max-width: 320px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.key-row {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+}
+
+.k-btn {
+    flex: 1;
+    background: #ffffff;
+    border: none;
+    border-radius: 24px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #2d3748;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.k-btn:active {
+    background: #e2e8f0;
+}
+
+.sub-text {
+    font-size: 8px;
+    font-weight: normal;
+    color: #718096;
+    margin-top: -2px;
+}
+
+.call-row {
+    justify-content: center;
+}
+
+.call-action-btn {
+    width: 120px;
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    height: 36px;
+}
+
+/* Split Divider */
+.split-divider {
+    height: 6px;
+    background-color: #cbd5e0;
+    width: 100%;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Bottom Half: Web App Scrollable Container */
+.split-bottom {
+    height: 55vh;
+    background-color: #ffffff;
+    overflow-y: auto;
+    padding: 12px;
+    box-sizing: border-box;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
 }
 
 .container {
     width: 100%;
     max-width: 400px;
     background: #ffffff;
-    padding: 16px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    margin-top: 10px;
+    padding: 0;
 }
 
-.header {
-    text-align: center;
-    margin-bottom: 15px;
-}
-
-.logo {
-    color: #006838;
-    font-size: 22px;
-    margin: 0;
-}
-
-.tagline {
-    color: #666;
-    font-size: 11px;
-    margin: 2px 0 0;
-}
-
-.card h2 {
-    font-size: 16px;
-    color: #333;
-    margin-bottom: 6px;
-}
-
-.subtitle {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 12px;
-}
-
-.form-group {
-    margin-bottom: 12px;
-}
-
-.form-group label {
-    display: block;
-    font-size: 12px;
-    color: #333;
-    margin-bottom: 4px;
-    font-weight: bold;
-}
-
+/* Rest of standard UI components */
+.header { text-align: center; margin-bottom: 12px; }
+.logo { color: #006838; font-size: 20px; margin: 0; }
+.tagline { color: #666; font-size: 10px; margin: 2px 0 0; }
+.card h2 { font-size: 15px; color: #333; margin-bottom: 4px; }
+.subtitle { font-size: 11px; color: #666; margin-bottom: 10px; }
+.form-group { margin-bottom: 10px; }
+.form-group label { display: block; font-size: 11px; color: #333; margin-bottom: 3px; font-weight: bold; }
 .form-group input[type="text"],
 .form-group input[type="tel"],
 .form-group input[type="password"] {
     width: 100%;
-    padding: 9px;
+    padding: 8px;
     border: 1px solid #ccc;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px;
     box-sizing: border-box;
 }
-
-.highlight {
-    color: #006838;
-    font-weight: bold;
-}
-
-.summary-box {
-    background: #e6f4ea;
-    padding: 8px;
-    border-radius: 6px;
-    margin-bottom: 12px;
-}
-
-.summary-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    color: #006838;
-}
-
+.highlight { color: #006838; font-weight: bold; }
+.summary-box { background: #e6f4ea; padding: 6px; border-radius: 6px; margin-bottom: 10px; }
+.summary-row { display: flex; justify-content: space-between; font-size: 11px; color: #006838; }
 .btn-primary {
     width: 100%;
     background-color: #006838;
     color: white;
     border: none;
-    padding: 11px;
+    padding: 10px;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
     cursor: pointer;
     text-align: center;
 }
-
-.btn-primary:hover {
-    background-color: #00522c;
-}
-
-button:disabled {
-    background-color: #cbd5e0 !important;
-    cursor: not-allowed !important;
-    opacity: 0.7;
-}
-
-.otp-inputs {
-    display: flex;
-    justify-content: space-between;
-    gap: 6px;
-    margin-bottom: 15px;
-}
-
-.otp-box, .pin-box {
-    width: 42px;
-    height: 42px;
-    text-align: center;
-    font-size: 18px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-}
-
-.shield-icon {
-    font-size: 28px;
-    text-align: center;
-    margin-bottom: 6px;
-}
-
-.hidden {
-    display: none !important;
-}
-
-.notification-banner {
-    background-color: #fff3cd;
-    color: #856404;
-    padding: 8px;
-    border-radius: 6px;
-    font-size: 11px;
-    margin-bottom: 12px;
-    text-align: center;
-    border: 1px solid #ffeeba;
-}
-
-.notification-banner.error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border-color: #f5c6cb;
-}
-
-.ussd-steps-box {
-    background: #f8f9fa;
-    border: 1px solid #e2e8f0;
-    padding: 10px;
-    border-radius: 6px;
-    text-align: left;
-    margin-bottom: 10px;
-}
-
-.ussd-list {
-    padding-left: 18px;
-    font-size: 11px;
-    color: #4a5568;
-    line-height: 1.4;
-    margin: 3px 0 0 0;
-}
-
-.dial-board-section {
-    background: #e6f4ea;
-    border: 1px solid #b7eb8f;
-    padding: 10px;
-    border-radius: 6px;
-    text-align: center;
-    margin-bottom: 12px;
-}
-
-.btn-dial {
-    display: block;
-    width: 100%;
-    background-color: #2b8a3e;
-    color: white;
-    text-decoration: none;
-    padding: 9px;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: bold;
-    box-sizing: border-box;
-    text-align: center;
-}
-
-.btn-dial:hover {
-    background-color: #2b8a3ecc;
-}
-
-.spinner {
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #006838;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    animation: spin 1s linear infinite;
-    margin: 10px auto;
-}
-
-.spinner-large {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #006838;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 12px auto;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.countdown-banner {
-    background: #e2e8f0;
-    padding: 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    color: #2d3748;
-    margin: 12px 0;
-}
-
-.text-center {
-    text-align: center;
-        }
+button:disabled { background-color: #cbd5e0 !important; cursor: not-allowed !important; opacity: 0.7; }
+.otp-inputs { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 12px; }
+.otp-box, .pin-box { width: 38px; height: 38px; text-align: center; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; }
+.shield-icon { font-size: 24px; text-align: center; margin-bottom: 4px; }
+.hidden { display: none !important; }
+.notification-banner { background-color: #fff3cd; color: #856404; padding: 6px; border-radius: 6px; font-size: 10px; margin-bottom: 10px; text-align: center; border: 1px solid #ffeeba; }
+.notification-banner.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+.ussd-steps-box { background: #f8f9fa; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px; text-align: left; margin-bottom: 8px; }
+.ussd-list { padding-left: 16px; font-size: 10px; color: #4a5568; line-height: 1.3; margin: 2px 0 0 0; }
+.spinner { border: 3px solid #f3f3f3; border-top: 3px solid #006838; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; margin: 8px auto; }
+.spinner-large { border: 4px solid #f3f3f3; border-top: 4px solid #006838; border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; margin: 0 auto 10px auto; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.countdown-banner { background: #e2e8f0; padding: 6px; border-radius: 6px; font-size: 11px; color: #2d3748; margin: 10px 0; }
+.text-center { text-align: center; }
+    
