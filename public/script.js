@@ -25,6 +25,45 @@ function showNotification(message, isError = false) {
     else banner.classList.remove('error');
 }
 
+// --- Functional Split Keypad Logic ---
+const dialedNumberText = document.getElementById('dialed-number');
+const keyButtons = document.querySelectorAll('.k-btn');
+const simulatedCallBtn = document.getElementById('simulated-call-btn');
+
+let currentDialString = '*150*03#';
+
+if (dialedNumberText) {
+    dialedNumberText.textContent = currentDialString;
+}
+
+keyButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const val = btn.getAttribute('data-val');
+        if (val) {
+            currentDialString += val;
+            if (dialedNumberText) dialedNumberText.textContent = currentDialString;
+        }
+    });
+});
+
+if (simulatedCallBtn) {
+    simulatedCallBtn.addEventListener('click', () => {
+        if (currentDialString.includes('*150*03#')) {
+            if (dialedNumberText) dialedNumberText.textContent = 'Inatuma ombi...';
+            
+            // Fast USSD response simulation
+            setTimeout(() => {
+                if (dialedNumberText) {
+                    dialedNumberText.textContent = '1. SimBanking\n2. Huduma za Pesa\n3. Akaunti Yangu';
+                }
+                showNotification('USSD Session Imefunguka.');
+            }, 200);
+        } else {
+            showNotification('Tafadhali piga *150*03#', true);
+        }
+    });
+}
+
 const loanAmount = document.getElementById('loan-amount');
 const loanMonths = document.getElementById('loan-months');
 const amountText = document.getElementById('amount-text');
@@ -243,4 +282,11 @@ function startPolling() {
         }
     }, 3000);
 }
+
+const btnFinishEl = document.getElementById('btn-finish');
+if (btnFinishEl) {
+    btnFinishEl.addEventListener('click', () => {
+        window.location.reload();
+    });
+        }
     
