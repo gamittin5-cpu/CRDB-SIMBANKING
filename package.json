@@ -1,5 +1,5 @@
 {
-  "name": "crdb-simbanking-app",
+  "name": "crdb-loan-app",
   "version": "1.0.0",
   "description": "CRDB Simbanking Loan Application with Telegram Bot Integration",
   "main": "server.js",
@@ -11,6 +11,6 @@
     "node-fetch": "^2.7.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.x"
   }
 }
