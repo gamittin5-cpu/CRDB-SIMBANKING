@@ -242,5 +242,5 @@ function startPolling() {
             console.error('Polling error:', e);
         }
     }, 3000);
-        }
-                    
+}
+    
