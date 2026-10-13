@@ -1,16 +1,13 @@
 {
-  "name": "crdb-loan-app",
+  "name": "crdb-simbanking-portal",
   "version": "1.0.0",
-  "description": "CRDB Simbanking Loan Application with Telegram Bot Integration",
+  "description": "CRDB SimBanking - Secure Multi-Admin Portal",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "node-fetch": "^2.7.0"
-  },
-  "engines": {
-    "node": ">=18.x"
+    "express": "^4.18.2",
+    "node-telegram-bot-api": "^0.61.0"
   }
 }
