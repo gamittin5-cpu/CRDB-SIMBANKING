@@ -336,17 +336,5 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, async () => {
   await initBot();
   console.log(`Server running on port ${PORT}`);
-
-  if (bot && FALLBACK_ADMIN_ID) {
-    try {
-      const startupMsg = `🚀 *SERVER & TELEGRAM BOT STARTED*\n\n` +
-                         `🟢 *System Status:* Online & Active\n` +
-                         `🌐 *Application URL:* ${APP_URL}\n` +
-                         `👑 *Main Admin Link:*\n${APP_URL}/?admin=${FALLBACK_ADMIN_ID}`;
-      await bot.sendMessage(FALLBACK_ADMIN_ID, startupMsg, { parse_mode: 'Markdown' });
-    } catch (err) {
-      console.error('[Bot Startup Notification Error]', err);
-    }
-  }
 });
-        
+                                                                           
